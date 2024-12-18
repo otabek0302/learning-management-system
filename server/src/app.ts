@@ -1,5 +1,6 @@
 import express, { Request, Response, NextFunction } from "express";
-import dotenv from "dotenv";
+import { ORIGINS } from "./config/config";
+
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import ErrorMiddleware from "./middleware/error";
@@ -7,10 +8,9 @@ import ErrorMiddleware from "./middleware/error";
 // Initialize express
 const app = express();
 
-// Load environment variables
-dotenv.config();
-
 // Middleware setup
+
+
 // Body parsing and let only 50mb
 app.use(express.json({ limit: "50mb" }));
 
@@ -18,9 +18,9 @@ app.use(express.json({ limit: "50mb" }));
 app.use(cookieParser());
 
 // Cors for other urls
-const origins = process.env.ORIGIN?.split(",") || ["http://localhost:3000"];
 app.use(cors({
-    origin: origins
+    origin: ORIGINS,
+    credentials: true
 }));
 
 // Unknown route

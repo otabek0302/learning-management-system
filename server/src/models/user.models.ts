@@ -44,7 +44,7 @@ const userSchema = new Schema<IUser>(
       type: String,
       required: [true, "Please enter a password"],
       minlength: [6, "Password should be at least 6 characters"],
-      select: false, // Don't select the password by default in queries
+      select: false,
     },
     avatar: {
       public_id: {
@@ -96,13 +96,13 @@ userSchema.methods.comparePassword = async function (password: string): Promise<
   return await bcrypt.compare(password, this.password);
 };
 
-// Pre-save middleware to hash the password before saving
+// Pre-save middleware to hash the password
 userSchema.pre<IUser>("save", async function (next) {
   if (!this.isModified("password")) {
-    return next(); // Password hasn't been modified, proceed without hashing
+    return next();
   }
-  const salt = await bcrypt.genSalt(10); // Salt the password with a rounds of 10
-  this.password = await bcrypt.hash(this.password, salt); // Hash the password
+  const salt = await bcrypt.genSalt(10);
+  this.password = await bcrypt.hash(this.password, salt);
   next();
 });
 
