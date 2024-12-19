@@ -1,15 +1,24 @@
-import express, { Request, Response, NextFunction } from "express";
+import { Request, Response, NextFunction } from "express";
 import { ORIGINS } from "./config/config";
 
+import express from "express";
 import cors from "cors";
+import helmet from "helmet";
+import morgan from "morgan";
+
 import cookieParser from "cookie-parser";
 import ErrorMiddleware from "./middleware/error";
+
+import UserRouter from "./routes/user.route";
 
 // Initialize express
 const app = express();
 
-// Middleware setup
-
+// Security and logging middleware
+app.use(helmet());
+if (process.env.NODE_ENV === "development") {
+    app.use(morgan("dev"));
+}
 
 // Body parsing and let only 50mb
 app.use(express.json({ limit: "50mb" }));
@@ -23,9 +32,12 @@ app.use(cors({
     credentials: true
 }));
 
+// API Routers
+app.use("/api/v1", UserRouter)
+
 // Unknown route
 app.all("*", (req: Request, res: Response, next: NextFunction) => {
-    const err = new Error(`Unknown route ${req.originalUrl}`) as any;
+    const err: any = new Error(`Cannot find ${req.originalUrl} on this server!`);
     err.status = 404;
     next(err);
 });

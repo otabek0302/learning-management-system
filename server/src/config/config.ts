@@ -14,7 +14,7 @@ function parseOrigins(originsStr?: string): string[] {
     if (Array.isArray(parsed)) {
       return parsed;
     }
-    return [parsed]; // If parsed is not an array, just return it as a single-origin array
+    return [parsed];
   } catch (error) {
     // If JSON parse fails, try to split by commas.
     return originsStr.split(",").map(o => o.trim()).filter(Boolean);
@@ -26,7 +26,7 @@ export const NODE_ENV = process.env.NODE_ENV || "development";
 export const ORIGINS = parseOrigins(process.env.ORIGIN);
 
 // Database configuration
-export const DB_URL = process.env.DB_URL || "mongodb://127.0.0.1:27017/lms";
+export const DATABASE_URL = process.env.DB_URL || "mongodb://127.0.0.1:27017/lms";
 export const DB_USER = process.env.DB_USER || "";
 export const DB_PASS = process.env.DB_PASS || "";
 

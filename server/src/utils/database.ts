@@ -1,10 +1,6 @@
-import dotenv from "dotenv";
 import mongoose from "mongoose";
 
-// Load environment variables
-dotenv.config();
-
-const DATABASE_URL = process.env.DB_URL || "" as string;
+import { DATABASE_URL } from "../config/config";
 
 if (!DATABASE_URL) {
     throw new Error("Environment variable DB_URL is not defined. Please provide a valid MongoDB connection string.");
@@ -33,12 +29,15 @@ const connectToDatabase = async (): Promise<void> => {
 
 // Handle shutdown of the application
 const handleExit = (signal: NodeJS.Signals): void => {
-    console.log(`⚠️ Received ${signal}. Closing MongoDB connection...`);
+  console.log(`⚠️ Received ${signal}. Closing MongoDB connection...`);
 
-    mongoose.connection.close(() => {
-        console.log("🔌 MongoDB connection closed. Exiting process.");
-        process.exit(0);
-    });
+  mongoose.connection.close().then(() => {
+    console.log("🔌 MongoDB connection closed. Exiting process.");
+    process.exit(0);
+  }).catch(err => {
+    console.error("Error closing MongoDB connection:", err);
+    process.exit(1);
+  });
 };
 
 
