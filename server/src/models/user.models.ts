@@ -49,11 +49,9 @@ const userSchema = new Schema<IUser>(
     avatar: {
       public_id: {
         type: String,
-        required: true,
       },
       url: {
         type: String,
-        required: true,
       },
     },
     role: {
@@ -75,11 +73,9 @@ const userSchema = new Schema<IUser>(
     ],
     verifyEmailToken: {
       type: String,
-      required: true,
     },
     verifyEmailTokenExpiry: {
       type: Date,
-      required: true,
     },
     forgotPasswordToken: {
       type: String,
