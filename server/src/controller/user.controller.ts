@@ -9,6 +9,7 @@ import CatchAsyncErrors from "../middleware/catchAsyncErrors"
 import ErrorHandler from "../utils/ErrorHandler";
 import User from "../models/user.models";
 import sendMail from "../utils/sendMail";
+import { sendToken } from "../utils/jwt";
 
 
 // Register user
@@ -61,6 +62,7 @@ export const resgisterUser = CatchAsyncErrors(async (req: Request, res: Response
     }
 })
 
+// Create Activitation Token
 interface IActivationToken {
     token: string;
     activationCode: string;
@@ -74,6 +76,7 @@ export const createActivationToken = (user: IRegister): IActivationToken => {
     return { token, activationCode };
 }
 
+// Activate User Account
 interface IActivationRequest {
     activation_token: string;
     activation_code: string;
@@ -100,6 +103,39 @@ export const activateUser = CatchAsyncErrors(async (req: Request, res: Response,
         res.status(201).json({
             success: true,
         });
+
+    } catch (error: any) {
+        return next(new ErrorHandler(error.message, 400));
+    }
+})
+
+// Login User
+
+interface ILogin {
+    email: string;
+    password: string;
+}
+
+export const loginUser = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+
+        const { email, password } = req.body as ILogin;
+
+        if (!email || !password) {
+            return next(new ErrorHandler("Please enter email and password", 400));
+        }
+
+        const user = await User.findOne({ email }).select("+password");
+        if (!user) {
+            return next(new ErrorHandler("Invalid email or password", 400));
+        }
+
+        const isPasswordMatch = await user.comparePassword(password);
+        if (!isPasswordMatch) {
+            return next(new ErrorHandler("Invalid email or password", 400));
+        }
+
+        sendToken(user, 200, res);
 
     } catch (error: any) {
         return next(new ErrorHandler(error.message, 400));

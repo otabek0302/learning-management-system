@@ -41,6 +41,11 @@ export const REDIS_REST_TOKEN = process.env.REDIS_REST_TOKEN || "";
 
 // Activation token
 export const ACTIVATION_TOKEN_SECRET = process.env.ACTIVATION_TOKEN_SECRET || "";
+export const ACCESS_TOKEN = process.env.ACCESS_TOKEN || "";
+export const REFRESH_TOKEN = process.env.REFRESH_TOKEN || "";
+
+export const ACCESS_TOKEN_EXPIRE = process.env.ACCESS_TOKEN_EXPIRE || "";
+export const REFRESH_TOKEN_EXPIRE = process.env.REFRESH_TOKEN_EXPIRE || "";
 
 // SMTP activation email configuration
 export const SMTP_HOST = process.env.SMTP_HOST || "";

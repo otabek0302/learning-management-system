@@ -1,11 +1,16 @@
-import mongoose, { Document, Schema, Model } from "mongoose";
+import { Document, Schema, Model } from "mongoose";
+import { ACCESS_TOKEN, REFRESH_TOKEN } from "../config/config"; 
+
+import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
 
 // Email regex to validate email format
 const emailRegexPattern: RegExp = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
 
 // Interface for the User document
-interface IUser extends Document {
+export interface IUser extends Document {
+  _id: string;
   name: string;
   email: string;
   password: string;
@@ -23,6 +28,8 @@ interface IUser extends Document {
   forgotPasswordTokenExpiry: Date;
   createdAt: Date;
   updatedAt: Date;
+  SignAccessToken: () => string;
+  SignRefreshToken: () => string;
 }
 
 // Schema for User model
@@ -90,6 +97,16 @@ const userSchema = new Schema<IUser>(
 // Password comparison method
 userSchema.methods.comparePassword = async function (password: string): Promise<boolean> {
   return await bcrypt.compare(password, this.password);
+};
+
+// Sign access token
+userSchema.methods.SignAccessToken = function (): string {
+  return jwt.sign({ id: this._id }, ACCESS_TOKEN as string);
+};
+
+// Sign refresh token
+userSchema.methods.SignRefreshToken = function (): string {
+  return jwt.sign({ id: this._id }, REFRESH_TOKEN as string);
 };
 
 // Pre-save middleware to hash the password
