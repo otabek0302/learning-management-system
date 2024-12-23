@@ -1,6 +1,8 @@
 import { Request, Response, NextFunction } from "express";
-import { ACTIVATION_TOKEN_SECRET } from "../config/config";
+import { ACCESS_TOKEN, ACTIVATION_TOKEN_SECRET, REFRESH_TOKEN } from "../config/config";
 import { Secret } from "jsonwebtoken";
+import { accessTokenOptions, refreshTokenOptions, sendToken } from "../utils/jwt";
+import { IJwtPayload } from "../@types/auth.types";
 
 import ejs from "ejs";
 import jwt from "jsonwebtoken";
@@ -9,8 +11,9 @@ import CatchAsyncErrors from "../middleware/catchAsyncErrors"
 import ErrorHandler from "../utils/ErrorHandler";
 import User from "../models/user.models";
 import sendMail from "../utils/sendMail";
-import { sendToken } from "../utils/jwt";
 import redis from "../utils/redis";
+import { ISocialAuthRequest, IUser } from "../@types/user.types";
+import { getUserById } from "../services/user.service";
 
 
 // Register user
@@ -155,6 +158,90 @@ export const logoutUser = CatchAsyncErrors(async (req: Request, res: Response, n
             success: true,
             message: "Logged out successfully"
         });
+    } catch (error: any) {
+        return next(new ErrorHandler(error.message, 400));
+    }
+})
+
+// Update access token 
+export const updateAccessToken = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const refresh_token = req.cookies.refresh_token as string | undefined;
+
+        if (!refresh_token) {
+            return next(new ErrorHandler("Please login to access this resource", 401));
+        }
+
+        let decoded: IJwtPayload;
+
+        try {
+            decoded = jwt.verify(refresh_token, REFRESH_TOKEN as string) as IJwtPayload;
+        } catch (error) {
+            return next(new ErrorHandler("Refresh token is not valid or has expired", 401));
+        }
+
+        if (!decoded || !decoded.id) {
+            return next(new ErrorHandler("Refresh token payload is invalid", 400));
+        }
+
+        const session: string | null = await redis.get(decoded.id as string);
+
+        if (!session) {
+            return next(new ErrorHandler("Refresh token is not valid or has expired", 401));
+        }
+
+        const user = session as unknown as IUser;
+
+        if (!user || !user._id) {
+            return next(new ErrorHandler("User session is invalid", 400));
+        }
+
+        const accessToken = jwt.sign({ id: user?._id }, ACCESS_TOKEN as string, {
+            expiresIn: "5m",
+        });
+
+        const refreshToken = jwt.sign({ id: user?._id }, REFRESH_TOKEN as string, {
+            expiresIn: "1d",
+        });
+
+        res.cookie("access_token", accessToken, accessTokenOptions);
+        res.cookie("refresh_token", refreshToken, refreshTokenOptions);
+
+        // Upload session to Redis
+        res.status(200).json({
+            success: true,
+            accessToken
+        })
+
+    } catch (error: any) {
+        return next(new ErrorHandler(error.message, 400));
+    }
+})
+
+// User services
+export const getUserInfo = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const userId = req.user?._id;
+
+        getUserById(userId, res);
+    } catch (error: any) {
+        return next(new ErrorHandler(error.message, 400));
+    }
+})
+
+// Social auth
+export const socialAuth = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { email, name, avatar } = req.body as ISocialAuthRequest;
+        const user = await User.findOne({ email })
+
+        if (!user) {
+            const newUser = await User.create({ email, name, avatar })
+            sendToken(newUser, 200, res);
+        } else {
+            sendToken(user, 200, res);
+        }
+
     } catch (error: any) {
         return next(new ErrorHandler(error.message, 400));
     }

@@ -49,7 +49,6 @@ const userSchema = new Schema<IUser>(
     },
     password: {
       type: String,
-      required: [true, "Please enter a password"],
       minlength: [6, "Password should be at least 6 characters"],
       select: false,
     },
@@ -101,12 +100,16 @@ userSchema.methods.comparePassword = async function (password: string): Promise<
 
 // Sign access token
 userSchema.methods.SignAccessToken = function (): string {
-  return jwt.sign({ id: this._id }, ACCESS_TOKEN as string);
+  return jwt.sign({ id: this._id }, ACCESS_TOKEN as string || '', {
+    expiresIn: "5m",
+  });
 };
 
 // Sign refresh token
 userSchema.methods.SignRefreshToken = function (): string {
-  return jwt.sign({ id: this._id }, REFRESH_TOKEN as string);
+  return jwt.sign({ id: this._id }, REFRESH_TOKEN as string || '', {
+    expiresIn: "2h",
+  });
 };
 
 // Pre-save middleware to hash the password
