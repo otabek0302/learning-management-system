@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { IUser } from '../models/user.models';
 import { ACCESS_TOKEN_EXPIRE, REFRESH_TOKEN_EXPIRE, NODE_ENV } from '../config/config';
+
 import redis from "./redis";
 
 interface ITokenOptions {
@@ -16,7 +17,8 @@ export const sendToken = (user: IUser, statusCode: number, res: Response) => {
     const refreshToken = user.SignRefreshToken();
 
     // Upload session to Redis
-    redis.set(user._id, JSON.stringify(user) as any);
+    // redis.set(user._id, JSON.stringify(user) as any);
+    redis.set(user._id.toString(), JSON.stringify(user.toObject() as any), { ex: 3600 });
 
     // Parse eviroment variables to integrates with fallback values
     const accessTokenExpire = parseInt(ACCESS_TOKEN_EXPIRE || '300', 10)

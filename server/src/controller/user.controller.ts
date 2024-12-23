@@ -10,6 +10,7 @@ import ErrorHandler from "../utils/ErrorHandler";
 import User from "../models/user.models";
 import sendMail from "../utils/sendMail";
 import { sendToken } from "../utils/jwt";
+import redis from "../utils/redis";
 
 
 // Register user
@@ -147,6 +148,8 @@ export const logoutUser = CatchAsyncErrors(async (req: Request, res: Response, n
     try {
         res.cookie("access_token", "", { maxAge: 1 });
         res.cookie("refresh_token", "", { maxAge: 1 });
+
+        redis.del(req.user._id.toString());
 
         res.status(200).json({
             success: true,
