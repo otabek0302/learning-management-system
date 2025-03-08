@@ -1,5 +1,5 @@
 import { Document, Schema, Model } from "mongoose";
-import { ACCESS_TOKEN, REFRESH_TOKEN } from "../config/config"; 
+import { ACCESS_TOKEN, REFRESH_TOKEN } from "../config/config";
 
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";

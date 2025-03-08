@@ -3,6 +3,8 @@ import { ACCESS_TOKEN, ACTIVATION_TOKEN_SECRET, REFRESH_TOKEN } from "../config/
 import { Secret } from "jsonwebtoken";
 import { accessTokenOptions, refreshTokenOptions, sendToken } from "../utils/jwt";
 import { IJwtPayload } from "../@types/auth.types";
+import { ISocialAuthRequest, IUser } from "../@types/user.types";
+import { getUserById } from "../services/user.service";
 
 import ejs from "ejs";
 import jwt from "jsonwebtoken";
@@ -12,9 +14,7 @@ import ErrorHandler from "../utils/ErrorHandler";
 import User from "../models/user.models";
 import sendMail from "../utils/sendMail";
 import redis from "../utils/redis";
-import { ISocialAuthRequest, IUser } from "../@types/user.types";
-import { getUserById } from "../services/user.service";
-
+import cloudinary from "cloudinary";
 
 // Register user
 interface IRegister {
@@ -27,7 +27,7 @@ interface IRegister {
     };
 }
 
-export const resgisterUser = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
+export const registerUser = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { name, email, password }: IRegister = req.body;
 
@@ -114,7 +114,6 @@ export const activateUser = CatchAsyncErrors(async (req: Request, res: Response,
 })
 
 // Login User
-
 interface ILogin {
     email: string;
     password: string;
@@ -204,6 +203,8 @@ export const updateAccessToken = CatchAsyncErrors(async (req: Request, res: Resp
             expiresIn: "1d",
         });
 
+        req.user = user;
+
         res.cookie("access_token", accessToken, accessTokenOptions);
         res.cookie("refresh_token", refreshToken, refreshTokenOptions);
 
@@ -242,6 +243,135 @@ export const socialAuth = CatchAsyncErrors(async (req: Request, res: Response, n
             sendToken(user, 200, res);
         }
 
+    } catch (error: any) {
+        return next(new ErrorHandler(error.message, 400));
+    }
+})
+
+// Updated user info
+interface IUpdateUserInfo {
+    name?: string;
+    email?: string;
+    password?: string;
+    avatar?: {
+        public_id: string;
+        url: string;
+    };
+}
+
+export const updateUserInfo = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { name, email } = req.body as IUpdateUserInfo;
+        const userId = req.user?._id;
+        const user = await User.findById(userId);
+
+        if (email && user) {
+            const isEmailExist = await User.findOne({ email });
+            if (isEmailExist) {
+                return next(new ErrorHandler("Email already exist", 400));
+            }
+            user.email = email;
+        }
+
+        if (name && user) {
+            user.name = name;
+        }
+
+        await user?.save();
+
+        await redis.set(userId, JSON.stringify(user));
+
+        res.status(200).json({
+            success: true,
+            user
+        })
+    } catch (error: any) {
+        return next(new ErrorHandler(error.message, 400));
+    }
+})
+
+// Update user password
+interface IUpdatePassword {
+    oldPassword: string;
+    newPassword: string;
+}
+
+export const updatePassword = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { oldPassword, newPassword } = req.body as IUpdatePassword;
+
+        if (!oldPassword || !newPassword) {
+            return next(new ErrorHandler("Please enter old and new password", 400));
+        }
+
+        const user = await User.findById(req.user?._id).select("+password");
+
+        if (!user) {
+            return next(new ErrorHandler("User not found", 400));
+        }
+
+        const isPasswordMatch = await user.comparePassword(oldPassword);
+
+        if (!isPasswordMatch) {
+            return next(new ErrorHandler("Old password is incorrect", 400));
+        }
+
+        if (newPassword.length < 8) {
+            return next(new ErrorHandler("Password must be at least 8 characters long", 400));
+        }
+
+        user.password = newPassword;
+        await user.save();
+
+        await redis.set(user._id.toString(), JSON.stringify(user));
+
+        res.status(200).json({
+            success: true,
+            message: "Password updated successfully"
+        })
+    } catch (error: any) {
+        return next(new ErrorHandler(error.message, 400));
+    }
+})
+
+// Update user Avatar
+interface IUpdateUserAvatar {
+    avatar: string;
+}
+
+export const updateProfilePicture = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { avatar } = req.body as IUpdateUserAvatar;
+
+        if (!avatar) {
+            return next(new ErrorHandler("Please enter avatar", 400));
+        }
+
+        const userId = req.user?._id;
+        const user = await User.findById(userId);
+
+        if (!user) {
+            return next(new ErrorHandler("User not found", 400));
+        }
+
+        if (user?.avatar?.public_id) {
+            await cloudinary.v2.uploader.destroy(user?.avatar?.public_id);
+        } else {
+            const uploadResponse = await cloudinary.v2.uploader.upload(avatar, { folder: "avatars", width: 150, height: 150, crop: "fill" }); 
+            user.avatar = {
+                public_id: uploadResponse.public_id,
+                url: uploadResponse.secure_url
+            };
+        }
+
+        await user.save();
+
+        await redis.set(userId, JSON.stringify(user));
+
+        res.status(200).json({
+            success: true,
+            user
+        })
     } catch (error: any) {
         return next(new ErrorHandler(error.message, 400));
     }

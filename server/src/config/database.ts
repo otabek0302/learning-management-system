@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-import { DATABASE_URL } from "../config/config";
+import { DATABASE_URL } from "./config";
 
 if (!DATABASE_URL) {
     throw new Error("Environment variable DB_URL is not defined. Please provide a valid MongoDB connection string.");
