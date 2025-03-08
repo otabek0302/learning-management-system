@@ -1,123 +1,170 @@
 # 🎓 Learning Management System (LMS)
 
-A comprehensive, industrial-grade Learning Management System built with modern technologies.
+A comprehensive, enterprise-grade Learning Management System built with modern web technologies.
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue.svg)](https://www.typescriptlang.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-18.0+-green.svg)](https://nodejs.org/)
+[![MongoDB](https://img.shields.io/badge/MongoDB-6.0+-green.svg)](https://www.mongodb.com/)
 
-## 📋 Overview
+## 🚀 Quick Start
 
-This enterprise-level LMS platform offers a robust solution for managing educational content, supporting:
-- Course creation and management
-- Student enrollment and progress tracking
-- Real-time interactive learning
-- Comprehensive analytics
-- Secure payment processing
+1. **Clone the repository**
+```bash
+git clone https://github.com/otabek0302/learning-management-system.git
+cd lms-platform
+```
 
-## 🎥 Tutorial Series
+2. **Set up environment variables**
+```bash
+# In server directory
+cp .env.example .env
+# Configure your environment variables
+```
 
-Follow along with our detailed YouTube tutorial series:
-- 🔗 [LMS Full Stack Series](your-youtube-link)
-- 📺 New episodes released weekly
-- 💡 Step-by-step implementation guide
+3. **Install dependencies**
+```bash
+# Install server dependencies
+cd server
+npm install
 
-## ⚡ Key Features
+# Install client dependencies
+cd ../client
+npm install
+```
 
-### Core Functionality
-- 🔐 Multi-role authentication (Students, Instructors, Admins)
-- 📚 Comprehensive course management
-- 💬 Real-time communication
-- 💳 Secure payment processing
-- 📊 Advanced analytics dashboard
+4. **Start development servers**
+```bash
+# Start server (from server directory)
+npm run dev
 
-### Technical Features
-- 🔄 Real-time updates using WebSocket
-- 🚀 Server-side rendering
-- 📱 Responsive design
-- 🔍 Full-text search capability
+# Start client (from client directory)
+npm run dev
+```
+
+## 🎯 Key Features
+
+### For Students
+- 📚 Access to comprehensive course materials
+- 💻 Interactive learning experiences
+- 📊 Progress tracking and analytics
+- 💬 Real-time communication with instructors
+- 📱 Responsive design for all devices
+
+### For Instructors
+- 🎓 Course creation and management
+- 📈 Student progress monitoring
+- 📊 Analytics dashboard
+- 💡 Interactive teaching tools
+- 📝 Assessment creation and grading
+
+### For Administrators
+- 👥 User management
 - 🔒 Role-based access control
+- 💳 Payment processing
+- 📊 System-wide analytics
+- ⚙️ Platform configuration
 
 ## 🛠️ Technology Stack
 
-### Backend Infrastructure
-- **Runtime**: Node.js
+### Backend
+- **Runtime**: Node.js 18+
 - **Framework**: Express.js with TypeScript
-- **Database**: MongoDB
+- **Database**: MongoDB with Mongoose
 - **Caching**: Redis
-- **Real-time**: Socket.io
+- **Authentication**: JWT
+- **Email**: Nodemailer
+- **File Storage**: Cloudinary
+- **API Documentation**: Swagger
 
-### Frontend Architecture
-- **Framework**: Next.js 13
-- **State Management**: RTK Query
+### Frontend
+- **Framework**: Next.js 13+
+- **Language**: TypeScript
 - **Styling**: Tailwind CSS
+- **State Management**: RTK Query
 - **UI Components**: Headless UI
 
-### DevOps & Tools
+### DevOps
 - **Containerization**: Docker
+- **Version Control**: Git
 - **CI/CD**: GitHub Actions
-- **Authentication**: JWT
-- **API Design**: REST
-- **Documentation**: Swagger
+- **Monitoring**: (Coming soon)
 
-## 🗂️ Project Structure
+## 📁 Project Structure
 
 📂 Project Structure
 mathematica
 Copy
 Edit
-/lms-platform  
-│── backend/ (Express.js API)  
-│── frontend/ (Next.js 13 + RTK Query)  
-│── database/ (MongoDB & Redis configurations)  
-│── docker-compose.yml (Containerized setup)  
-│── .env (Environment variables)  
+lms-platform/
+├── client/ # Frontend Next.js application
+│ ├── src/
+│ │ ├── app/ # Next.js 13 app directory
+│ │ ├── components/ # Reusable components
+│ │ └── styles/ # Global styles
+│ └── public/ # Static assets
+│
+├── server/ # Backend Express.js application
+│ ├── src/
+│ │ ├── config/ # Configuration files
+│ │ ├── controllers/ # Route controllers
+│ │ ├── middleware/ # Custom middleware
+│ │ ├── models/ # Database models
+│ │ ├── routes/ # API routes
+│ │ └── utils/ # Utility functions
+│ └── tests/ # Backend tests
+│
 │── README.md (This file)  
+
 🏗️ Installation & Setup
 Prerequisites
 Ensure you have the following installed:
 
-Node.js (v18+)
-MongoDB (Running locally or cloud-based)
-Redis (For caching & real-time features)
-Docker (Optional for containerization)
-Backend Setup
-bash
-Copy
-Edit
-cd backend  
-npm install  
-npm run dev
-Frontend Setup
-bash
-Copy
-Edit
-cd frontend  
-npm install  
-npm run dev
-Run with Docker (Optional)
-bash
-Copy
-Edit
-docker-compose up --build
+
 🔗 API Documentation
 📜 The full API documentation will be available soon (via Swagger or Postman). Stay tuned!
 
-🛠️ Contribution
-Want to contribute? Follow these steps:
+## 🧪 Testing
 
-Fork the repo
-Clone your fork
-Create a new branch (git checkout -b feature-name)
-Commit changes (git commit -m "Added new feature")
-Push your branch (git push origin feature-name)
-Create a Pull Request
-🌟 Support
+```bash
+# Run server tests
+cd server
+npm test
+
+# Run client tests
+cd client
+npm test
+```
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 👥 Support
+
+- 📧 Gmail: otabekjon0302@gmail.com
+- 📧 Email: otabekjon2002@mail.ru
+- 💬 Discord: [Join our community](https://discord.gg/your-invite)
+- 📚 Documentation: [Read the docs](https://docs.yourdomain.com)
+
 If you find this project useful, don't forget to:
 ⭐ Star the repository
 📢 Share it with others
-📩 Subscribe to the YouTube series
 
-📞 Contact
-📧 Email: your-email@example.com
-🐦 Twitter: @yourhandle
-📺 YouTube: LMS Full Stack Series (Insert YouTube link here)
+## 🙏 Acknowledgments
+
+- Next.js team for the amazing framework
+- MongoDB team for the reliable database
+- All contributors who have helped this project grow
+
+---
+
+Made with ❤️ by [Amonov Otabek]
