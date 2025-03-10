@@ -96,25 +96,12 @@ npm run dev
 mathematica
 Copy
 Edit
-lms-platform/
-├── client/ # Frontend Next.js application
-│ ├── src/
-│ │ ├── app/ # Next.js 13 app directory
-│ │ ├── components/ # Reusable components
-│ │ └── styles/ # Global styles
-│ └── public/ # Static assets
-│
-├── server/ # Backend Express.js application
-│ ├── src/
-│ │ ├── config/ # Configuration files
-│ │ ├── controllers/ # Route controllers
-│ │ ├── middleware/ # Custom middleware
-│ │ ├── models/ # Database models
-│ │ ├── routes/ # API routes
-│ │ └── utils/ # Utility functions
-│ └── tests/ # Backend tests
-│
-│── README.md (This file)  
+lms-platform/  
+│── backend/ (Express.js API)  
+│── frontend/ (Next.js 13 + RTK Query)  
+│── README.md   
+│── LICENSE   
+│── .gitignore   
 
 🏗️ Installation & Setup
 Prerequisites
