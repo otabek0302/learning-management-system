@@ -1,5 +1,5 @@
 import { Response } from 'express';
-import { IUser } from '../models/user.models';
+import { IUser } from '../models/user.model';
 import { ACCESS_TOKEN_EXPIRE, REFRESH_TOKEN_EXPIRE, NODE_ENV } from '../config/config';
 
 import redis from "./redis";

@@ -1,4 +1,6 @@
-import { Model, Schema, model } from "mongoose";
+import { Document, Model, Schema, model } from "mongoose";
+
+
 
 // Comments
 interface IComment extends Document {
@@ -142,6 +144,7 @@ const courseSchema = new Schema<ICourse>({
     },
 }, { timestamps: true });
 
+// Create and export the Course model
 const CourseModel: Model<ICourse> = model("Course", courseSchema);
 
 export default CourseModel;

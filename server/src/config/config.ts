@@ -47,6 +47,9 @@ export const REFRESH_TOKEN = process.env.REFRESH_TOKEN || "";
 export const ACCESS_TOKEN_EXPIRE = process.env.ACCESS_TOKEN_EXPIRE || "";
 export const REFRESH_TOKEN_EXPIRE = process.env.REFRESH_TOKEN_EXPIRE || "";
 
+// Forgot password token
+export const FORGOT_PASSWORD_TOKEN_SECRET = process.env.FORGOT_PASSWORD_TOKEN_SECRET || "";
+
 // SMTP activation email configuration
 export const SMTP_HOST = process.env.SMTP_HOST || "";
 export const SMTP_PORT = process.env.SMTP_PORT || "";

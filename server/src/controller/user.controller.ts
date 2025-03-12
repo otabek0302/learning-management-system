@@ -1,48 +1,36 @@
 import { Request, Response, NextFunction } from "express";
-import { ACCESS_TOKEN, ACTIVATION_TOKEN_SECRET, REFRESH_TOKEN } from "../config/config";
-import { Secret } from "jsonwebtoken";
+import { ACCESS_TOKEN, REFRESH_TOKEN } from "../config/config";
 import { accessTokenOptions, refreshTokenOptions, sendToken } from "../utils/jwt";
 import { IJwtPayload } from "../@types/auth.types";
 import { ISocialAuthRequest, IUser } from "../@types/user.types";
-import { getUserById } from "../services/user.service";
 
-import ejs from "ejs";
+import { checkUserExist, createActivationToken, getUserById, verifyActivationToken, createForgotPasswordToken, verifyForgotPasswordToken } from "../services/user.service";
+import { ILogin, IRegister, IUpdatePassword, IUpdateUserInfo, IUpdateUserAvatar, IForgotPassword, IForgotPasswordRequest, IResetPassword } from "../interfaces/user.interface";
+
 import jwt from "jsonwebtoken";
-import path from "path";
 import CatchAsyncErrors from "../middleware/catchAsyncErrors"
 import ErrorHandler from "../utils/ErrorHandler";
-import User from "../models/user.models";
+import User from "../models/user.model";
 import sendMail from "../utils/sendMail";
 import redis from "../utils/redis";
 import cloudinary from "cloudinary";
 
-// Register user
-interface IRegister {
-    name: string;
-    email: string;
-    password: string;
-    avatar?: {
-        public_id: string;
-        url: string;
-    };
-}
-
+// Register User
 export const registerUser = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { name, email, password }: IRegister = req.body;
 
-        const isEmailExist = await User.findOne({ email: email });
+        const { name, email, password }: IUser = req.body;
 
-        if (isEmailExist) {
-            return next(new ErrorHandler("User already exist", 400));
-        }
+        // Validate user is exist or not
+        await checkUserExist(email, res, next);
 
-        const user: IRegister = { name, email, password };
+        // Create user
+        const user = { name, email, password } as IRegister;
 
+        // Create activation token
         const activationToken = createActivationToken(user);
         const activationCode = activationToken.activationCode;
         const data = { user: { name: user.name }, activationCode }
-        const html = await ejs.renderFile(path.join(__dirname, "../mails/activation-mail.ejs"), data);
 
         try {
             await sendMail({
@@ -66,58 +54,26 @@ export const registerUser = CatchAsyncErrors(async (req: Request, res: Response,
     }
 })
 
-// Create Activitation Token
-interface IActivationToken {
-    token: string;
-    activationCode: string;
-}
-
-export const createActivationToken = (user: IRegister): IActivationToken => {
-    const activationCode = Math.floor(1000 + Math.random() * 9000).toString();
-    const token = jwt.sign({ user, activationCode }, ACTIVATION_TOKEN_SECRET as Secret, {
-        expiresIn: "5m",
-    });
-    return { token, activationCode };
-}
-
 // Activate User Account
-interface IActivationRequest {
-    activation_token: string;
-    activation_code: string;
-}
-
 export const activateUser = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
     try {
 
-        const { activation_token, activation_code } = req.body as IActivationRequest;
-        const newUser: { user: IRegister; activationCode: string } = jwt.verify(activation_token, ACTIVATION_TOKEN_SECRET as string) as { user: IRegister; activationCode: string }
+        // Verify activation token
+        const user = await verifyActivationToken(req.body.activation_token, req.body.activation_code, res, next);
 
-        if (newUser.activationCode !== activation_code) {
-            return next(new ErrorHandler("Invalid activation code", 400));
+        if (!user) {
+            return next(new ErrorHandler("Invalid activation token or code", 400));
         }
 
-        const { email, name, password } = newUser.user;
-        const existingUser = await User.findOne({ email });
-
-        if (existingUser) {
-            return next(new ErrorHandler("User already exist", 400));
-        }
-
-        const user = await User.create({ email, name, password });
         res.status(201).json({
             success: true,
+            message: `User created successfully with email ${user?.email}`,
         });
 
     } catch (error: any) {
         return next(new ErrorHandler(error.message, 400));
     }
 })
-
-// Login User
-interface ILogin {
-    email: string;
-    password: string;
-}
 
 export const loginUser = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -138,6 +94,7 @@ export const loginUser = CatchAsyncErrors(async (req: Request, res: Response, ne
             return next(new ErrorHandler("Invalid email or password", 400));
         }
 
+        // Generate token
         sendToken(user, 200, res);
 
     } catch (error: any) {
@@ -208,6 +165,7 @@ export const updateAccessToken = CatchAsyncErrors(async (req: Request, res: Resp
         res.cookie("access_token", accessToken, accessTokenOptions);
         res.cookie("refresh_token", refreshToken, refreshTokenOptions);
 
+
         // Upload session to Redis
         res.status(200).json({
             success: true,
@@ -248,28 +206,17 @@ export const socialAuth = CatchAsyncErrors(async (req: Request, res: Response, n
     }
 })
 
-// Updated user info
-interface IUpdateUserInfo {
-    name?: string;
-    email?: string;
-    password?: string;
-    avatar?: {
-        public_id: string;
-        url: string;
-    };
-}
 
+// Update user info
 export const updateUserInfo = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { name, email } = req.body as IUpdateUserInfo;
+        
         const userId = req.user?._id;
         const user = await User.findById(userId);
 
         if (email && user) {
-            const isEmailExist = await User.findOne({ email });
-            if (isEmailExist) {
-                return next(new ErrorHandler("Email already exist", 400));
-            }
+            await checkUserExist(email, res, next);
             user.email = email;
         }
 
@@ -291,11 +238,6 @@ export const updateUserInfo = CatchAsyncErrors(async (req: Request, res: Respons
 })
 
 // Update user password
-interface IUpdatePassword {
-    oldPassword: string;
-    newPassword: string;
-}
-
 export const updatePassword = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { oldPassword, newPassword } = req.body as IUpdatePassword;
@@ -335,10 +277,6 @@ export const updatePassword = CatchAsyncErrors(async (req: Request, res: Respons
 })
 
 // Update user Avatar
-interface IUpdateUserAvatar {
-    avatar: string;
-}
-
 export const updateProfilePicture = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { avatar } = req.body as IUpdateUserAvatar;
@@ -357,7 +295,7 @@ export const updateProfilePicture = CatchAsyncErrors(async (req: Request, res: R
         if (user?.avatar?.public_id) {
             await cloudinary.v2.uploader.destroy(user?.avatar?.public_id);
         } else {
-            const uploadResponse = await cloudinary.v2.uploader.upload(avatar, { folder: "avatars", width: 150, height: 150, crop: "fill" }); 
+            const uploadResponse = await cloudinary.v2.uploader.upload(avatar, { folder: "avatars", width: 150, height: 150, crop: "fill" });
             user.avatar = {
                 public_id: uploadResponse.public_id,
                 url: uploadResponse.secure_url
@@ -376,3 +314,205 @@ export const updateProfilePicture = CatchAsyncErrors(async (req: Request, res: R
         return next(new ErrorHandler(error.message, 400));
     }
 })
+
+
+// Forgot password
+export const forgotPassword = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { email } = req.body as IForgotPassword;
+
+        const user = await User.findOne({ email });
+
+        if (!user) {
+            return next(new ErrorHandler("User not found", 400));
+        }
+
+        const forgotPasswordToken = createForgotPasswordToken(user);
+        const forgotPasswordCode = forgotPasswordToken.forgotPasswordCode;
+        const data = { user: { name: user.name }, forgotPasswordCode }
+
+        try {
+            await sendMail({
+                email: user.email,
+                subject: "Forgot Password",
+                template: "forgot-password-mail.ejs",
+                data
+            });
+
+            res.status(200).json({
+                success: true,
+                message: `Please check your email address: ${user.email} to reset your password.`,
+                forgotPasswordToken: forgotPasswordToken.token
+            })
+        } catch (error: any) {
+            return next(new ErrorHandler(error.message, 400));
+        }
+    } catch (error: any) {
+        return next(new ErrorHandler(error.message, 400));
+    }
+})
+
+// Verify forgot password token
+export const verifyForgotPasswordCode = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { forgot_password_token, forgot_password_code } = req.body as IForgotPasswordRequest;
+
+        const user = await verifyForgotPasswordToken(forgot_password_token, forgot_password_code, res, next);
+        
+        if (!user) {
+            return next(new ErrorHandler("Invalid or expired password reset token", 400));
+        }
+
+        // Store user in Redis with a temporary key for password reset
+        const resetKey = `password-reset-${user._id}`;
+        await redis.set(resetKey, JSON.stringify(user), { ex: 300 }); // expires in 5 minutes
+
+        res.status(200).json({
+            success: true,
+            message: "Forgot password code verified successfully",
+            resetKey // Send this key to be used in reset password
+        })
+
+    } catch (error: any) {
+        return next(new ErrorHandler(error.message, 400));
+    }
+})
+
+// Reset password
+export const resetPassword = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { password, resetKey } = req.body as IResetPassword;
+
+        if (!password || !resetKey) {
+            return next(new ErrorHandler("Please provide password and reset key", 400));
+        }
+
+        // Get user from Redis using resetKey
+        const userJson = await redis.get(resetKey);
+        if (!userJson) {
+            return next(new ErrorHandler("Password reset session expired or invalid", 400));
+        }
+
+        const userInfo = userJson as unknown as IUser;
+        const user = await User.findById(userInfo._id).select("+password");
+        
+        if (!user) {
+            return next(new ErrorHandler("User not found", 400));
+        }
+
+        user.password = password;
+        await user.save();
+
+        // Clear the reset key from Redis
+        await redis.del(resetKey);
+
+        res.status(200).json({
+            success: true,
+            message: "Password updated successfully"
+        })
+
+    } catch (error: any) {
+        return next(new ErrorHandler(error.message, 400));
+    }
+})
+
+
+// ---- Admin Routes ---- //
+
+// Get All Users
+export const getAllUsers = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const page = parseInt(req.query.page as string) || 1;
+        const limit = 12;
+        const skip = (page - 1) * limit;
+
+        // Create base query excluding the requesting user and password
+        const baseQuery = User.find({ _id: { $ne: req.user?._id } }).select("-password").lean();
+
+        // Get total count for pagination
+        const totalUsers = await User.countDocuments({ _id: { $ne: req.user?._id } });
+
+        // Execute paginated query
+        const users = await baseQuery.skip(skip).limit(limit).sort({ createdAt: -1 }); // Sort by newest first
+
+        res.status(200).json({
+            success: true,
+            users,
+            pagination: {
+                currentPage: page,
+                totalPages: Math.ceil(totalUsers / limit),
+                totalUsers,
+                hasMore: totalUsers > skip + users.length
+            }
+        });
+
+    } catch (error: any) {
+        return next(new ErrorHandler(error.message, 400));
+    }
+})
+
+// Search Users
+export const searchUsers = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        // Get search query from query params
+        const { search } = req.query as { search: string };
+        console.log(search);
+        
+
+        // Search users by name or email
+        const users = await User.find({
+            $or: [{ name: { $regex: search, $options: "i" } }, { email: { $regex: search, $options: "i" } }]
+        }).select("-password").lean();
+
+        res.status(200).json({
+            success: true,
+            users
+        })
+    } catch (error: any) {
+        return next(new ErrorHandler(error.message, 400));
+    }
+})
+
+// Get User By Id
+export const fetchUserById = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { id } = req.params;
+
+        const user = await User.findById(id).select("-password").lean();
+
+        if (!user) {
+            return next(new ErrorHandler("User not found", 400));
+        }
+
+        res.status(200).json({
+            success: true,
+            user
+        })
+    } catch (error: any) {
+        return next(new ErrorHandler(error.message, 400));
+    }
+})
+
+// Delete User
+export const deleteUser = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { id } = req.params;
+
+        const user = await User.findById(id);
+
+        if (!user) {
+            return next(new ErrorHandler("User not found", 400));
+        }
+
+        await user.deleteOne();
+
+        res.status(200).json({
+            success: true,
+            message: "User deleted successfully"
+        })
+    } catch (error: any) {
+        return next(new ErrorHandler(error.message, 400));
+    }
+})
+
+
