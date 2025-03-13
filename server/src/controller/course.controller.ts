@@ -6,6 +6,7 @@ import { ICourse, ICreateCourseRequestBody, IThumbnail } from "../interfaces/cou
 import CatchAsyncErrors from "../middleware/catchAsyncErrors"
 import ErrorHandler from "../utils/ErrorHandler";
 import Course from "../models/course.model";
+import redis from "../utils/redis";
 
 // Upload Course
 export const createCourse = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
@@ -83,19 +84,70 @@ export const updateCourse = CatchAsyncErrors(async (req: Request, res: Response,
 // Get Single Course - With Purchased Course
 export const getSingleCourse = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
     try {
+        // Check if course is cached
+        const isCached = await redis.get(req.params.id);
 
-        // Get course id from params
-        const course = await Course.findById(req.params.id).select("-courseData.videoUrl -courseData.suggestion -courseData.questions -courseData.links");
+        if (isCached) {
+            const cachedCourse = isCached as unknown as ICourse;
 
-        if (!course) {
-            return next(new ErrorHandler("Course not found", 404));
+            return res.status(200).json({
+                success: true,
+                course: cachedCourse
+            })
+
+        } else {
+
+            // Get course id from params
+            const course = await Course.findById(req.params.id).select("-courseData.videoUrl -courseData.suggestion -courseData.questions -courseData.links");
+
+            if (!course) {
+                return next(new ErrorHandler("Course not found", 404));
+            }
+
+            // Cache course
+            await redis.set(req.params.id, JSON.stringify(course));
+
+            // Return success response
+            res.status(200).json({
+                success: true,
+                course
+            })
+
         }
+    } catch (error: any) {
+        return next(new ErrorHandler(error.message, 500));
+    }
+})
 
-        // Return success response
-        res.status(200).json({
-            success: true,
-            course
-        })
+// Get All Courses with Purchased Course
+export const getAllCourses = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+
+        // Check if courses are cached
+        const isCached = await redis.get("courses");
+
+        if (isCached) {
+            const cachedCourses = isCached as unknown as ICourse[];
+
+            return res.status(200).json({
+                success: true,
+                courses: cachedCourses
+            })
+            
+        } else {
+
+            // Get all courses
+            const courses = await Course.find().select("-courseData.videoUrl -courseData.suggestion -courseData.questions -courseData.links");
+
+            // Cache courses
+            await redis.set("courses", JSON.stringify(courses));
+
+            // Return success response
+            res.status(200).json({
+                success: true,
+                courses
+            })
+        }
     } catch (error: any) {
         return next(new ErrorHandler(error.message, 500));
     }
