@@ -21,12 +21,17 @@ export interface ILink extends Document {
     url: string;
 }
 
+// Thumbnail
+export interface IThumbnail extends Document {
+    public_id: string;
+    url: string;
+}
+
 // Course Data
 export interface ICourseData extends Document {
     title: string;
     description: string;
     videoUrl: string;
-    videoThumbnail: string;
     videoSection: string;
     videoLength: number;
     videoPlayer: string;
@@ -41,7 +46,7 @@ export interface ICourse extends Document {
     description: string;
     price: number;
     estimatedPrice?: number;
-    thumbnail: object;
+    thumbnail: IThumbnail;
     tags: string;
     level: string;
     demoUrl: string;
@@ -52,3 +57,21 @@ export interface ICourse extends Document {
     ratings: number;
     purchased: number;
 }
+
+
+// Request Body
+export interface ICreateCourseRequestBody {
+    name: string;
+    description: string;
+    price: number;
+    estimatedPrice?: number;
+    thumbnail: string;
+    tags: string;
+    level: string;
+    demoUrl: string;
+    benefits: { title: string }[];
+    prerequisites: { title: string }[];
+    courseData: ICourseData[];
+    ratings: number;
+    purchased: number;
+}   
