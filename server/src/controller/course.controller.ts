@@ -79,3 +79,24 @@ export const updateCourse = CatchAsyncErrors(async (req: Request, res: Response,
         return next(new ErrorHandler(error.message, 500));
     }
 })
+
+// Get Single Course - With Purchased Course
+export const getSingleCourse = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+
+        // Get course id from params
+        const course = await Course.findById(req.params.id).select("-courseData.videoUrl -courseData.suggestion -courseData.questions -courseData.links");
+
+        if (!course) {
+            return next(new ErrorHandler("Course not found", 404));
+        }
+
+        // Return success response
+        res.status(200).json({
+            success: true,
+            course
+        })
+    } catch (error: any) {
+        return next(new ErrorHandler(error.message, 500));
+    }
+})
