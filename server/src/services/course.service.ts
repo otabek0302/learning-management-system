@@ -29,8 +29,6 @@ export const updateCourseThumbnail = async (course: ICourse, thumbnail: string) 
     const uploadResponse = await cloudinary.v2.uploader.upload(thumbnail, { 
         folder: "courses", 
     });
-    console.log(uploadResponse);
-    
 
     return uploadResponse;
 }

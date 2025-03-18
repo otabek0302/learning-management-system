@@ -7,6 +7,7 @@ import CatchAsyncErrors from "../middleware/catchAsyncErrors"
 import ErrorHandler from "../utils/ErrorHandler";
 import Course from "../models/course.model";
 import redis from "../utils/redis";
+import CourseModel from "../models/course.model";
 
 // Upload Course
 export const createCourse = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
@@ -43,7 +44,6 @@ export const createCourse = CatchAsyncErrors(async (req: Request, res: Response,
         return next(new ErrorHandler(error.message, 500));
     }
 })
-
 
 // Update Course
 export const updateCourse = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
@@ -133,7 +133,6 @@ export const getAllCourses = CatchAsyncErrors(async (req: Request, res: Response
                 success: true,
                 courses: cachedCourses
             })
-            
         } else {
 
             // Get all courses
@@ -148,6 +147,37 @@ export const getAllCourses = CatchAsyncErrors(async (req: Request, res: Response
                 courses
             })
         }
+    } catch (error: any) {
+        return next(new ErrorHandler(error.message, 500));
+    }
+})
+
+// Get course content - only for subscribed users
+export const getCourseByUser = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        // Get courses of user
+        const userCourseList = req.user?.courses;
+        const courseId = req.params.id;
+
+        // Check if user has purchased the course
+        const courseExists = userCourseList?.find((course: any) => course._id.toString() === courseId);
+
+        // If course does not exist
+        if (!courseExists) {
+            return next(new ErrorHandler("You have not purchased this course", 400));
+        }
+
+        // Get course details
+        const course = await CourseModel.findById(courseId)
+
+        // Get course content
+        const content = course?.courseData;
+        
+        res.status(200).json({
+            success: true,
+            content
+        })
+
     } catch (error: any) {
         return next(new ErrorHandler(error.message, 500));
     }
