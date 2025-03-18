@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 
 import { updateCourseThumbnail, uploadCourseThumbnail, validateCourseData } from "../services/course.service";
-import { ICourse, ICreateCourseRequestBody, IThumbnail } from "../interfaces/course.interface";
+import { IAddCommentRequestBody, IComment, ICourse, ICreateCourseRequestBody, IThumbnail } from "../interfaces/course.interface";
 
 import CatchAsyncErrors from "../middleware/catchAsyncErrors"
 import ErrorHandler from "../utils/ErrorHandler";
@@ -178,6 +178,59 @@ export const getCourseByUser = CatchAsyncErrors(async (req: Request, res: Respon
             content
         })
 
+    } catch (error: any) {
+        return next(new ErrorHandler(error.message, 500));
+    }
+})
+
+// Add Comment in Course 
+export const addComment = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        // Get course id, content id and question from body
+        const { comment, courseId, contentId }: IAddCommentRequestBody = req.body;
+
+        // Check if course exists
+        const course = await CourseModel.findById(courseId);
+
+        // Check if course exists
+        if (!course) {
+            return next(new ErrorHandler("Course not found", 400));
+        }
+
+        // Check if content exists
+        const content = course?.courseData.find((item: any) => item._id.equals(contentId));
+
+        // Check if content exists
+        if (!content) {
+            return next(new ErrorHandler("Content not found", 400));
+        }
+
+        // Check if comment already exists
+        const commentExists = content?.comments.find((item: any) => item.comment === comment);
+
+        // If comment already exists
+        if (commentExists) {
+            return next(new ErrorHandler("Comment already exists", 400));
+        }
+        // Create a new comment object
+        const newComment = {
+            user: req.user,
+            comment: comment,
+            commentReplies: []
+        } as IComment;
+
+        // Add question to content
+        content?.comments.push(newComment);
+
+        // Save course
+        await course.save();
+
+        // Return success response
+        res.status(200).json({
+            success: true,
+            message: "Comment added successfully"
+        })
+        
     } catch (error: any) {
         return next(new ErrorHandler(error.message, 500));
     }

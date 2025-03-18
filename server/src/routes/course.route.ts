@@ -1,5 +1,5 @@
 import express from "express";
-import { createCourse, getAllCourses, getCourseByUser, getSingleCourse, updateCourse } from "../controller/course.controller";
+import { createCourse, getAllCourses, getCourseByUser, getSingleCourse, updateCourse, addComment } from "../controller/course.controller";
 import { isAuthenticated, authorizeRoles } from "../middleware/auth";
 
 const router = express.Router();
@@ -18,5 +18,8 @@ router.get("/get-all-courses", getAllCourses);
 
 // Get Course Content
 router.get("/get-course-content/:id", isAuthenticated, getCourseByUser);
+
+// Add Comment in Course
+router.put("/add-comment", isAuthenticated, addComment);
 
 export default router;

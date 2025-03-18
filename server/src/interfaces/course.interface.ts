@@ -1,11 +1,30 @@
 import { Document } from "mongoose";
+import { IUser } from "./user.interface";
+
+
+// Course
+export interface ICourse extends Document {
+    name: string;
+    description: string;
+    price: number;
+    estimatedPrice?: number;
+    thumbnail: IThumbnail;
+    tags: string;
+    level: string;
+    demoUrl: string;
+    benefits: { title: string }[];
+    prerequisites: { title: string }[];
+    reviews: IReview[];
+    courseData: ICourseData[];
+    ratings: number;
+    purchased: number;
+}
 
 // Comments
 export interface IComment extends Document {
-    user: string;
+    user: IUser;
     comment: string;
-    createdAt: Date;
-    commentReplies: IComment[];
+    commentReplies: [];
 }
 
 // Reviews
@@ -37,27 +56,8 @@ export interface ICourseData extends Document {
     videoPlayer: string;
     links: ILink[];
     suggestion: string;
-    questions: IComment[];
+    comments: IComment[];
 }
-
-// Course
-export interface ICourse extends Document {
-    name: string;
-    description: string;
-    price: number;
-    estimatedPrice?: number;
-    thumbnail: IThumbnail;
-    tags: string;
-    level: string;
-    demoUrl: string;
-    benefits: { title: string }[];
-    prerequisites: { title: string }[];
-    reviews: IReview[];
-    courseData: ICourseData[];
-    ratings: number;
-    purchased: number;
-}
-
 
 // Request Body
 export interface ICreateCourseRequestBody {
@@ -75,3 +75,10 @@ export interface ICreateCourseRequestBody {
     ratings: number;
     purchased: number;
 }   
+
+// Add Comment Request Body
+export interface IAddCommentRequestBody {
+    comment: string;
+    courseId: string;
+    contentId: string;
+}
