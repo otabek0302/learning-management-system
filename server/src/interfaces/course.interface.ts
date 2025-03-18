@@ -24,7 +24,7 @@ export interface ICourse extends Document {
 export interface IComment extends Document {
     user: IUser;
     comment: string;
-    commentReplies: [];
+    commentReplies: IReply[];
 }
 
 // Reviews
@@ -81,4 +81,18 @@ export interface IAddCommentRequestBody {
     comment: string;
     courseId: string;
     contentId: string;
+}
+
+// Add Reply to Comment Request Body
+export interface IAddReplyToCommentRequestBody {
+    reply: string;
+    courseId: string;
+    contentId: string;
+    commentId: string;
+}
+
+// Reply
+export interface IReply extends Document {
+    user: IUser;
+    reply: string;
 }

@@ -1,8 +1,9 @@
 import { Response, NextFunction } from "express";
-import { ICourse, IThumbnail } from "../interfaces/course.interface";
+import { ICourse } from "../interfaces/course.interface";
 
 import cloudinary from "cloudinary";
 import ErrorHandler from "../utils/ErrorHandler";
+import sendMail from "../utils/sendMail";
 
 // Validate Course Data
 export const validateCourseData = async (data: ICourse, res: Response, next: NextFunction) => {
@@ -15,9 +16,9 @@ export const validateCourseData = async (data: ICourse, res: Response, next: Nex
 
 // Upload Course Thumbnail
 export const uploadCourseThumbnail = async (courseThumbnail: string) => {
-    const uploadResponse = await cloudinary.v2.uploader.upload(courseThumbnail, { 
-        folder: "courses", 
-        crop: "fill" 
+    const uploadResponse = await cloudinary.v2.uploader.upload(courseThumbnail, {
+        folder: "courses",
+        crop: "fill"
     });
     return uploadResponse;
 }
@@ -26,9 +27,26 @@ export const uploadCourseThumbnail = async (courseThumbnail: string) => {
 export const updateCourseThumbnail = async (course: ICourse, thumbnail: string) => {
     await cloudinary.v2.uploader.destroy(course.thumbnail.public_id);
 
-    const uploadResponse = await cloudinary.v2.uploader.upload(thumbnail, { 
-        folder: "courses", 
+    const uploadResponse = await cloudinary.v2.uploader.upload(thumbnail, {
+        folder: "courses",
     });
 
     return uploadResponse;
+}
+
+// Send Reply Notification
+export const sendReplyNotification = async (data: any, email: string) => {
+    try {
+        if (email) {
+            sendMail({
+                email,
+                subject: "Reply Notification",
+                template: "reply-comment-notification.ejs",
+                data
+            })
+        }
+    } catch (error: any) {
+        return new ErrorHandler(error.message, 500);
+    }
+
 }

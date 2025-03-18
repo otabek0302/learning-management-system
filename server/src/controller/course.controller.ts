@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 
-import { updateCourseThumbnail, uploadCourseThumbnail, validateCourseData } from "../services/course.service";
-import { IAddCommentRequestBody, IComment, ICourse, ICreateCourseRequestBody, IThumbnail } from "../interfaces/course.interface";
+import { sendReplyNotification, updateCourseThumbnail, uploadCourseThumbnail, validateCourseData } from "../services/course.service";
+import { IAddCommentRequestBody, IAddReplyToCommentRequestBody, IComment, ICourse, ICreateCourseRequestBody, IReply, IThumbnail } from "../interfaces/course.interface";
 
 import CatchAsyncErrors from "../middleware/catchAsyncErrors"
 import ErrorHandler from "../utils/ErrorHandler";
@@ -216,7 +216,7 @@ export const addComment = CatchAsyncErrors(async (req: Request, res: Response, n
         const newComment = {
             user: req.user,
             comment: comment,
-            commentReplies: []
+            commentReplies: [] as IReply[]
         } as IComment;
 
         // Add question to content
@@ -229,6 +229,80 @@ export const addComment = CatchAsyncErrors(async (req: Request, res: Response, n
         res.status(200).json({
             success: true,
             message: "Comment added successfully"
+        })
+        
+    } catch (error: any) {
+        return next(new ErrorHandler(error.message, 500));
+    }
+})
+
+// Add Reply to Comment in Course
+export const addReplyToComment = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        // Get course id, content id and comment id from body
+        const { reply, courseId, contentId, commentId }: IAddReplyToCommentRequestBody = req.body;
+
+        // Check if course exists
+        const course = await CourseModel.findById(courseId);
+
+        // Check if course exists
+        if (!course) {
+            return next(new ErrorHandler("Course not found", 400));
+        }
+
+        // Check if content exists
+        const content = course?.courseData.find((item: any) => item._id.equals(contentId));
+
+        // Check if content exists
+        if (!content) {
+            return next(new ErrorHandler("Content not found", 400));
+        }
+
+        // Check if comment exists
+        const comment = content?.comments.find((item: any) => item._id.equals(commentId));
+
+        // Check if comment exists
+        if (!comment) {
+            return next(new ErrorHandler("Comment not found", 400));
+        }
+
+        // Create a new reply object
+        const newReply = {
+            user: req.user,
+            reply: reply
+        } as IReply;
+        
+        // Add reply to comment
+        comment.commentReplies.push(newReply);
+
+        // Save course
+        await course.save();
+
+        // If user is not the commenter, send notification
+        console.log(req.user?._id, comment.user?._id);
+        if (req.user?._id !== comment.user?._id) {
+            // Send notification
+            // await sendNotification({
+            //     user: comment.user,
+            //     title: "New Reply",
+            //     message: `${req.user?.name} replied to your comment`
+            // })
+        }else {
+            // Return success response
+            const data = {
+                name: comment.user?.name,
+                title: content?.title,
+                url: `${process.env.FRONTEND_URL}/course/${courseId}/content/${contentId}?commentId=${commentId}`
+            }
+
+            // Send reply notification
+            await sendReplyNotification(data, comment.user?.email);
+        }
+
+        // Return success response
+        res.status(200).json({
+            success: true,
+            message: "Reply added successfully"
         })
         
     } catch (error: any) {
