@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 
 import { sendReplyNotification, updateCourseThumbnail, uploadCourseThumbnail, validateCourseData } from "../services/course.service";
-import { IAddCommentRequestBody, IAddReplyToCommentRequestBody, IAddReviewRequestBody, IComment, ICourse, ICreateCourseRequestBody, IReply, IReview, IThumbnail } from "../interfaces/course.interface";
+import { IAddCommentRequestBody, IAddReplyToCommentRequestBody, IAddReviewRequestBody, IComment, ICourse, ICreateCourseRequestBody, IReply, IReplyToReviewRequestBody, IReview, IThumbnail } from "../interfaces/course.interface";
 
 import CatchAsyncErrors from "../middleware/catchAsyncErrors"
 import ErrorHandler from "../utils/ErrorHandler";
@@ -373,6 +373,50 @@ export const addReview = CatchAsyncErrors(async (req: Request, res: Response, ne
             message: "Review added successfully"
         })
 
+    } catch (error: any) {
+        return next(new ErrorHandler(error.message, 500));
+    }
+})
+
+// Reply to Review in Course
+export const replyToReview = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        // Get reply, review id and course id from body
+        const { comment, reviewId, courseId }: IReplyToReviewRequestBody = req.body;
+
+        // Check if course exists
+        const course = await CourseModel.findById(courseId);
+
+        // Check if course exists
+        if (!course) {
+            return next(new ErrorHandler("Course not found", 400));
+        }
+
+        // Check if review exists
+        const review = course.reviews.find((item: any) => item._id.equals(reviewId));
+
+        // Check if review exists
+        if (!review) {
+            return next(new ErrorHandler("Review not found", 400));
+        }
+
+        // Create a new reply object
+        const replyData = {
+            user: req.user,
+            comment: comment
+        } as any;
+
+        // Add reply to review
+        review.commentReplies.push(replyData);
+
+        // Save course
+        await course.save();
+
+        // Return success response
+        res.status(200).json({
+            success: true,
+            message: "Reply added successfully"
+        })
     } catch (error: any) {
         return next(new ErrorHandler(error.message, 500));
     }

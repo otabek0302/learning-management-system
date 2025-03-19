@@ -9,7 +9,8 @@ const reviewSchema = new Schema<IReview>({
         default: 0,
     },
     comment: String,
-});
+    commentReplies: [Object],
+}, { timestamps: true });
 
 const linkSchema = new Schema<ILink>({
     title: String,

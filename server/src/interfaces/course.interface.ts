@@ -32,6 +32,7 @@ export interface IReview extends Document {
     user: IUser;
     rating: number;
     comment: string;
+    commentReplies: IReply[];
 }
 
 // Links
@@ -101,4 +102,11 @@ export interface IReply extends Document {
 export interface IAddReviewRequestBody {
     comment: string;
     rating: number;
+}
+
+// Reply to Review Request Body
+export interface IReplyToReviewRequestBody {
+    comment: string;
+    reviewId: string;
+    courseId: string;
 }
