@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 
 import { sendReplyNotification, updateCourseThumbnail, uploadCourseThumbnail, validateCourseData } from "../services/course.service";
-import { IAddCommentRequestBody, IAddReplyToCommentRequestBody, IComment, ICourse, ICreateCourseRequestBody, IReply, IThumbnail } from "../interfaces/course.interface";
+import { IAddCommentRequestBody, IAddReplyToCommentRequestBody, IAddReviewRequestBody, IComment, ICourse, ICreateCourseRequestBody, IReply, IReview, IThumbnail } from "../interfaces/course.interface";
 
 import CatchAsyncErrors from "../middleware/catchAsyncErrors"
 import ErrorHandler from "../utils/ErrorHandler";
@@ -172,7 +172,7 @@ export const getCourseByUser = CatchAsyncErrors(async (req: Request, res: Respon
 
         // Get course content
         const content = course?.courseData;
-        
+
         res.status(200).json({
             success: true,
             content
@@ -230,7 +230,7 @@ export const addComment = CatchAsyncErrors(async (req: Request, res: Response, n
             success: true,
             message: "Comment added successfully"
         })
-        
+
     } catch (error: any) {
         return next(new ErrorHandler(error.message, 500));
     }
@@ -271,7 +271,7 @@ export const addReplyToComment = CatchAsyncErrors(async (req: Request, res: Resp
             user: req.user,
             reply: reply
         } as IReply;
-        
+
         // Add reply to comment
         comment.commentReplies.push(newReply);
 
@@ -287,7 +287,7 @@ export const addReplyToComment = CatchAsyncErrors(async (req: Request, res: Resp
             //     title: "New Reply",
             //     message: `${req.user?.name} replied to your comment`
             // })
-        }else {
+        } else {
             // Return success response
             const data = {
                 name: comment.user?.name,
@@ -304,7 +304,75 @@ export const addReplyToComment = CatchAsyncErrors(async (req: Request, res: Resp
             success: true,
             message: "Reply added successfully"
         })
-        
+
+    } catch (error: any) {
+        return next(new ErrorHandler(error.message, 500));
+    }
+})
+
+// Add Review in Course
+export const addReview = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        // Get review, rating and user id from body
+        const { comment, rating }: IAddReviewRequestBody = req.body;
+
+        // Get user course list
+        const userCourseList = req.user?.courses;
+
+        // Get course id from params
+        const courseId = req.params.id;
+
+        // Check if user has purchased the course
+        const courseExists = userCourseList?.some((course: any) => course._id.toString() === courseId);
+
+        // If course does not exist
+        if (!courseExists) {
+            return next(new ErrorHandler("You have not purchased this course", 400));
+        }
+
+        // Check if course exists
+        const course = await CourseModel.findById(courseId);
+
+        // Check if course exists
+        if (!course) {
+            return next(new ErrorHandler("Course not found", 400));
+        }
+
+        // Create a new review object
+        const reviewData = {
+            user: req.user,
+            comment,
+            rating: rating
+        } as IReview;
+
+        // Add review to course
+        course.reviews.push(reviewData);
+
+        // Calculate total rating
+        const totalRating = course.reviews.reduce((acc: number, curr: IReview) => acc + curr.rating, 0);
+
+        // Calculate average rating
+        const averageRating = totalRating / (course.reviews?.length || 0);
+
+        // Update course rating
+        course.ratings = parseFloat(averageRating.toFixed(1));
+
+        // Save course
+        await course.save();
+
+        // Send review notification
+        // await sendNotification({
+        //     user: req.user,
+        //     title: "New Review",
+        //     message: `${req.user?.name} reviewed your course`
+        // })
+
+        // Return success response
+        res.status(200).json({
+            success: true,
+            message: "Review added successfully"
+        })
+
     } catch (error: any) {
         return next(new ErrorHandler(error.message, 500));
     }

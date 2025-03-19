@@ -29,7 +29,7 @@ export interface IComment extends Document {
 
 // Reviews
 export interface IReview extends Document {
-    user: string;
+    user: IUser;
     rating: number;
     comment: string;
 }
@@ -95,4 +95,10 @@ export interface IAddReplyToCommentRequestBody {
 export interface IReply extends Document {
     user: IUser;
     reply: string;
+}
+
+// Add Review Request Body
+export interface IAddReviewRequestBody {
+    comment: string;
+    rating: number;
 }
