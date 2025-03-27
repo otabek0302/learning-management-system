@@ -327,6 +327,7 @@ export const forgotPassword = CatchAsyncErrors(async (req: Request, res: Respons
             return next(new ErrorHandler("User not found", 400));
         }
 
+        
         const forgotPasswordToken = createForgotPasswordToken(user);
         const forgotPasswordCode = forgotPasswordToken.forgotPasswordCode;
         const data = { user: { name: user.name }, forgotPasswordCode }

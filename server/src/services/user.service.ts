@@ -53,7 +53,7 @@ export const verifyActivationToken = async (activation_token: string, activation
 }
 
 // Create forgot password token
-export const createForgotPasswordToken = (user: IRegister): IForgotPasswordToken => {
+export const createForgotPasswordToken = (user: { name: string; email: string; password: string }): IForgotPasswordToken => {
     const forgotPasswordCode = Math.floor(1000 + Math.random() * 9000).toString();
     const token = jwt.sign({ user, forgotPasswordCode }, FORGOT_PASSWORD_TOKEN_SECRET as Secret, {
         expiresIn: "5m",

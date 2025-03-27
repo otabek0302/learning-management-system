@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 
-import { sendReplyNotification, updateCourseThumbnail, uploadCourseThumbnail, validateCourseData } from "../services/course.service";
+import { sendNotificationMail, updateCourseThumbnail, uploadCourseThumbnail, validateCourseData } from "../services/course.service";
 import { IAddCommentRequestBody, IAddReplyToCommentRequestBody, IAddReviewRequestBody, IComment, ICourse, ICreateCourseRequestBody, IReply, IReplyToReviewRequestBody, IReview, IThumbnail } from "../interfaces/course.interface";
 
 import CatchAsyncErrors from "../middleware/catchAsyncErrors"
@@ -8,6 +8,7 @@ import ErrorHandler from "../utils/ErrorHandler";
 import Course from "../models/course.model";
 import redis from "../utils/redis";
 import CourseModel from "../models/course.model";
+import { createNotification } from "../services/notification.service";
 
 // Upload Course
 export const createCourse = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
@@ -34,6 +35,13 @@ export const createCourse = CatchAsyncErrors(async (req: Request, res: Response,
         if (!course) {
             return next(new ErrorHandler("Course not created", 400));
         }
+
+        // Create Notification
+        await createNotification({
+            user: req.user?._id || "",
+            title: "New Course",
+            message: `You have a new course ${course.name}`
+        });
 
         // Return success response
         res.status(201).json({
@@ -69,6 +77,13 @@ export const updateCourse = CatchAsyncErrors(async (req: Request, res: Response,
 
         // Update course
         const course = await Course.findByIdAndUpdate(req.params.id, { $set: courseData }, { new: true });
+
+        // Create Notification
+        await createNotification({
+            user: req.user?._id || "",
+            title: "Course Updated",
+            message: `You have updated your course ${course?.name}`
+        });
 
         // Return success response
         res.status(200).json({
@@ -281,11 +296,11 @@ export const addReplyToComment = CatchAsyncErrors(async (req: Request, res: Resp
         // If user is not the commenter, send notification
         if (req.user?._id !== comment.user?._id) {
             // Send notification
-            // await sendNotification({
-            //     user: comment.user,
-            //     title: "New Reply",
-            //     message: `${req.user?.name} replied to your comment`
-            // })
+            await createNotification({
+                user: comment.user?._id?.toString() || "",
+                title: "New Reply",
+                message: `${req.user?.name} replied to your comment`
+            });
         } else {
             // Return success response
             const data = {
@@ -295,7 +310,7 @@ export const addReplyToComment = CatchAsyncErrors(async (req: Request, res: Resp
             }
 
             // Send reply notification
-            await sendReplyNotification(data, comment.user?.email);
+            await sendNotificationMail(data, comment.user?.email);
         }
 
         // Return success response
@@ -360,11 +375,11 @@ export const addReview = CatchAsyncErrors(async (req: Request, res: Response, ne
         await course.save();
 
         // Send review notification
-        // await sendNotification({
-        //     user: req.user,
-        //     title: "New Review",
-        //     message: `${req.user?.name} reviewed your course`
-        // })
+        await createNotification({
+            user: req.user?._id || "",
+            title: "New Review",
+            message: `${req.user?.name} reviewed your course`
+        })
 
         // Return success response
         res.status(200).json({
@@ -414,11 +429,11 @@ export const replyToReview = CatchAsyncErrors(async (req: Request, res: Response
         // Send reply notification
         if (req.user?._id !== review.user?._id) {
             // Send notification
-            // await sendNotification({
-            //     user: review.user,
-            //     title: "New Reply",
-            //     message: `${req.user?.name} replied to your review`
-            // })
+            await createNotification({
+                user: review.user?._id?.toString() || "",
+                title: "New Reply",
+                message: `${req.user?.name} replied to your review`
+            })
         } else {
             // Return success response
             const data = {
@@ -428,7 +443,7 @@ export const replyToReview = CatchAsyncErrors(async (req: Request, res: Response
             }
 
             // Send reply notification
-            await sendReplyNotification(data, review.user?.email);
+            await sendNotificationMail(data, review.user?.email);
         }
         // Return success response
         res.status(200).json({

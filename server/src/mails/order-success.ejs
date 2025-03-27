@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Course Purchase Confirmation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333333;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background-color: #4b2994;
+            padding: 20px;
+            text-align: center;
+            color: white;
+        }
+        .content {
+            padding: 20px;
+        }
+        .course-details {
+            background-color: #f8f9fa;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+            border-left: 4px solid #4b2994;
+        }
+        .footer {
+            text-align: center;
+            padding: 20px;
+            font-size: 12px;
+            color: #666;
+            border-top: 1px solid #eee;
+        }
+        .button {
+            background-color: #4b2994;
+            color: white;
+            padding: 12px 25px;
+            text-decoration: none;
+            border-radius: 5px;
+            display: inline-block;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Course Purchase Successful!</h1>
+        </div>
+        
+        <div class="content">
+            <p>Thank you for purchasing a course from us!</p>
+            
+            <div class="course-details">
+                <h3>Course Details:</h3>
+                <p><strong>Course ID:</strong> <%= _id %></p>
+                <p><strong>Course Name:</strong> <%= name %></p>
+                <p><strong>Purchase Price:</strong> $<%= price %></p>
+                <p><strong>Purchase Date:</strong> <%= date %></p>
+            </div>
+            
+            <div style="text-align: center;">
+                <a href="/courses/<%= _id %>" class="button">Start Learning</a>
+            </div>
+            
+            <p>We're excited to have you start your learning journey with us! You can access your course immediately by clicking the button above or visiting your dashboard.</p>
+            
+            <p>If you have any questions or need assistance, please don't hesitate to contact our support team.</p>
+            
+            <p>Happy Learning!<br>Your E-Learning Team</p>
+        </div>
+        
+        <div class="footer">
+            <p>© <%= new Date().getFullYear() %> Your E-Learning Platform. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

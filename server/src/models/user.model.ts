@@ -20,7 +20,7 @@ export interface IUser extends Document {
   };
   role: string;
   isVerified: boolean;
-  courses: Array<{ courseId: mongoose.Schema.Types.ObjectId }>;
+  courses: Array<Object>;
   comparePassword: (password: string) => Promise<boolean>;
   verifyEmailToken: string;
   verifyEmailTokenExpiry: Date;

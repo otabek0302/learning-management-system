@@ -1,5 +1,4 @@
-import { Document } from "mongoose";
-import { ICourse } from "./course.interface";
+import { Document, Schema } from "mongoose";
 
 // User Interface
 export interface IUser extends Document {
@@ -11,7 +10,7 @@ export interface IUser extends Document {
         url: string;
     };
     role: string;
-    courses: ICourse[];
+    courses: { _id: Schema.Types.ObjectId }[];
 }
 
 // Register Interface

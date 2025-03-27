@@ -4,6 +4,7 @@ import { IUser } from "./user.interface";
 
 // Course
 export interface ICourse extends Document {
+    _id: string;
     name: string;
     description: string;
     price: number;

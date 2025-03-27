@@ -34,13 +34,13 @@ export const updateCourseThumbnail = async (course: ICourse, thumbnail: string) 
     return uploadResponse;
 }
 
-// Send Reply Notification
-export const sendReplyNotification = async (data: any, email: string) => {
+// Send Notification Mail
+export const sendNotificationMail = async (data: any, email: string) => {
     try {
         if (email) {
             sendMail({
                 email,
-                subject: "Reply Notification",
+                subject: "Reply Comment Notification",
                 template: "reply-comment-notification.ejs",
                 data
             })
@@ -48,5 +48,4 @@ export const sendReplyNotification = async (data: any, email: string) => {
     } catch (error: any) {
         return new ErrorHandler(error.message, 500);
     }
-
 }

@@ -14,11 +14,7 @@ const notificationSchema = new Schema<INotification>({
     status: {
         type: String,
         required: true,
-        enum: ["read", "unread"]
-    },
-    userId: {
-        type: String,
-        required: true
+        default: "unread",
     }
 }, { timestamps: true });
 
