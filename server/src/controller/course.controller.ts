@@ -279,7 +279,6 @@ export const addReplyToComment = CatchAsyncErrors(async (req: Request, res: Resp
         await course.save();
 
         // If user is not the commenter, send notification
-        console.log(req.user?._id, comment.user?._id);
         if (req.user?._id !== comment.user?._id) {
             // Send notification
             // await sendNotification({
@@ -412,6 +411,25 @@ export const replyToReview = CatchAsyncErrors(async (req: Request, res: Response
         // Save course
         await course.save();
 
+        // Send reply notification
+        if (req.user?._id !== review.user?._id) {
+            // Send notification
+            // await sendNotification({
+            //     user: review.user,
+            //     title: "New Reply",
+            //     message: `${req.user?.name} replied to your review`
+            // })
+        } else {
+            // Return success response
+            const data = {
+                name: review.user?.name,
+                title: course?.name,
+                url: `${process.env.FRONTEND_URL}/course/${courseId}?reviewId=${reviewId}`
+            }
+
+            // Send reply notification
+            await sendReplyNotification(data, review.user?.email);
+        }
         // Return success response
         res.status(200).json({
             success: true,
