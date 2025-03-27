@@ -2,13 +2,13 @@ import { Request, Response, NextFunction } from "express";
 
 import { sendNotificationMail, updateCourseThumbnail, uploadCourseThumbnail, validateCourseData } from "../services/course.service";
 import { IAddCommentRequestBody, IAddReplyToCommentRequestBody, IAddReviewRequestBody, IComment, ICourse, ICreateCourseRequestBody, IReply, IReplyToReviewRequestBody, IReview, IThumbnail } from "../interfaces/course.interface";
+import { createNotification } from "../services/notification.service";
 
 import CatchAsyncErrors from "../middleware/catchAsyncErrors"
 import ErrorHandler from "../utils/ErrorHandler";
 import Course from "../models/course.model";
 import redis from "../utils/redis";
 import CourseModel from "../models/course.model";
-import { createNotification } from "../services/notification.service";
 
 // Upload Course
 export const createCourse = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {

@@ -13,6 +13,7 @@ import ErrorMiddleware from "./middleware/error";
 import UserRouter from "./routes/user.route";
 import CourseRouter from "./routes/course.route";
 import OrderRouter from "./routes/order.route";
+import NotificationRouter from "./routes/notification.route";   
 
 // Initialize express
 const app = express();
@@ -39,6 +40,7 @@ app.use(cors({
 app.use("/api/v1", UserRouter)
 app.use("/api/v1", CourseRouter)
 app.use("/api/v1", OrderRouter)
+app.use("/api/v1", NotificationRouter)
 
 // Unknown route
 app.all("*", (req: Request, res: Response, next: NextFunction) => {

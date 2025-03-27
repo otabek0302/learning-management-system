@@ -1,6 +1,7 @@
 import sendMail from "../utils/sendMail";
 import ErrorHandler from "../utils/ErrorHandler";
 
+// Send Order Success Email
 export const sendOrderSuccessEmail = async (data: any, email: string) => {
     try {
         if (email) {

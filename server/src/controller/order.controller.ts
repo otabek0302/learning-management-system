@@ -79,7 +79,7 @@ export const createOrder = catchAsyncErrors(async (req: Request, res: Response, 
         // Send response
         res.status(201).json({
             success: true,
-            order
+            message: "Order created successfully"
         })
 
     } catch (error: any) {

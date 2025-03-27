@@ -6,6 +6,7 @@ import { ISocialAuthRequest, IUser } from "../@types/user.types";
 
 import { checkUserExist, createActivationToken, getUserById, verifyActivationToken, createForgotPasswordToken, verifyForgotPasswordToken } from "../services/user.service";
 import { ILogin, IRegister, IUpdatePassword, IUpdateUserInfo, IUpdateUserAvatar, IForgotPassword, IForgotPasswordRequest, IResetPassword } from "../interfaces/user.interface";
+import { createNotification } from "../services/notification.service";
 
 import jwt from "jsonwebtoken";
 import CatchAsyncErrors from "../middleware/catchAsyncErrors"
@@ -64,6 +65,13 @@ export const activateUser = CatchAsyncErrors(async (req: Request, res: Response,
         if (!user) {
             return next(new ErrorHandler("Invalid activation token or code", 400));
         }
+
+        // Create Notification
+        await createNotification({
+            user: user?._id || "",
+            title: "New User",
+            message: `New user ${user?.name} has been created`
+        });
 
         res.status(201).json({
             success: true,

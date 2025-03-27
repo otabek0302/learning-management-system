@@ -6,4 +6,3 @@ export interface IOrder extends Document {
     userId: string;
     paymentInfo: object;
 }
-
