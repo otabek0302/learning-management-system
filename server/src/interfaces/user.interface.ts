@@ -86,3 +86,9 @@ export interface IResetPassword {
     password: string;
     resetKey: string;
 }
+
+// Update User Role Interface
+export interface IUpdateUserRole {
+    id: string;
+    role: string;
+}

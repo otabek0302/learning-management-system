@@ -1,7 +1,7 @@
 import express from "express";
 const router = express.Router();
 
-import { activateUser, deleteUser, fetchUserById, forgotPassword, getAllUsers, getUserInfo, loginUser, logoutUser, registerUser, resetPassword, searchUsers, socialAuth, updateAccessToken, updatePassword, updateProfilePicture, updateUserInfo, verifyForgotPasswordCode } from "../controller/user.controller";
+import { activateUser, deleteUser, fetchUserById, forgotPassword, getAllUsers, getUserInfo, loginUser, logoutUser, registerUser, resetPassword, searchUsers, socialAuth, updateAccessToken, updatePassword, updateProfilePicture, updateUserInfo, updateUserRole, verifyForgotPasswordCode } from "../controller/user.controller";
 import { authorizeRoles, isAuthenticated } from "../middleware/auth";
 
 // User Routes
@@ -13,7 +13,7 @@ router.post('/activate-user', activateUser);
 // Login User
 router.post('/login-user', loginUser);
 
-// Logout User
+// Logout User -- Only for Admin
 router.get('/logout', isAuthenticated, authorizeRoles("admin"), logoutUser);
 
 // Refresh Token
@@ -45,12 +45,19 @@ router.post('/reset-password', resetPassword);
 
 
 // Admin Routes
+// Get All Users -- Only for Admin
 router.get('/admin/users', isAuthenticated, authorizeRoles("admin"), getAllUsers);
 
+// Get User by ID -- Only for Admin
 router.get('/admin/user/:id', isAuthenticated, authorizeRoles("admin"), fetchUserById);
 
+// Delete User -- Only for Admin
 router.delete('/admin/user/:id', isAuthenticated, authorizeRoles("admin"), deleteUser);
 
+// Search Users -- Only for Admin
 router.get('/admin/search-users', isAuthenticated, authorizeRoles("admin"), searchUsers);
+
+// Update User Role -- Only for Admin
+router.put('/admin/update-role', isAuthenticated, authorizeRoles("admin"), updateUserRole);
 
 export default router;

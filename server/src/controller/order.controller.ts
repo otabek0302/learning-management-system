@@ -87,17 +87,30 @@ export const createOrder = catchAsyncErrors(async (req: Request, res: Response, 
     }
 })
 
+// Admin Routes
 // Get All Orders
 export const getAllOrders = catchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
     try {
-        // Get all orders
-        const orders = await Order.find();
+        const page = parseInt(req.query.page as string) || 1;
+        const limit = 12;
+        const skip = (page - 1) * limit;
 
+        // Get all orders
+        const orders = await Order.find().sort({ createdAt: -1 }).skip(skip).limit(limit);
+
+        // Get total count for pagination
+        const totalOrders = await Order.countDocuments();
 
         // Return success response
         res.status(200).json({
             success: true,
-            orders
+            orders,
+            pagination: {
+                currentPage: page,
+                totalPages: Math.ceil(totalOrders / limit),
+                totalOrders,
+                hasMore: totalOrders > skip + orders.length
+            }
         })
     } catch (error: any) {
         return next(new ErrorHandler(error.message, 500));

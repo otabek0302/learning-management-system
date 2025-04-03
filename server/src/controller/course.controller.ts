@@ -150,8 +150,16 @@ export const getAllCourses = CatchAsyncErrors(async (req: Request, res: Response
             })
         } else {
 
+            // page, limit, skip
+            const page = parseInt(req.query.page as string) || 1;
+            const limit = parseInt(req.query.limit as string) || 10;
+            const skip = (page - 1) * limit;
+
             // Get all courses
-            const courses = await Course.find().select("-courseData.videoUrl -courseData.suggestion -courseData.questions -courseData.links");
+            const courses = await Course.find().select("-courseData.videoUrl -courseData.suggestion -courseData.questions -courseData.links").skip(skip).limit(limit);
+
+            // Get total count for pagination
+            const totalCourses = await Course.countDocuments();
 
             // Cache courses
             await redis.set("courses", JSON.stringify(courses));
@@ -159,7 +167,13 @@ export const getAllCourses = CatchAsyncErrors(async (req: Request, res: Response
             // Return success response
             res.status(200).json({
                 success: true,
-                courses
+                courses,
+                pagination: {
+                    currentPage: page,
+                    totalPages: Math.ceil(totalCourses / limit),
+                    totalCourses,
+                    hasMore: totalCourses > skip + courses.length
+                }
             })
         }
     } catch (error: any) {
@@ -449,6 +463,39 @@ export const replyToReview = CatchAsyncErrors(async (req: Request, res: Response
         res.status(200).json({
             success: true,
             message: "Reply added successfully"
+        })
+    } catch (error: any) {
+        return next(new ErrorHandler(error.message, 500));
+    }
+})
+
+// Admin Routes
+// Get All Courses
+
+export const getAllCoursesAdmin = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const page = parseInt(req.query.page as string) || 1;
+        const limit = 12;
+        const skip = (page - 1) * limit;
+
+        // Create base query excluding the requesting user and password
+        const baseQuery = Course.find().sort({ createdAt: -1 }).skip(skip).limit(limit);
+
+        // Get total count for pagination
+        const totalCourses = await Course.countDocuments();
+
+        // Execute paginated query
+        const courses = await baseQuery.skip(skip).limit(limit);
+
+        res.status(200).json({
+            success: true,
+            courses,
+            pagination: {
+                currentPage: page,
+                totalPages: Math.ceil(totalCourses / limit),
+                totalCourses,
+                hasMore: totalCourses > skip + courses.length
+            }
         })
     } catch (error: any) {
         return next(new ErrorHandler(error.message, 500));

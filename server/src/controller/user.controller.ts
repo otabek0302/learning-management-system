@@ -5,7 +5,7 @@ import { IJwtPayload } from "../@types/auth.types";
 import { ISocialAuthRequest, IUser } from "../@types/user.types";
 
 import { checkUserExist, createActivationToken, getUserById, verifyActivationToken, createForgotPasswordToken, verifyForgotPasswordToken } from "../services/user.service";
-import { ILogin, IRegister, IUpdatePassword, IUpdateUserInfo, IUpdateUserAvatar, IForgotPassword, IForgotPasswordRequest, IResetPassword } from "../interfaces/user.interface";
+import { ILogin, IRegister, IUpdatePassword, IUpdateUserInfo, IUpdateUserAvatar, IForgotPassword, IForgotPasswordRequest, IResetPassword, IUpdateUserRole } from "../interfaces/user.interface";
 import { createNotification } from "../services/notification.service";
 
 import jwt from "jsonwebtoken";
@@ -219,7 +219,7 @@ export const socialAuth = CatchAsyncErrors(async (req: Request, res: Response, n
 export const updateUserInfo = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { name, email } = req.body as IUpdateUserInfo;
-        
+
         const userId = req.user?._id;
         const user = await User.findById(userId);
 
@@ -335,7 +335,7 @@ export const forgotPassword = CatchAsyncErrors(async (req: Request, res: Respons
             return next(new ErrorHandler("User not found", 400));
         }
 
-        
+
         const forgotPasswordToken = createForgotPasswordToken(user);
         const forgotPasswordCode = forgotPasswordToken.forgotPasswordCode;
         const data = { user: { name: user.name }, forgotPasswordCode }
@@ -367,7 +367,7 @@ export const verifyForgotPasswordCode = CatchAsyncErrors(async (req: Request, re
         const { forgot_password_token, forgot_password_code } = req.body as IForgotPasswordRequest;
 
         const user = await verifyForgotPasswordToken(forgot_password_token, forgot_password_code, res, next);
-        
+
         if (!user) {
             return next(new ErrorHandler("Invalid or expired password reset token", 400));
         }
@@ -404,7 +404,7 @@ export const resetPassword = CatchAsyncErrors(async (req: Request, res: Response
 
         const userInfo = userJson as unknown as IUser;
         const user = await User.findById(userInfo._id).select("+password");
-        
+
         if (!user) {
             return next(new ErrorHandler("User not found", 400));
         }
@@ -431,18 +431,19 @@ export const resetPassword = CatchAsyncErrors(async (req: Request, res: Response
 // Get All Users
 export const getAllUsers = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
     try {
+        // Get page and limit from query params
         const page = parseInt(req.query.page as string) || 1;
         const limit = 12;
         const skip = (page - 1) * limit;
 
         // Create base query excluding the requesting user and password
-        const baseQuery = User.find({ _id: { $ne: req.user?._id } }).select("-password").lean();
+        const baseQuery = User.find({ _id: { $ne: req.user?._id } }).select("-password").lean().sort({ createdAt: -1 });
 
         // Get total count for pagination
         const totalUsers = await User.countDocuments({ _id: { $ne: req.user?._id } });
 
         // Execute paginated query
-        const users = await baseQuery.skip(skip).limit(limit).sort({ createdAt: -1 }); // Sort by newest first
+        const users = await baseQuery.skip(skip).limit(limit);
 
         res.status(200).json({
             success: true,
@@ -466,7 +467,7 @@ export const searchUsers = CatchAsyncErrors(async (req: Request, res: Response, 
         // Get search query from query params
         const { search } = req.query as { search: string };
         console.log(search);
-        
+
 
         // Search users by name or email
         const users = await User.find({
@@ -485,8 +486,10 @@ export const searchUsers = CatchAsyncErrors(async (req: Request, res: Response, 
 // Get User By Id
 export const fetchUserById = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
     try {
+        // Get user id from params
         const { id } = req.params;
 
+        // Get user by id
         const user = await User.findById(id).select("-password").lean();
 
         if (!user) {
@@ -505,8 +508,10 @@ export const fetchUserById = CatchAsyncErrors(async (req: Request, res: Response
 // Delete User
 export const deleteUser = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
     try {
+        // Get user id from params
         const { id } = req.params;
 
+        // Get user by id
         const user = await User.findById(id);
 
         if (!user) {
@@ -524,4 +529,28 @@ export const deleteUser = CatchAsyncErrors(async (req: Request, res: Response, n
     }
 })
 
+// Update User Role
+export const updateUserRole = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        // Get user id and role from body
+        const { id, role } = req.body as IUpdateUserRole;
 
+        // Get user by id
+        const user = await User.findById(id);
+
+        if (!user) {
+            return next(new ErrorHandler("User not found", 400));
+        }
+
+        // Update user role
+        user.role = role;
+        await user.save();
+
+        res.status(200).json({
+            success: true,
+            message: "User role updated successfully"
+        })
+    } catch (error: any) {
+        return next(new ErrorHandler(error.message, 400));
+    }
+})

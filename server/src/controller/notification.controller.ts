@@ -1,19 +1,33 @@
-import { Request, Response, NextFunction } from "express"; 
+import { Request, Response, NextFunction } from "express";
 
 import ErrorHandler from "../utils/ErrorHandler";
 import catchAsyncErrors from "../middleware/catchAsyncErrors";
 import Notification from "../models/notification.model";
+import cron from "node-cron";
 
 // Get All Notifications -- Only for Admin
 export const getAllNotifications = catchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
     try {
+        const page = parseInt(req.query.page as string) || 1;
+        const limit = 12;
+        const skip = (page - 1) * limit;
+
         // Get all notifications
-        const notifications = await Notification.find().sort({ createdAt: -1 });
+        const notifications = await Notification.find().sort({ createdAt: -1 }).skip(skip).limit(limit);
+
+        // Get total count for pagination
+        const totalNotifications = await Notification.countDocuments();
 
         // Return success response
         res.status(200).json({
             success: true,
-            notifications
+            notifications,
+            pagination: {
+                currentPage: page,
+                totalPages: Math.ceil(totalNotifications / limit),
+                totalNotifications,
+                hasMore: totalNotifications > skip + notifications.length
+            }
         })
     } catch (error: any) {
         return next(new ErrorHandler(error.message, 500));
@@ -53,3 +67,9 @@ export const updateNotificationStatus = catchAsyncErrors(async (req: Request, re
         return next(new ErrorHandler(error.message, 500));
     }
 })
+
+// Delete Notification -- Only for Admin
+cron.schedule('0 0 0 * * *', async () => {
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    await Notification.deleteMany({ status: "read", createdAt: { $lt: thirtyDaysAgo } });
+});
