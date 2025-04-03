@@ -13,7 +13,8 @@ import ErrorMiddleware from "./middleware/error";
 import UserRouter from "./routes/user.route";
 import CourseRouter from "./routes/course.route";
 import OrderRouter from "./routes/order.route";
-import NotificationRouter from "./routes/notification.route";   
+import NotificationRouter from "./routes/notification.route";
+import DashboardRouter from "./routes/dashboard.route";
 
 // Initialize express
 const app = express();
@@ -41,6 +42,7 @@ app.use("/api/v1", UserRouter)
 app.use("/api/v1", CourseRouter)
 app.use("/api/v1", OrderRouter)
 app.use("/api/v1", NotificationRouter)
+app.use("/api/v1", DashboardRouter)
 
 // Unknown route
 app.all("*", (req: Request, res: Response, next: NextFunction) => {

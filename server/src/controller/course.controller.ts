@@ -8,7 +8,6 @@ import CatchAsyncErrors from "../middleware/catchAsyncErrors"
 import ErrorHandler from "../utils/ErrorHandler";
 import Course from "../models/course.model";
 import redis from "../utils/redis";
-import CourseModel from "../models/course.model";
 
 // Upload Course
 export const createCourse = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
@@ -197,7 +196,7 @@ export const getCourseByUser = CatchAsyncErrors(async (req: Request, res: Respon
         }
 
         // Get course details
-        const course = await CourseModel.findById(courseId)
+        const course = await Course.findById(courseId)
 
         // Get course content
         const content = course?.courseData;
@@ -219,7 +218,7 @@ export const addComment = CatchAsyncErrors(async (req: Request, res: Response, n
         const { comment, courseId, contentId }: IAddCommentRequestBody = req.body;
 
         // Check if course exists
-        const course = await CourseModel.findById(courseId);
+        const course = await Course.findById(courseId);
 
         // Check if course exists
         if (!course) {
@@ -272,7 +271,7 @@ export const addReplyToComment = CatchAsyncErrors(async (req: Request, res: Resp
         const { reply, courseId, contentId, commentId }: IAddReplyToCommentRequestBody = req.body;
 
         // Check if course exists
-        const course = await CourseModel.findById(courseId);
+        const course = await Course.findById(courseId);
 
         // Check if course exists
         if (!course) {
@@ -359,7 +358,7 @@ export const addReview = CatchAsyncErrors(async (req: Request, res: Response, ne
         }
 
         // Check if course exists
-        const course = await CourseModel.findById(courseId);
+        const course = await Course.findById(courseId);
 
         // Check if course exists
         if (!course) {
@@ -413,7 +412,7 @@ export const replyToReview = CatchAsyncErrors(async (req: Request, res: Response
         const { comment, reviewId, courseId }: IReplyToReviewRequestBody = req.body;
 
         // Check if course exists
-        const course = await CourseModel.findById(courseId);
+        const course = await Course.findById(courseId);
 
         // Check if course exists
         if (!course) {
@@ -508,7 +507,7 @@ export const deleteCourse = CatchAsyncErrors(async (req: Request, res: Response,
         const { id } = req.body as IDeleteCourseRequestBody;
 
         // Check if course exists
-        const course = await CourseModel.findById(id);
+        const course = await Course.findById(id);
 
         // Check if course exists
         if (!course) {
