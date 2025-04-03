@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 
 import { sendNotificationMail, updateCourseThumbnail, uploadCourseThumbnail, validateCourseData } from "../services/course.service";
-import { IAddCommentRequestBody, IAddReplyToCommentRequestBody, IAddReviewRequestBody, IComment, ICourse, ICreateCourseRequestBody, IReply, IReplyToReviewRequestBody, IReview, IThumbnail } from "../interfaces/course.interface";
+import { IAddCommentRequestBody, IAddReplyToCommentRequestBody, IAddReviewRequestBody, IComment, ICourse, ICreateCourseRequestBody, IDeleteCourseRequestBody, IReply, IReplyToReviewRequestBody, IReview, IThumbnail } from "../interfaces/course.interface";
 import { createNotification } from "../services/notification.service";
 
 import CatchAsyncErrors from "../middleware/catchAsyncErrors"
@@ -496,6 +496,35 @@ export const getAllCoursesAdmin = CatchAsyncErrors(async (req: Request, res: Res
                 totalCourses,
                 hasMore: totalCourses > skip + courses.length
             }
+        })
+    } catch (error: any) {
+        return next(new ErrorHandler(error.message, 500));
+    }
+})
+
+export const deleteCourse = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        // Get course id from body
+        const { id } = req.body as IDeleteCourseRequestBody;
+
+        // Check if course exists
+        const course = await CourseModel.findById(id);
+
+        // Check if course exists
+        if (!course) {
+            return next(new ErrorHandler("Course not found", 400));
+        }
+
+        // Delete course
+        await course.deleteOne();
+
+        // Delete course from redis
+        await redis.del(id);
+
+        // Return success response
+        res.status(200).json({
+            success: true,
+            message: "Course deleted successfully"
         })
     } catch (error: any) {
         return next(new ErrorHandler(error.message, 500));

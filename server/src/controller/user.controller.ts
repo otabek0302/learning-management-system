@@ -5,7 +5,7 @@ import { IJwtPayload } from "../@types/auth.types";
 import { ISocialAuthRequest, IUser } from "../@types/user.types";
 
 import { checkUserExist, createActivationToken, getUserById, verifyActivationToken, createForgotPasswordToken, verifyForgotPasswordToken } from "../services/user.service";
-import { ILogin, IRegister, IUpdatePassword, IUpdateUserInfo, IUpdateUserAvatar, IForgotPassword, IForgotPasswordRequest, IResetPassword, IUpdateUserRole } from "../interfaces/user.interface";
+import { ILogin, IRegister, IUpdatePassword, IUpdateUserInfo, IUpdateUserAvatar, IForgotPassword, IForgotPasswordRequest, IResetPassword, IUpdateUserRole, IDeleteUser, IGetUserById } from "../interfaces/user.interface";
 import { createNotification } from "../services/notification.service";
 
 import jwt from "jsonwebtoken";
@@ -486,8 +486,8 @@ export const searchUsers = CatchAsyncErrors(async (req: Request, res: Response, 
 // Get User By Id
 export const fetchUserById = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
     try {
-        // Get user id from params
-        const { id } = req.params;
+        // Get user id from body
+        const { id } = req.body as IGetUserById;
 
         // Get user by id
         const user = await User.findById(id).select("-password").lean();
@@ -508,8 +508,8 @@ export const fetchUserById = CatchAsyncErrors(async (req: Request, res: Response
 // Delete User
 export const deleteUser = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
     try {
-        // Get user id from params
-        const { id } = req.params;
+        // Get user id from body
+        const { id } = req.body as IDeleteUser;
 
         // Get user by id
         const user = await User.findById(id);

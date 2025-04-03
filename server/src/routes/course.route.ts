@@ -1,14 +1,14 @@
 import express from "express";
-import { createCourse, getAllCourses, getAllCoursesAdmin, getCourseByUser, getSingleCourse, updateCourse, addComment, addReplyToComment, addReview, replyToReview } from "../controller/course.controller";
+import { createCourse, getAllCourses, getAllCoursesAdmin, getCourseByUser, getSingleCourse, updateCourse, addComment, addReplyToComment, addReview, replyToReview, deleteCourse } from "../controller/course.controller";
 import { isAuthenticated, authorizeRoles } from "../middleware/auth";
 
 const router = express.Router();
 
 // Create Course -- Only for Admin
-router.post("/create-course", isAuthenticated, authorizeRoles("admin"), createCourse);
+router.post("/admin/create-course", isAuthenticated, authorizeRoles("admin"), createCourse);
 
 // Update Course -- Only for Admin
-router.put("/update-course/:id", isAuthenticated, authorizeRoles("admin"), updateCourse);
+router.put("/admin/update-course/:id", isAuthenticated, authorizeRoles("admin"), updateCourse);
 
 // Get Single Course
 router.get("/get-single-course/:id", getSingleCourse);
@@ -17,7 +17,7 @@ router.get("/get-single-course/:id", getSingleCourse);
 router.get("/get-all-courses", getAllCourses);
 
 // Get All Courses -- Admin
-router.get("/get-all-courses-admin", isAuthenticated, authorizeRoles("admin"), getAllCoursesAdmin);
+router.get("/admin/get-all-courses", isAuthenticated, authorizeRoles("admin"), getAllCoursesAdmin);
 
 // Get Course Content
 router.get("/get-course-content/:id", isAuthenticated, getCourseByUser);
@@ -32,6 +32,9 @@ router.put("/reply-comment", isAuthenticated, addReplyToComment);
 router.put("/add-review/:id", isAuthenticated, addReview);
 
 // Reply to Review in Course -- Only for Admin
-router.put("/reply-review", isAuthenticated, authorizeRoles("admin"), replyToReview);
+router.put("/admin/reply-review", isAuthenticated, authorizeRoles("admin"), replyToReview);
+
+// Delete Course -- Only for Admin
+router.delete("/admin/delete-course", isAuthenticated, authorizeRoles("admin"), deleteCourse);
 
 export default router;

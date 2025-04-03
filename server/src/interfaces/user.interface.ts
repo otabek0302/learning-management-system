@@ -92,3 +92,13 @@ export interface IUpdateUserRole {
     id: string;
     role: string;
 }
+
+// Delete User Interface
+export interface IDeleteUser {
+    id: string;
+}
+
+// Get User By Id Interface
+export interface IGetUserById {
+    id: string;
+}

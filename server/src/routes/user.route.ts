@@ -49,10 +49,10 @@ router.post('/reset-password', resetPassword);
 router.get('/admin/users', isAuthenticated, authorizeRoles("admin"), getAllUsers);
 
 // Get User by ID -- Only for Admin
-router.get('/admin/user/:id', isAuthenticated, authorizeRoles("admin"), fetchUserById);
+router.get('/admin/get-user', isAuthenticated, authorizeRoles("admin"), fetchUserById);
 
 // Delete User -- Only for Admin
-router.delete('/admin/user/:id', isAuthenticated, authorizeRoles("admin"), deleteUser);
+router.delete('/admin/delete-user', isAuthenticated, authorizeRoles("admin"), deleteUser);
 
 // Search Users -- Only for Admin
 router.get('/admin/search-users', isAuthenticated, authorizeRoles("admin"), searchUsers);

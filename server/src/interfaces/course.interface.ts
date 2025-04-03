@@ -111,3 +111,8 @@ export interface IReplyToReviewRequestBody {
     reviewId: string;
     courseId: string;
 }
+
+// Delete Course Request Body
+export interface IDeleteCourseRequestBody {
+    id: string;
+}
