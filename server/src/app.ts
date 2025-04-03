@@ -15,6 +15,7 @@ import CourseRouter from "./routes/course.route";
 import OrderRouter from "./routes/order.route";
 import NotificationRouter from "./routes/notification.route";
 import DashboardRouter from "./routes/dashboard.route";
+import LayoutRouter from "./routes/layout.route";
 
 // Initialize express
 const app = express();
@@ -43,7 +44,7 @@ app.use("/api/v1", CourseRouter)
 app.use("/api/v1", OrderRouter)
 app.use("/api/v1", NotificationRouter)
 app.use("/api/v1", DashboardRouter)
-
+app.use("/api/v1", LayoutRouter)
 // Unknown route
 app.all("*", (req: Request, res: Response, next: NextFunction) => {
     const err: any = new Error(`Cannot find ${req.originalUrl} on this server!`);
