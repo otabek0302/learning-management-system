@@ -173,6 +173,8 @@ export const updateAccessToken = CatchAsyncErrors(async (req: Request, res: Resp
         res.cookie("access_token", accessToken, accessTokenOptions);
         res.cookie("refresh_token", refreshToken, refreshTokenOptions);
 
+        // Update user in Redis with 30 days expiration
+        await redis.set(user._id.toString(), JSON.stringify(user), { ex: 30 * 24 * 60 * 60 });
 
         // Upload session to Redis
         res.status(200).json({
