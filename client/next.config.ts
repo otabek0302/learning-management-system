@@ -2,24 +2,25 @@ import type { NextConfig } from "next";
 import withPWA from "next-pwa";
 
 const nextConfig: NextConfig = {
-  reactStrictMode: true,          // Helps catch bugs early
+  reactStrictMode: true, // Helps catch bugs early
   images: {
     domains: ["res.cloudinary.com"], // If you use Cloudinary for images
   },
   experimental: {
-    optimizeCss: true,            // Optimize TailwindCSS
+    optimizeCss: true, // Optimize TailwindCSS
   },
   typescript: {
-    ignoreBuildErrors: false,     // Force fixing TS errors
+    ignoreBuildErrors: false, // Force fixing TS errors
   },
   eslint: {
-    ignoreDuringBuilds: true,     // Optional: Skip ESLint errors during build
+    ignoreDuringBuilds: true, // Optional: Skip ESLint errors during build
   },
-  async redirects() {             // Redirects (optional)
+  async redirects() {
+    // Redirects (optional)
     return [
       {
-        source: '/home',
-        destination: '/',
+        source: "/home",
+        destination: "/",
         permanent: true,
       },
     ];

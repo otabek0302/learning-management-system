@@ -9,11 +9,11 @@ export const LanguagesDropdown = () => {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="outline" size="icon" iconSize="md">
+        <Button variant="outline" size="icon" iconSize="md" className="h-8 w-8 md:w-9 md:h-9 cursor-pointer shadow-none">
           <Globe className="text-primary" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-fit p-0 mt-1 flex flex-col gap-2 border-none shadow-none">
+      <PopoverContent className="mt-1 flex w-fit flex-col gap-2 border-none p-0 shadow-none">
         <Button variant="outline" size="icon" iconSize="md">
           <US />
         </Button>

@@ -1,69 +1,23 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Bell, Maximize, Minimize, Moon, Sun } from "lucide-react";
-import { LanguagesDropdown } from "@/components/ui/languages-dropdown";
-import { useTheme } from "next-themes";
-import { useState } from "react";
-import { NavUser } from "@/components/ui/nav-user";
-
-import Logo from "@/assets/images/logo.png";
-import Image from "next/image";
-
+import NavigationList from "../client-ui/Header/navigation-list";
+import NavigationIcons from "../client-ui/Header/navigation-icons";
+import NavigationLogo from "../client-ui/Header/navigation-logo";
+import NavigationMobileMenu from "../client-ui/Header/navigation-mobile-menu";
 const Header = () => {
-  const { theme, setTheme } = useTheme();
-  const [isMaximized, setIsMaximized] = useState(false);
-
-  const handleMaximize = () => {
-    setIsMaximized(!isMaximized);
-    if (isMaximized) {
-      document.exitFullscreen();
-    } else {
-      document.documentElement.requestFullscreen();
-    }
-  };
-
   return (
-    <header className="px-4 py-3 border-b bg-background">
+    <header className="border-b bg-background px-4 py-3">
       <div className="container mx-auto">
         <div className="flex items-center justify-between">
-          <div className="relative w-12 h-12">
-            <Image src={Logo} alt="Logo" fill className="object-contain" />
+          <div className="flex items-center justify-start">
+            <NavigationLogo />
           </div>
-          <div className="flex-1 flex items-center justify-end gap-2">
-            <LanguagesDropdown />
-            <Button
-              variant="outline"
-              size="icon"
-              iconSize="md"
-              className="shadow-none cursor-pointer"
-              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
-              {theme === "dark" ? (
-                <Sun className="text-primary" />
-              ) : (
-                <Moon className="text-primary" />
-              )}
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              iconSize="md"
-              className="shadow-none cursor-pointer">
-              <Bell className="text-primary" />
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              iconSize="md"
-              className="shadow-none cursor-pointer"
-              onClick={handleMaximize}>
-              {isMaximized ? (
-                <Minimize className="text-primary" />
-              ) : (
-                <Maximize className="text-primary" />
-              )}
-            </Button>
-            <NavUser />
+          <div className="hidden md:flex items-center justify-center gap-2">
+            <NavigationList />
+          </div>
+          <div className="flex items-center justify-end gap-2">
+            <NavigationIcons />
+            <NavigationMobileMenu />
           </div>
         </div>
       </div>

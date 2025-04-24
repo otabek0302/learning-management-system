@@ -11,11 +11,11 @@ export function NavUser() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="icon" iconSize="md" className="shadow-none cursor-pointer">
+        <Button variant="outline" size="icon" iconSize="md" className="cursor-pointer shadow-none">
           <User className="text-primary" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg shadow-none mr-2" side="bottom" align="start" sideOffset={16}>
+      <DropdownMenuContent className="mr-2 w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg shadow-none" side="bottom" align="start" sideOffset={16}>
         <DropdownMenuLabel className="p-0 font-normal">
           <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
             <Avatar className="h-8 w-8 rounded-lg">
