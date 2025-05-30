@@ -1,6 +1,7 @@
 import { Poppins } from "next/font/google";
 import { DefaultSeo } from "next-seo";
-import { ThemeProvider } from "@/components/theme-provider";
+import { Providers } from "./providers";
+
 import "./globals.css";
 
 import Header from "@/components/layout/Header";
@@ -31,11 +32,11 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <meta name="theme-color" content="#1B5FFE " />
       </head>
       <body className={`${poppins.variable} antialiased`}>
-        <ThemeProvider attribute="class" enableSystem disableTransitionOnChange>
+        <Providers>
           <Header />
           {children}
           <Footer />
-        </ThemeProvider>
+        </Providers>
       </body>
     </html>
   );

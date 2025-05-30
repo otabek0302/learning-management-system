@@ -11,8 +11,8 @@ export function NavUser() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="icon" iconSize="md" className="cursor-pointer shadow-none">
-          <User className="text-primary" />
+        <Button variant="outline" size="icon" className="h-8 w-8 cursor-pointer shadow-none lg:h-9 lg:w-9">
+          <User className="h-4 w-4 text-primary lg:h-5 lg:w-5" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="mr-2 w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg shadow-none" side="bottom" align="start" sideOffset={16}>

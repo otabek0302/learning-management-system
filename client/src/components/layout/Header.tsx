@@ -1,21 +1,33 @@
 "use client";
 
-import NavigationList from "../client-ui/Header/navigation-list";
-import NavigationIcons from "../client-ui/Header/navigation-icons";
-import NavigationLogo from "../client-ui/Header/navigation-logo";
-import NavigationMobileMenu from "../client-ui/Header/navigation-mobile-menu";
+import { usePathname } from "next/navigation";
+
+import NavigationList from "@/components/client-ui/header/navigation-list";
+import NavigationIcons from "@/components/client-ui/header/navigation-icons";
+import NavigationLogo from "@/components/client-ui/header/navigation-logo";
+import NavigationMobileMenu from "@/components/client-ui/header/navigation-mobile-menu";
+
 const Header = () => {
+  const pathname = usePathname();
+
+  if (pathname === "/login" || pathname === "/register" || pathname === "/verification") return null;
+
   return (
     <header className="border-b bg-background px-4 py-3">
       <div className="container mx-auto">
         <div className="flex items-center justify-between">
-          <div className="flex items-center justify-start">
+          {/* Left: Logo */}
+          <div className="flex flex-shrink-0 items-center">
             <NavigationLogo />
           </div>
-          <div className="hidden md:flex items-center justify-center gap-2">
+
+          {/* Center: Navigation List */}
+          <div className="hidden flex-1 items-center justify-center md:flex">
             <NavigationList />
           </div>
-          <div className="flex items-center justify-end gap-2">
+
+          {/* Right: Icons and Mobile Menu */}
+          <div className="flex flex-shrink-0 items-center gap-2">
             <NavigationIcons />
             <NavigationMobileMenu />
           </div>

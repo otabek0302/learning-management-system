@@ -1,0 +1,89 @@
+{
+  "pages": {
+    "home": {
+      "meta": {
+        "title": "Учебный портал",
+        "description": "Современная платформа для управления курсами и пользователями."
+      }
+    },
+    "login": {
+      "meta": {
+        "title": "Вход | Учебный портал",
+        "description": "Войдите в систему, чтобы получить доступ к курсам и ресурсам."
+      },
+      "form": {
+        "title": "Вход",
+        "description": "Добро пожаловать ! Пожалуйста, введите свои данные.",
+        "email": "Email",
+        "email_placeholder": "Введите ваш email",
+        "email_error": "Email обязателен",
+        "password": "Пароль",
+        "password_placeholder": "Введите ваш пароль",
+        "password_error": "Пароль обязателен",
+        "dont_have_account": "Нет аккаунта ?",
+        "sign_in": "Войти",
+        "sign_up": "Регистрация"
+      }
+    },
+    "register": {
+      "meta": {
+        "title": "Регистрация | Учебный портал",
+        "description": "Зарегистрируйтесь в системе, чтобы получить доступ к курсам и ресурсам."
+      },
+      "form": {
+        "title": "Регистрация",
+        "description": "Добро пожаловать в нашу платформу ! Пожалуйста, введите свои данные.",
+        "name": "Имя",
+        "name_placeholder": "Введите ваше имя",
+        "name_error": "Имя обязательно",
+        "email": "Email",
+        "email_placeholder": "Введите ваш email",
+        "email_error": "Email обязателен",
+        "password": "Пароль",
+        "password_placeholder": "Введите ваш пароль",
+        "password_error": "Пароль обязателен",
+        "confirm_password": "Подтвердить пароль",
+        "confirm_password_placeholder": "Подтвердите ваш пароль",
+        "confirm_password_error": "Подтверждение пароля обязательно",
+        "already_have_account": "Уже есть аккаунт ?",
+        "sign_up": "Регистрация",
+        "sign_in": "Вход"
+      }
+    },
+    "verification": {
+      "meta": {
+        "title": "Верификация | Учебный портал",
+        "description": "Верифицируйте ваш аккаунт, чтобы получить доступ к курсам и ресурсам."
+      },
+      "form": {
+        "title": "Верификация",
+        "description": "Пожалуйста, введите код верификации, отправленный на ваш email.",
+        "code": "Код",
+        "code_placeholder": "Введите код",
+        "code_error": "Код обязателен",
+        "verify": "Верифицировать",
+        "didnt_receive": "Не получили код ?",
+        "resend_code": "Отправить код",
+        "resending": "Отправка...",
+        "back_to": "Вернуться к",
+        "sign_in": "Войти"
+      }
+    }
+  },
+  "components": {},
+  "common": {},
+  "messages": {
+    "errors": {},
+    "success": {}
+  },
+  "routes": {
+    "home": "Главная",
+    "about": "О нас",
+    "contact": "Контакты",
+    "courses": "Курсы",
+    "policy": "Политика",
+    "faq": "FAQ",
+    "login": "Войти",
+    "register": "Регистрация"
+  }
+}

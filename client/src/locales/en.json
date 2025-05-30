@@ -1,0 +1,89 @@
+{
+  "pages": {
+    "home": {
+      "meta": {
+        "title": "Learning Management System",
+        "description": "A modern LMS platform to manage your courses and users."
+      }
+    },
+    "login": {
+      "meta": {
+        "title": "Login | Learning Management System",
+        "description": "Login to your account to access your courses and resources."
+      },
+      "form": {
+        "title": "Sign in",
+        "description": "Welcome back ! Please enter your details.",
+        "email": "Email",
+        "email_placeholder": "Enter your email",
+        "email_error": "Email is required",
+        "password": "Password",
+        "password_placeholder": "Enter your password",
+        "password_error": "Password is required",
+        "dont_have_account": "Don't have an account ?",
+        "sign_in": "Sign in",
+        "sign_up": "Sign up"
+      }
+    },
+    "register": {
+      "meta": {
+        "title": "Register | Learning Management System",
+        "description": "Register to your account to access your courses and resources."
+      },
+      "form": {
+        "title": "Sign up",
+        "description": "Welcome to our platform ! Please enter your details.",
+        "name": "Name",
+        "name_placeholder": "Enter your name",
+        "name_error": "Name is required",
+        "email": "Email",
+        "email_placeholder": "Enter your email",
+        "email_error": "Email is required",
+        "password": "Password",
+        "password_placeholder": "Enter your password",
+        "password_error": "Password is required",
+        "confirm_password": "Confirm password",
+        "confirm_password_placeholder": "Confirm your password",
+        "confirm_password_error": "Confirm password is required",
+        "already_have_account": "Already have an account ?",
+        "sign_up": "Sign up",
+        "sign_in": "Sign in"
+      }
+    },
+    "verification": {
+      "meta": {
+        "title": "Verification | Learning Management System",
+        "description": "Verify your account to access your courses and resources."
+      },
+      "form": {
+        "title": "Verification",
+        "description": "Please enter the verification code sent to your email.",
+        "code": "Code",
+        "code_placeholder": "Enter the code",
+        "code_error": "Code is required",
+        "verify": "Verify",
+        "didnt_receive": "Didn't receive the code ?",
+        "resend_code": "Resend code",
+        "resending": "Resending...",
+        "back_to": "Back to",
+        "sign_in": "Sign in"
+      }
+    }
+  },
+  "components": {},
+  "common": {},
+  "messages": {
+    "errors": {},
+    "success": {}
+  },
+  "routes": {
+    "home": "Home",
+    "about": "About",
+    "contact": "Contact",
+    "courses": "Courses",
+    "policy": "Policy",
+    "faq": "FAQ",
+    "login": "Login",
+    "register": "Register"
+  }
+}

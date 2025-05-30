@@ -1,0 +1,89 @@
+{
+  "pages": {
+    "home": {
+      "meta": {
+        "title": "Bosh sahifa",
+        "description": "A modern LMS platform to manage your courses and users."
+      }
+    },
+    "login": {
+      "meta": {
+        "title": "Kirish | Uchun o'quv portali",
+        "description": "Kirish, kurslar va resurslarga kirish uchun."
+      },
+      "form": {
+        "title": "Kirish",
+        "description": "Xush kelibsiz ! Iltimos, ma'lumotlaringizni kiriting.",
+        "email": "Email",
+        "email_placeholder": "Emailni kiriting",
+        "email_error": "Email kerak",
+        "password": "Parol",
+        "password_placeholder": "Parolni kiriting",
+        "password_error": "Parol kerak",
+        "dont_have_account": "Akkountingiz yo'qmi ?",
+        "sign_in": "Kirish",
+        "sign_up": "Ro'yxatdan o'tish"
+      }
+    },
+    "register": {
+      "meta": {
+        "title": "Ro'yxatdan o'tish | O'quv portali",
+        "description": "O'quv portali bo'yicha kurslarga va resurslarga kirish uchun."
+      },
+      "form": {
+        "title": "Ro'yxatdan o'tish",
+        "description": "Xush kelibsiz ! Iltimos, ma'lumotlaringizni kiriting.",
+        "name": "Ism",
+        "name_placeholder": "Ismni kiriting",
+        "name_error": "Ism kerak",
+        "email": "Email",
+        "email_placeholder": "Emailni kiriting",
+        "email_error": "Email kerak",
+        "password": "Parol",
+        "password_placeholder": "Parolni kiriting",
+        "password_error": "Parol kerak",
+        "confirm_password": "Parolni tasdiqlash",
+        "confirm_password_placeholder": "Parolni tasdiqlang",
+        "confirm_password_error": "Parolni tasdiqlash kerak",
+        "already_have_account": "Akkountingiz mavjudmi ?",
+        "sign_up": "Ro'yxatdan o'tish",
+        "sign_in": "Kirish"
+      }
+    },
+    "verification": {
+      "meta": {
+        "title": "Verification | O'quv portali",
+        "description": "Akkountingizni tasdiqlang, kurslarga va resurslarga kirish uchun."
+      },
+      "form": {
+        "title": "Tasdiqlash",
+        "description": "Iltimos, emailingizga yuborilgan tasdiqlash kodini kiriting.",
+        "code": "Kod",
+        "code_placeholder": "Kodni kiriting",
+        "code_error": "Kod kerak",
+        "verify": "Tasdiqlash",
+        "didnt_receive": "Kodni qabul qilmadingizmi ?",
+        "resend_code": "Kodni qayta yuborish",
+        "resending": "Qayta yuborilmoqda...",
+        "back_to": "Orqaga",
+        "sign_in": "Kirish"
+      }
+    }
+  },
+  "components": {},
+  "common": {},
+  "messages": {
+    "errors": {},
+    "success": {}
+  },
+  "routes": {
+    "home": "Bosh sahifa",
+    "about": "Biz haqimizda",
+    "contact": "Bog'lanish",
+    "courses": "Kurslar",
+    "policy": "Siyosat",
+    "faq": "FAQ",
+    "login": "Kirish",
+    "register": "Ro'yxatdan o'tish"
+  }
+}

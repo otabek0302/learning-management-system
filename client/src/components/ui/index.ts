@@ -1,6 +1,6 @@
-import { DarkMode } from "./dark-mode";
-import { LanguagesDropdown } from "./languages-dropdown";
+import { ThemeButton } from "./theme-button";
+import { LanguagesButton } from "./languages-button";
 import { NavNotification } from "./nav-notification";
 import { NavUser } from "./nav-user";
 
-export { DarkMode, LanguagesDropdown, NavNotification, NavUser };
+export { ThemeButton, LanguagesButton, NavNotification, NavUser };
