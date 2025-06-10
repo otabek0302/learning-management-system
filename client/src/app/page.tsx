@@ -1,18 +1,23 @@
 "use client";
 
-import { NextSeo } from "next-seo";
 import { useTranslation } from "react-i18next";
+import { useSession } from "next-auth/react";
+
+import Loading from "@/app/loading";
 
 const Home = () => {
   const { t } = useTranslation();
+  const { status } = useSession();
+
+  // Show loading state while checking authentication
+  if (status === "loading") {
+    return <Loading />;
+  }
 
   return (
-    <>
-      <NextSeo title={t("pages.home.meta.title")} description={t("pages.home.meta.description")} />
-      <main className="flex min-h-screen flex-col items-center justify-center bg-gray-50 p-8">
-        <h1>{t("pages.home.meta.title")}</h1>
-      </main>
-    </>
+    <main className="flex h-full w-full flex-col items-center justify-center p-8">
+      <h1>{t("pages.home.meta.title")}</h1>
+    </main>
   );
 };
 

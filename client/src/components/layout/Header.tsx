@@ -13,9 +13,9 @@ const Header = () => {
   if (pathname === "/login" || pathname === "/register" || pathname === "/verification") return null;
 
   return (
-    <header className="border-b bg-background px-4 py-3">
-      <div className="container mx-auto">
-        <div className="flex items-center justify-between">
+    <header className="sticky top-0 z-50">
+      <div className="container mx-auto px-4 md:px-6">
+        <div className="flex items-center justify-between border-b bg-background py-3">
           {/* Left: Logo */}
           <div className="flex flex-shrink-0 items-center">
             <NavigationLogo />

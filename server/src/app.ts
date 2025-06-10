@@ -39,12 +39,12 @@ app.use(cors({
 }));
 
 // API Routers
-app.use("/api/v1", UserRouter)
-app.use("/api/v1", CourseRouter)
-app.use("/api/v1", OrderRouter)
-app.use("/api/v1", NotificationRouter)
-app.use("/api/v1", DashboardRouter)
-app.use("/api/v1", LayoutRouter)
+app.use("/api/v1/users", UserRouter)
+app.use("/api/v1/courses", CourseRouter)
+app.use("/api/v1/orders", OrderRouter)
+app.use("/api/v1/notifications", NotificationRouter)
+app.use("/api/v1/dashboard", DashboardRouter)
+app.use("/api/v1/layout", LayoutRouter)
 // Unknown route
 app.all("*", (req: Request, res: Response, next: NextFunction) => {
     const err: any = new Error(`Cannot find ${req.originalUrl} on this server!`);

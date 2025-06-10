@@ -18,8 +18,10 @@ export const checkUserExist = async (email: string, res: Response, next: NextFun
     const user = await User.findOne({ email });
 
     if (user) {
-        return next(new ErrorHandler("User already exist", 400));
+        return next(new ErrorHandler("User already exist", 409));
     }
+    
+    return true;
 }
 
 

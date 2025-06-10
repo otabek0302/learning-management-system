@@ -5,7 +5,7 @@ dotenv.config();
 // Safely parse the ORIGINS environment variable, handling it as a JSON array or comma-separated string.
 function parseOrigins(originsStr?: string): string[] {
   if (!originsStr) {
-    return ["http://localhost:3000"];
+    return ["http://localhost:3000", "http://localhost:3001"];
   }
 
   // Try to parse as JSON array

@@ -4,10 +4,12 @@ import NextLink from "next/link";
 import { ThemeButton, LanguagesButton, NavUser } from "@/components/ui";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
+import { useSelector } from "react-redux";
+import { RootState } from "@/redux/store";
 
 const NavigationIcons = () => {
-  const user = false;
   const { t } = useTranslation();
+  const { user } = useSelector((state: RootState) => state.auth);
 
   return (
     <div className="flex items-center gap-2">

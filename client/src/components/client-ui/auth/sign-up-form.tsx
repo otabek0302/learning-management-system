@@ -1,27 +1,30 @@
 import * as Yup from "yup";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useFormik } from "formik";
-import { EyeIcon, EyeOffIcon } from "lucide-react";
+import { EyeIcon, EyeOffIcon, Loader2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
-import { GithubIcon, GoogleIcon, Logo } from "@/assets";
+import { useRegisterMutation } from "@/redux/features/auth/authApi";
+import { SocialAuthentication } from "@/components/ui/social-authentication";
+import { Logo } from "@/assets";
+import { toast } from "sonner";
 
 import Image from "next/image";
 
 const schema = Yup.object().shape({
   name: Yup.string().required("Name is required"),
   email: Yup.string().email("Invalid email").required("Email is required"),
-  password: Yup.string().required("Password is required"),
-  confirmPassword: Yup.string()
-    .oneOf([Yup.ref("password")], "Passwords must match")
-    .required("Confirm password is required"),
+  password: Yup.string().min(6, "Password must be at least 6 characters").required("Password is required"),
+  confirmPassword: Yup.string().oneOf([Yup.ref("password")], "Passwords must match").required("Confirm password is required"),
 });
 
 const SignUpForm = ({ setPage }: { setPage: (page: string) => void }) => {
   const { t } = useTranslation();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [register, { error, data, status, isLoading, isError, isSuccess }] = useRegisterMutation();
 
+  
   const formik = useFormik({
     initialValues: {
       name: "",
@@ -30,18 +33,37 @@ const SignUpForm = ({ setPage }: { setPage: (page: string) => void }) => {
       confirmPassword: "",
     },
     validationSchema: schema,
-    onSubmit: async ({ email, password }) => {
-      console.log(email, password);
+    onSubmit: async ({ name, email, password }) => {
+      const data = { name, email, password };
+      await register(data).unwrap();
     },
   });
+  
+  useEffect(() => {
+    if (isSuccess) {
+      console.log(data?.message);
+      toast.success(t("pages.register.messages.check_email", { email: values.email }));
+      setPage("verification");
+    }
+    if (isError) {
+      console.log(error);
+      if (status === "rejected") {
+        toast.error(t("pages.register.messages.already_exist"));
+      } else {
+        toast.error(t("pages.register.messages.error"));
+      }
+    }
 
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isSuccess, isError, status]);
+  
   const { handleSubmit, handleChange, handleBlur, values, errors, touched } = formik;
 
   return (
     <form onSubmit={handleSubmit} className="flex w-[420px] flex-col gap-4">
       <div className="flex flex-col items-start gap-2">
         <div className="relative h-20 w-20">
-          <Image src={Logo} alt="Logo" fill priority className="object-contain" sizes="80px" />
+          <Image src={Logo} alt="Logo" fill className="object-contain" sizes="(max-width: 768px) 80px, 80px" />
         </div>
         <h3 className="text-3xl font-bold">{t("pages.register.form.title")}</h3>
         <p className="text-sm text-gray-400">{t("pages.register.form.description")}</p>
@@ -89,18 +111,12 @@ const SignUpForm = ({ setPage }: { setPage: (page: string) => void }) => {
         </div>
 
         <div className="flex items-center justify-between gap-6">
-          <Button variant="default" size="lg" className="w-full rounded-lg bg-primary p-2 text-base font-medium text-primary-foreground hover:bg-primary/90">
-            <Image src={GoogleIcon} alt="Google" width={20} height={20} className="mr-2" sizes="20px" />
-            <span className="text-sm font-medium">Google</span>
-          </Button>
-          <Button variant="default" size="lg" className="w-full rounded-lg bg-primary p-2 text-base font-medium text-primary-foreground hover:bg-primary/90">
-            <Image src={GithubIcon} alt="Github" width={20} height={20} className="mr-2" sizes="20px" />
-            <span className="text-sm font-medium">Github</span>
-          </Button>
+          <SocialAuthentication />
         </div>
 
         <div className="flex flex-col gap-4">
-          <Button type="submit" variant="default" size="lg" className="w-full rounded-lg bg-primary p-2 text-base font-medium text-primary-foreground hover:bg-primary/90">
+          <Button type="submit" variant="default" size="lg" className="w-full rounded-lg bg-primary p-2 text-base font-medium text-primary-foreground hover:bg-primary/90" disabled={isLoading}>
+            {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : ""}
             {t("pages.register.form.sign_up")}
           </Button>
           <div className="flex items-center justify-center gap-2">

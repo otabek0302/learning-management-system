@@ -1,10 +1,14 @@
 import * as Yup from "yup";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useFormik } from "formik";
-import { EyeIcon, EyeOffIcon } from "lucide-react";
+import { EyeIcon, EyeOffIcon, Loader2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
-import { Logo, GoogleIcon, GithubIcon } from "@/assets";
+import { useRouter } from "next/navigation";
+import { useLoginMutation } from "@/redux/features/auth/authApi";
+import { SocialAuthentication } from "@/components/ui/social-authentication";
+import { Logo } from "@/assets";
+import { toast } from "sonner";
 
 import Image from "next/image";
 
@@ -15,7 +19,10 @@ const schema = Yup.object().shape({
 
 const SignInForm = ({ setPage }: { setPage: (page: string) => void }) => {
   const { t } = useTranslation();
+  const router = useRouter();
   const [show, setShow] = useState(false);
+  const [login, { error, data, status, isLoading, isError, isSuccess }] = useLoginMutation();
+
   const formik = useFormik({
     initialValues: {
       email: "",
@@ -23,10 +30,27 @@ const SignInForm = ({ setPage }: { setPage: (page: string) => void }) => {
     },
     validationSchema: schema,
     onSubmit: async ({ email, password }) => {
-      console.log(email, password);
-      setPage("verification");
+      login({ email, password });
     },
   });
+
+  useEffect(() => {
+    if (isSuccess) {
+      console.log(data?.user);
+      toast.success(t("pages.login.messages.login_success"));
+      router.push("/");
+    }
+    if (isError) {
+      console.log(error);
+      if (status === "rejected") {
+        toast.error(t("pages.login.messages.login_error"));
+      } else {
+        toast.error(t("pages.login.messages.login_error"));
+      }
+    }
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isSuccess, isError, status]);
 
   const { handleSubmit, handleChange, handleBlur, values, errors, touched } = formik;
 
@@ -34,7 +58,7 @@ const SignInForm = ({ setPage }: { setPage: (page: string) => void }) => {
     <form onSubmit={handleSubmit} className="flex w-[420px] flex-col gap-4">
       <div className="flex flex-col items-start gap-2">
         <div className="relative h-20 w-20">
-          <Image src={Logo} alt="Logo" fill priority className="object-contain" sizes="80px" />
+          <Image src={Logo} alt="Logo" fill className="object-contain" sizes="(max-width: 768px) 80px, 80px" />
         </div>
         <h3 className="text-3xl font-bold">{t("pages.login.form.title")}</h3>
         <p className="text-sm text-gray-400">{t("pages.login.form.description")}</p>
@@ -62,18 +86,12 @@ const SignInForm = ({ setPage }: { setPage: (page: string) => void }) => {
         </div>
 
         <div className="flex items-center justify-between gap-6">
-          <Button variant="default" size="lg" className="w-full rounded-lg bg-primary p-2 text-base font-medium text-primary-foreground hover:bg-primary/90">
-            <Image src={GoogleIcon} alt="Google" width={20} height={20} className="mr-2" sizes="20px" />
-            <span className="text-sm font-medium">Google</span>
-          </Button>
-          <Button variant="default" size="lg" className="w-full rounded-lg bg-primary p-2 text-base font-medium text-primary-foreground hover:bg-primary/90">
-            <Image src={GithubIcon} alt="Github" width={20} height={20} className="mr-2" sizes="20px" />
-            <span className="text-sm font-medium">Github</span>
-          </Button>
+          <SocialAuthentication />
         </div>
 
         <div className="flex flex-col gap-4">
           <Button type="submit" variant="default" size="lg" className="w-full rounded-lg bg-primary p-2 text-base font-medium text-primary-foreground hover:bg-primary/90">
+            {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : ""}
             {t("pages.login.form.sign_in")}
           </Button>
           <div className="flex items-center justify-center gap-2">

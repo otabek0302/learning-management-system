@@ -19,11 +19,13 @@ import cloudinary from "cloudinary";
 // Register User
 export const registerUser = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
     try {
-
         const { name, email, password }: IUser = req.body;
 
         // Validate user is exist or not
-        await checkUserExist(email, res, next);
+        const userExists = await checkUserExist(email, res, next);
+        if (!userExists) {
+            return;
+        }
 
         // Create user
         const user = { name, email, password } as IRegister;
@@ -51,7 +53,7 @@ export const registerUser = CatchAsyncErrors(async (req: Request, res: Response,
         }
 
     } catch (error: any) {
-        return next(new ErrorHandler(error.message, 400));
+        return next(new ErrorHandler(error.message, 500));
     }
 })
 
@@ -220,18 +222,32 @@ export const socialAuth = CatchAsyncErrors(async (req: Request, res: Response, n
 // Update user info
 export const updateUserInfo = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { name, email } = req.body as IUpdateUserInfo;
+        const { name, email, avatar } = req.body as IUpdateUserInfo;
+
+        if ((!email || !email.trim()) && (!name || !name.trim())) {
+            return next(new ErrorHandler("No changes provided", 400));
+        }
 
         const userId = req.user?._id;
         const user = await User.findById(userId);
 
         if (email && user) {
-            await checkUserExist(email, res, next);
             user.email = email;
         }
 
         if (name && user) {
             user.name = name;
+        }
+
+        if (user?.avatar?.public_id) {
+            await cloudinary.v2.uploader.destroy(user.avatar.public_id);
+        }
+        if (user && typeof avatar === "string") {
+            const uploadResponse = await cloudinary.v2.uploader.upload(avatar, { folder: "avatars", width: 150, height: 150, crop: "fill" });
+            user.avatar = {
+                public_id: uploadResponse.public_id,
+                url: uploadResponse.secure_url
+            };
         }
 
         await user?.save();
@@ -240,6 +256,7 @@ export const updateUserInfo = CatchAsyncErrors(async (req: Request, res: Respons
 
         res.status(200).json({
             success: true,
+            message: "User info updated successfully",
             user
         })
     } catch (error: any) {

@@ -23,6 +23,10 @@
         "dont_have_account": "Нет аккаунта ?",
         "sign_in": "Войти",
         "sign_up": "Регистрация"
+      },
+      "messages": {
+        "login_success": "Вы успешно вошли в систему",
+        "login_error": "Неверный email или пароль"
       }
     },
     "register": {
@@ -48,6 +52,12 @@
         "already_have_account": "Уже есть аккаунт ?",
         "sign_up": "Регистрация",
         "sign_in": "Вход"
+      },
+      "messages": {
+        "success": "Пользователь успешно зарегистрирован",
+        "error": "Ошибка при регистрации пользователя",
+        "already_exist": "Пользователь уже существует",
+        "check_email": "Пожалуйста, проверьте ваш email: {{email}} для активации вашего аккаунта."
       }
     },
     "verification": {
@@ -67,14 +77,86 @@
         "resending": "Отправка...",
         "back_to": "Вернуться к",
         "sign_in": "Войти"
+      },
+      "messages": {
+        "success": "Аккаунт успешно верифицирован",
+        "error": "Ошибка при верификации аккаунта",
+        "already_verified": "Аккаунт уже верифицирован",
+        "check_email": "Пожалуйста, проверьте ваш email: {{email}} для активации вашего аккаунта."
+      }
+    },
+    "profile": {
+      "profile-toolbar": {
+        "title": "Профиль",
+        "edit-profile": "Редактировать профиль"
+      },
+      "profile-information": {
+        "title": "Профиль",
+        "full-name": "Имя и фамилия",
+        "email": "Email",
+        "avatar": "Аватар"
+      },
+      "updated-password": {
+        "title": "Обновление пароля",
+        "current-password": "Текущий пароль",
+        "current-password-placeholder": "Введите ваш текущий пароль",
+        "new-password": "Новый пароль",
+        "new-password-placeholder": "Введите ваш новый пароль",
+        "confirm-password": "Подтверждение пароля",
+        "confirm-password-placeholder": "Подтвердите ваш пароль",
+        "updating": "Обновление...",
+        "update-password": "Обновить пароль"
+      },
+      "profile-dialog": {
+        "title": "Редактирование профиля",
+        "description": "Для редактирования вашего профиля, пожалуйста, введите следующие данные.",
+        "full-name": "Имя и фамилия",
+        "full-name-placeholder": "Введите ваше имя и фамилию",
+        "email": "Email",
+        "email-placeholder": "Введите ваш email",
+        "avatar": "Аватар",
+        "avatar-placeholder": "Выберите файл",
+        "update": "Редактировать",
+        "updating": "Редактирование...",
+        "cancel": "Отмена"
+      },
+      "courses": {
+        "title": "Записанные курсы",
+        "add-course": "Добавить курс"
+      },
+      "notifications": {
+        "title": "Уведомления"
+      },
+      "settings": {
+        "title": "Настройки",
+        "language": "Язык",
+        "language-description": "Язык по умолчанию для публичного панели управления.",
+        "theme": "Тема",
+        "theme-description": "Тема по умолчанию для публичного панели управления."
       }
     }
   },
-  "components": {},
+  "components": {
+    "footer": {
+      "terms-and-condition": "Условия и условия",
+      "privacy-policy": "Политика конфиденциальности",
+      "cookies": "Куки"
+    }
+  },
   "common": {},
   "messages": {
-    "errors": {},
-    "success": {}
+    "errors": {
+      "social_sign_in": "Ошибка при входе через социальные сети",
+      "passwords-not-match": "Пароли не совпадают !",
+      "user-not-found": "Пользователь не найден !",
+      "no-courses": "Курсы не найдены !",
+      "no-notifications": "Уведомления не найдены !",
+      "update-profile-error": "Ошибка при обновлении профиля"
+    },
+    "success": {
+      "social_sign_in": "Вход через социальные сети успешно выполнен",
+      "update-profile-success": "Профиль успешно обновлен"
+    }
   },
   "routes": {
     "home": "Главная",

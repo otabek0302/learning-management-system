@@ -8,10 +8,10 @@ import { authorizeRoles, isAuthenticated } from "../middleware/auth";
 router.post('/registration', registerUser);
 
 // Activate User
-router.post('/activate-user', activateUser);
+router.post('/activate', activateUser);
 
 // Login User
-router.post('/login-user', loginUser);
+router.post('/login', loginUser);
 
 // Logout User -- Only for Admin
 router.get('/logout', isAuthenticated, authorizeRoles("admin"), logoutUser);

@@ -23,6 +23,10 @@
         "dont_have_account": "Akkountingiz yo'qmi ?",
         "sign_in": "Kirish",
         "sign_up": "Ro'yxatdan o'tish"
+      },
+      "messages": {
+        "login_success": "Siz muvaffaqiyatli kirishni tasdiqladingiz",
+        "login_error": "Email yoki parol noto'g'ri"
       }
     },
     "register": {
@@ -48,6 +52,12 @@
         "already_have_account": "Akkountingiz mavjudmi ?",
         "sign_up": "Ro'yxatdan o'tish",
         "sign_in": "Kirish"
+      },
+      "messages": {
+        "success": "Foydalanuvchi muvaffaqiyatli ro'yxatdan o'tgan",
+        "error": "Foydalanuvchi ro'yxatdan o'tishda xatolik yuz berdi",
+        "already_exist": "Foydalanuvchi allaqachon mavjud",
+        "check_email": "Iltimos, emailingizga yuborilgan tasdiqlash kodini kiriting."
       }
     },
     "verification": {
@@ -67,14 +77,86 @@
         "resending": "Qayta yuborilmoqda...",
         "back_to": "Orqaga",
         "sign_in": "Kirish"
+      },
+      "messages": {
+        "success": "Akkountingiz muvaffaqiyatli tasdiqlandi",
+        "error": "Akkountingiz tasdiqlashda xatolik yuz berdi",
+        "already_verified": "Akkountingiz allaqachon tasdiqlandi",
+        "check_email": "Iltimos, emailingizga yuborilgan tasdiqlash kodini kiriting."
+      }
+    },
+    "profile": {
+      "profile-toolbar": {
+        "title": "Sizning profilingiz",
+        "edit-profile": "Ma'lumotlarni tahrirlash"
+      },
+      "profile-information": {
+        "title": "Shaxsiy ma'lumotlar",
+        "full-name": "Ismingiz va familiyangiz",
+        "email": "Emailingiz",
+        "avatar": "Rasm"
+      },
+      "updated-password": {
+        "title": "Parolni o'zgartirish",
+        "current-password": "Joriy parol",
+        "current-password-placeholder": "Joriy parolni kiriting",
+        "new-password": "Yangi parol",
+        "new-password-placeholder": "Yangi parolni kiriting",
+        "confirm-password": "Parolni tasdiqlash",
+        "confirm-password-placeholder": "Parolni tasdiqlang",
+        "updating": "O'zgartirilmoqda...",
+        "update-password": "Parolni o'zgartirish"
+      },
+      "profile-dialog": {
+        "title": "Shaxsiy ma'lumotlarni tahrirlash",
+        "description": "Shaxsiy ma'lumotlaringizni tahrirlash uchun, quyidagi ma'lumotlarni kiriting.",
+        "full-name": "Ismingiz va familiyangiz",
+        "full-name-placeholder": "Ismingiz va familiyangizni kiriting",
+        "email": "Emailingiz",
+        "email-placeholder": "Emailingizni kiriting",
+        "avatar": "Rasm",
+        "avatar-placeholder": "Rasmni kiriting",
+        "update": "Tahrirlash",
+        "updating": "O'zgartirilmoqda...",
+        "cancel": "Bekor qilish"
+      },
+      "courses": {
+        "title": "O'qilgan kurslar",
+        "add-course": "Kurs qo'shish"
+      },
+      "notifications": {
+        "title": "Xabarlar"
+      },
+      "settings": {
+        "title": "Sozlamalar",
+        "language": "Til",
+        "language-description": "O'quv portali uchun asosiy til.",
+        "theme": "Tema",
+        "theme-description": "O'quv portali uchun asosiy tema."
       }
     }
   },
-  "components": {},
+  "components": {
+    "footer": {
+      "terms-and-condition": "Shartlar va shartlar",
+      "privacy-policy": "Maxfiylik siyosati",
+      "cookies": "Cookie"
+    }
+  },
   "common": {},
   "messages": {
-    "errors": {},
-    "success": {}
+    "errors": {
+      "social_sign_in": "Ijtimoiy tarmoq orqali kirishda xatolik yuz berdi",
+      "passwords-not-match": "Parollar mos emas !",
+      "user-not-found": "Foydalanuvchi topilmadi !",
+      "no-courses": "Kurslar topilmadi !",
+      "no-notifications": "Xabarlar topilmadi !",
+      "update-profile-error": "Profilni tahrirlashda xatolik yuz berdi"
+    },
+    "success": {
+      "social_sign_in": "Ijtimoiy tarmoq orqali kirish muvaffaqiyatli yakunlandi",
+      "update-profile-success": "Profil muvaffaqiyatli tahrirlandi"
+    }
   },
   "routes": {
     "home": "Bosh sahifa",

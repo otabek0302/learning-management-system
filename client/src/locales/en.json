@@ -23,6 +23,10 @@
         "dont_have_account": "Don't have an account ?",
         "sign_in": "Sign in",
         "sign_up": "Sign up"
+      },
+      "messages": {
+        "login_success": "You are logged in successfully",
+        "login_error": "Invalid email or password"
       }
     },
     "register": {
@@ -48,6 +52,12 @@
         "already_have_account": "Already have an account ?",
         "sign_up": "Sign up",
         "sign_in": "Sign in"
+      },
+      "messages": {
+        "success": "User registered successfully",
+        "error": "User registration failed",
+        "already_exist": "User already exist",
+        "check_email": "Please check your email address: {{email}} to activate your account."
       }
     },
     "verification": {
@@ -67,14 +77,86 @@
         "resending": "Resending...",
         "back_to": "Back to",
         "sign_in": "Sign in"
+      },
+      "messages": {
+        "success": "Account verified successfully",
+        "error": "Account verification failed",
+        "already_verified": "Account already verified",
+        "check_email": "Please check your email address: {{email}} to activate your account."
+      }
+    },
+    "profile": {
+      "profile-toolbar": {
+        "title": "Profile",
+        "edit-profile": "Edit profile"
+      },
+      "profile-information": {
+        "title": "Profile",
+        "full-name": "Full name",
+        "email": "Email",
+        "avatar": "Avatar"
+      },
+      "updated-password": {
+        "title": "Update password",
+        "current-password": "Current password",
+        "current-password-placeholder": "Enter your current password",
+        "new-password": "New password",
+        "new-password-placeholder": "Enter your new password",
+        "confirm-password": "Confirm password",
+        "confirm-password-placeholder": "Confirm your password",
+        "updating": "Updating...",
+        "update-password": "Update password"
+      },
+      "profile-dialog": {
+        "title": "Edit profile",
+        "description": "To edit your profile, please enter the following information.",
+        "full-name": "Full name",
+        "full-name-placeholder": "Enter your full name",
+        "email": "Email",
+        "email-placeholder": "Enter your email",
+        "avatar": "Avatar",
+        "avatar-placeholder": "Select a file",
+        "update": "Edit",
+        "updating": "Editing...",
+        "cancel": "Cancel"
+      },
+      "courses": {
+        "title": "Enrolled Courses",
+        "add-course": "Add course"
+      },
+      "notifications": {
+        "title": "Notifications"
+      },
+      "settings": {
+        "title": "Settings",
+        "language": "Language",
+        "language-description": "Default language for public dashboard.",
+        "theme": "Theme",
+        "theme-description": "Default theme for public dashboard."
       }
     }
   },
-  "components": {},
+  "components": {
+    "footer": {
+      "terms-and-condition": "Terms and conditions",
+      "privacy-policy": "Privacy policy",
+      "cookies": "Cookies"
+    }
+  },
   "common": {},
   "messages": {
-    "errors": {},
-    "success": {}
+    "errors": {
+      "social_sign_in": "Social sign-in failed",
+      "passwords-not-match": "Passwords do not match !",
+      "user-not-found": "User not found !",
+      "no-courses": "No courses found !",
+      "no-notifications": "No notifications found !",
+      "update-profile-error": "Profile update failed"
+    },
+    "success": {
+      "update-profile-success": "Profile updated successfully",
+      "social_sign_in": "Sign in with social success"
+    }
   },
   "routes": {
     "home": "Home",

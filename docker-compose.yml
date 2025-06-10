@@ -1,0 +1,29 @@
+services:
+  server:
+    build: ./server
+    container_name: lms-server
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./server:/app
+    environment:
+      - NODE_ENV=development
+      - DB_URL=mongodb+srv://otabekjon0302:lms_0302@lms.y7ym7.mongodb.net/lms
+      - DB_USER=otabekjon0302
+      - DB_PASS=lms_0302
+      - CLOUD_NAME=dqiss9gyu
+      - CLOUD_API_KEY=763884737798546
+      - CLOUD_SECRET_KEY=lhql_jDw_dWg4h06hkWUL5gY0M8
+      - REDIS_REST_URL=https://perfect-meerkat-28289.upstash.io
+      - REDIS_REST_TOKEN=AW6BAAIjcDFjNTM2ZDdlNzdiNGE0NzRkOGRiNGI1OWVlZmVjMTIyOHAxMA
+      - ACTIVATION_TOKEN_SECRET=tUE4PCbNPvNXd7sFHoficdCsg3fflpepJ9B/XJK47vNwJfqb2jLkXQuly0TjN014MEf+Lt3zemcnIUBQMqPNjQ==
+      - ACCESS_TOKEN=£@uit50?YP@35k/pyzb*D466WRkPi{v)],:OU-l;z4#Q,z:BY£
+      - REFRESH_TOKEN=]nx/F+"}"LRyN:w0f"k328EV{9cXW.U/&QwCl9yhEFLH[$
+      - FORGOT_PASSWORD_TOKEN_SECRET=tUE4PCbNPvNXd7sFHoficdCsg3fflpepJ9B/XJK47vNwJfqb2jLkXQuly0TjN014MEf+Lt3zemcnIUBQMqPNjQ==
+      - ACCESS_TOKEN_EXPIRE=5
+      - REFRESH_TOKEN_EXPIRE=3
+      - SMTP_HOST=smtp.gmail.com
+      - SMTP_PORT=465
+      - SMTP_SERVICE=gmail
+      - SMTP_MAIL=otabekjon0302@gmail.com
+      - SMTP_PASSWORD=bipr bpna xpyc drnx
