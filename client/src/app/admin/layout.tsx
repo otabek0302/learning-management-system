@@ -1,19 +1,21 @@
 import React from "react";
-import ProfileSidebar from "@/components/sections/profile/profile-sidebar";
+import AdminSidebar from "@/components/sections/admin/admin-sidebar";
 
-import { Protected } from "@/hooks/useProtected";
+import { ProtectedAdmin } from "@/hooks/useAdmin";
 
-export default function ProfileLayout({ children }: { children: React.ReactNode }) {
+const AdminLayout = ({ children }: { children: React.ReactNode }) => {
   return (
-    <Protected>
+    <ProtectedAdmin>
       <section>
         <div className="container mx-auto px-4 md:px-6">
           <div className="flex h-full md:min-h-[calc(100vh-130px)]">
-            <ProfileSidebar />
+            <AdminSidebar />
             <div className="h-full flex-1 overflow-y-auto">{children}</div>
           </div>
         </div>
       </section>
-    </Protected>
+    </ProtectedAdmin>
   );
-}
+};
+
+export default AdminLayout;

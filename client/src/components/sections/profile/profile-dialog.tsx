@@ -3,21 +3,21 @@
 import * as Yup from "yup";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { User, Mail, Loader2, ImageIcon } from "lucide-react";
+import { User, Mail, Loader2, ImageIcon, Pencil } from "lucide-react";
 import { useFormik } from "formik";
 
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
+import { useUpdateUserInfoMutation } from "@/redux/features/users/userApi";
+import { useLoadUserQuery } from "@/redux/features/api/apiSlice";
+import { useSelector } from "react-redux";
+import { RootState } from "@/redux/store";
+import { toBase64 } from "@/lib/helper";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { useSelector } from "react-redux";
-import { RootState } from "@/redux/store";
-import { useUpdateUserInfoMutation } from "@/redux/features/users/userApi";
 
 import Image from "next/image";
-import { useLoadUserQuery } from "@/redux/features/api/apiSlice";
-import { toBase64 } from "@/lib/helper";
 
 const schema = Yup.object().shape({
   name: Yup.string().required("Name is required").min(2, "Name must be at least 2 characters"),
@@ -29,7 +29,7 @@ const ProfileDialog = ({ openEditDialog, setOpenEditDialog }: { openEditDialog: 
   const [loadUser, setLoadUser] = useState(true);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string>("");
-  
+
   const { user } = useSelector((state: RootState) => state.auth);
   const { refetch } = useLoadUserQuery(undefined, { skip: loadUser ? false : true });
   const [updateUserInfo, { error, data, status, isLoading, isError, isSuccess }] = useUpdateUserInfoMutation();
@@ -46,9 +46,14 @@ const ProfileDialog = ({ openEditDialog, setOpenEditDialog }: { openEditDialog: 
         toast.error(t("messages.errors.user-not-found"));
         return;
       }
-      const base64 = avatarFile ? await toBase64(avatarFile) : null;
-      const data = { name: values.name, email: values.email, avatar: base64 };
-      await updateUserInfo(data).unwrap();
+      try {
+        const base64 = avatarFile ? await toBase64(avatarFile) : null;
+        const data = { name: values.name, email: values.email, avatar: base64 };
+        await updateUserInfo(data).unwrap();
+      } catch (error) {
+        console.error("Update failed:", error);
+        toast.error(t("messages.errors.update-profile-error"));
+      }
     },
   });
 
@@ -59,11 +64,14 @@ const ProfileDialog = ({ openEditDialog, setOpenEditDialog }: { openEditDialog: 
       setLoadUser(true);
       refetch();
       setOpenEditDialog(false);
+      setAvatarFile(null);
+      setAvatarPreview("");
     }
 
     if (isError) {
       console.log(error);
       toast.error(t("messages.errors.update-profile-error"));
+      setLoadUser(false);
     }
   }, [isSuccess, isError]);
 
@@ -80,11 +88,11 @@ const ProfileDialog = ({ openEditDialog, setOpenEditDialog }: { openEditDialog: 
         toast.error(t("messages.errors.file-too-large"));
         return;
       }
+      setAvatarFile(file);
       const fileReader = new FileReader();
       fileReader.onload = () => {
         if (fileReader.readyState === 2) {
           setAvatarPreview(fileReader.result as string);
-          setAvatarFile(file);
         }
       };
       fileReader.readAsDataURL(file);
@@ -109,10 +117,13 @@ const ProfileDialog = ({ openEditDialog, setOpenEditDialog }: { openEditDialog: 
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Avatar */}
           <div className="space-y-2">
-            <Label htmlFor="avatar">{t("pages.profile.profile-dialog.avatar")}</Label>
-            <div className="relative flex h-48 w-48 cursor-pointer items-center justify-center rounded-xl border p-2" onClick={() => document.getElementById("avatar")?.click()}>
-              {avatarPreview ? <Image src={avatarPreview} alt="Avatar" className="h-full w-full rounded-lg object-cover" width={80} height={80} onError={() => setAvatarPreview("")} /> : <ImageIcon className="absolute left-1/2 top-1/2 h-10 w-10 -translate-x-1/2 -translate-y-1/2 text-primary" />}
-              <Input type="file" id="avatar" className="hidden" accept="image/*" onChange={handleAvatarChange} disabled={isLoading} />
+            <Label htmlFor="avatar-dialog">{t("pages.profile.profile-dialog.avatar")}</Label>
+            <div className="group relative flex h-48 w-48 cursor-pointer items-center justify-center overflow-hidden rounded-xl border p-2" onClick={() => document.getElementById("avatar-dialog")?.click()}>
+              {avatarPreview ? <Image src={avatarPreview} alt="Avatar Preview" fill priority key={avatarPreview} className="object-cover object-center" sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" /> : user?.avatar?.url ? <Image src={user.avatar.url} alt="User Avatar" fill priority className="object-cover object-center" sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" /> : <ImageIcon className="absolute left-1/2 top-1/2 h-10 w-10 -translate-x-1/2 -translate-y-1/2 text-primary" />}
+              <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
+                <Pencil className="h-8 w-8 text-white" />
+              </div>
+              <Input type="file" id="avatar-dialog" className="hidden" accept="image/*" onChange={handleAvatarChange} disabled={isLoading} />
             </div>
             <p className="text-xs text-gray-500">{t("pages.profile.profile-dialog.avatar-hint")}</p>
           </div>

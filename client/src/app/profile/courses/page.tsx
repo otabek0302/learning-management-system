@@ -2,8 +2,8 @@
 
 import { Protected } from "@/hooks/useProtected";
 
-import CourseToolbar from "@/components/client-ui/profile/course/course-toolbar";
-import CourseList from "@/components/client-ui/profile/course/course-list";
+import CourseToolbar from "@/components/sections/profile/course/course-toolbar";
+import CourseList from "@/components/sections/profile/course/course-list";
 
 const CoursesPage = () => {
   return (

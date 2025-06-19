@@ -242,6 +242,7 @@ export const updateUserInfo = CatchAsyncErrors(async (req: Request, res: Respons
         if (user?.avatar?.public_id) {
             await cloudinary.v2.uploader.destroy(user.avatar.public_id);
         }
+        
         if (user && typeof avatar === "string") {
             const uploadResponse = await cloudinary.v2.uploader.upload(avatar, { folder: "avatars", width: 150, height: 150, crop: "fill" });
             user.avatar = {
@@ -268,6 +269,8 @@ export const updateUserInfo = CatchAsyncErrors(async (req: Request, res: Respons
 export const updatePassword = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { oldPassword, newPassword } = req.body as IUpdatePassword;
+        console.log("Updating password", oldPassword, newPassword);
+        
 
         if (!oldPassword || !newPassword) {
             return next(new ErrorHandler("Please enter old and new password", 400));
@@ -319,28 +322,38 @@ export const updateProfilePicture = CatchAsyncErrors(async (req: Request, res: R
             return next(new ErrorHandler("User not found", 400));
         }
 
-        if (user?.avatar?.public_id) {
-            await cloudinary.v2.uploader.destroy(user?.avatar?.public_id);
-        } else {
-            const uploadResponse = await cloudinary.v2.uploader.upload(avatar, { folder: "avatars", width: 150, height: 150, crop: "fill" });
-            user.avatar = {
-                public_id: uploadResponse.public_id,
-                url: uploadResponse.secure_url
-            };
+        // Always destroy previous avatar
+        if (user.avatar?.public_id) {
+            await cloudinary.v2.uploader.destroy(user.avatar.public_id);
         }
 
-        await user.save();
+        // Always upload new one
+        const uploadResponse = await cloudinary.v2.uploader.upload(avatar, {
+            folder: "avatars",
+            width: 150,
+            height: 150,
+            crop: "fill",
+            resource_type: "auto"
+        });
 
+        user.avatar = {
+            public_id: uploadResponse.public_id,
+            url: uploadResponse.secure_url
+        };
+
+        await user.save();
         await redis.set(userId, JSON.stringify(user));
 
         res.status(200).json({
             success: true,
+            message: "Avatar updated successfully",
             user
-        })
+        });
     } catch (error: any) {
+        console.error("Avatar upload error:", error);
         return next(new ErrorHandler(error.message, 400));
     }
-})
+});
 
 
 // Forgot password

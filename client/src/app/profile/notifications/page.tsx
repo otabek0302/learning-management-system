@@ -2,8 +2,8 @@
 
 import { Protected } from "@/hooks/useProtected";
 
-import NotificationContent from "@/components/client-ui/profile/notification/notification-list";
-import NotificationToolbar from "@/components/client-ui/profile/notification/notification-toolbar";
+import NotificationContent from "@/components/sections/profile/notification/notification-list";
+import NotificationToolbar from "@/components/sections/profile/notification/notification-toolbar";
 
 const NotificationsPage = () => {
   return (

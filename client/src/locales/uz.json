@@ -151,11 +151,13 @@
       "user-not-found": "Foydalanuvchi topilmadi !",
       "no-courses": "Kurslar topilmadi !",
       "no-notifications": "Xabarlar topilmadi !",
-      "update-profile-error": "Profilni tahrirlashda xatolik yuz berdi"
+      "update-profile-error": "Profilni tahrirlashda xatolik yuz berdi",
+      "update-password-error": "Parolni tahrirlashda xatolik yuz berdi"
     },
     "success": {
       "social_sign_in": "Ijtimoiy tarmoq orqali kirish muvaffaqiyatli yakunlandi",
-      "update-profile-success": "Profil muvaffaqiyatli tahrirlandi"
+      "update-profile-success": "Profil muvaffaqiyatli tahrirlandi",
+      "update-password-success": "Parol muvaffaqiyatli tahrirlandi"
     }
   },
   "routes": {

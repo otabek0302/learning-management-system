@@ -2,10 +2,10 @@
 
 import { usePathname } from "next/navigation";
 
-import NavigationList from "@/components/client-ui/header/navigation-list";
-import NavigationIcons from "@/components/client-ui/header/navigation-icons";
-import NavigationLogo from "@/components/client-ui/header/navigation-logo";
-import NavigationMobileMenu from "@/components/client-ui/header/navigation-mobile-menu";
+import NavigationList from "@/components/sections/header/navigation-list";
+import NavigationIcons from "@/components/sections/header/navigation-icons";
+import NavigationLogo from "@/components/sections/header/navigation-logo";
+import NavigationMobileMenu from "@/components/sections/header/navigation-mobile-menu";
 
 const Header = () => {
   const pathname = usePathname();

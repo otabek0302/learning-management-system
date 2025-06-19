@@ -151,11 +151,13 @@
       "user-not-found": "Пользователь не найден !",
       "no-courses": "Курсы не найдены !",
       "no-notifications": "Уведомления не найдены !",
-      "update-profile-error": "Ошибка при обновлении профиля"
+      "update-profile-error": "Ошибка при обновлении профиля",
+      "update-password-error": "Ошибка при обновлении пароля"
     },
     "success": {
       "social_sign_in": "Вход через социальные сети успешно выполнен",
-      "update-profile-success": "Профиль успешно обновлен"
+      "update-profile-success": "Профиль успешно обновлен",
+      "update-password-success": "Пароль успешно обновлен"
     }
   },
   "routes": {

@@ -2,8 +2,8 @@
 
 import { Protected } from "@/hooks/useProtected";
 
-import SettingContent from "@/components/client-ui/profile/setting/setting-content";
-import SettingToolbar from "@/components/client-ui/profile/setting/setting-toolbar";
+import SettingContent from "@/components/sections/profile/setting/setting-content";
+import SettingToolbar from "@/components/sections/profile/setting/setting-toolbar";
 
 const SettingsPage = () => {
   return (

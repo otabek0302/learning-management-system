@@ -3,9 +3,9 @@
 import { useState } from "react";
 import { Login, Register, Verified } from "@/assets";
 import Image from "next/image";
-import SignUpForm from "@/components/client-ui/auth/sign-up-form";
-import SignInForm from "@/components/client-ui/auth/sign-in-form";
-import Verification from "@/components/client-ui/auth/verification";
+import SignUpForm from "@/components/sections/auth/sign-up-form";
+import SignInForm from "@/components/sections/auth/sign-in-form";
+import Verification from "@/components/sections/auth/verification";
 
 const LoginPage = () => {
   const [page, setPage] = useState("sign-in");

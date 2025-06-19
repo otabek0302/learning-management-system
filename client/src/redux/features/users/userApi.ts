@@ -3,10 +3,10 @@ import { apiSlice } from "../api/apiSlice";
 export const userApi = apiSlice.injectEndpoints({
     endpoints: (builder) => ({
         updateAvatar: builder.mutation({
-            query: (avatar) => ({
+            query: (data) => ({
                 url: "/users/update-user-avatar",
                 method: "PUT",
-                body: { avatar },
+                body: data,
                 credentials: "include" as const,
             })
         }),
@@ -19,10 +19,10 @@ export const userApi = apiSlice.injectEndpoints({
             })
         }),
         updatePassword: builder.mutation({
-            query: ({ oldPassword, newPassword }) => ({
+            query: (data) => ({
                 url: "/users/update-user-password",
                 method: "PUT",
-                body: { oldPassword, newPassword },
+                body: data,
                 credentials: "include" as const,
             })
         }),

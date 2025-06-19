@@ -151,11 +151,13 @@
       "user-not-found": "User not found !",
       "no-courses": "No courses found !",
       "no-notifications": "No notifications found !",
-      "update-profile-error": "Profile update failed"
+      "update-profile-error": "Profile update failed",
+      "update-password-error": "Password update failed"
     },
     "success": {
       "update-profile-success": "Profile updated successfully",
-      "social_sign_in": "Sign in with social success"
+      "social_sign_in": "Sign in with social success",
+      "update-password-success": "Password updated successfully"
     }
   },
   "routes": {
