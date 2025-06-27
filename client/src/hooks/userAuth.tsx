@@ -14,7 +14,7 @@ export function userAuth() {
   if (status === "loading" || isLoading) {
     return null;
   }
-
+  
   // If we have either a session or a user in Redux, we're authenticated
   if (session?.user || user) {
     return true;

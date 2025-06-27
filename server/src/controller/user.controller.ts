@@ -134,6 +134,9 @@ export const updateAccessToken = CatchAsyncErrors(async (req: Request, res: Resp
     try {
         const refresh_token = req.cookies.refresh_token as string | undefined;
 
+        console.log("Incoming refresh_token:", refresh_token);
+
+
         if (!refresh_token) {
             return next(new ErrorHandler("Please login to access this resource", 401));
         }
@@ -142,6 +145,7 @@ export const updateAccessToken = CatchAsyncErrors(async (req: Request, res: Resp
 
         try {
             decoded = jwt.verify(refresh_token, REFRESH_TOKEN as string) as IJwtPayload;
+            console.log("Decoded refresh token:", decoded);
         } catch (error) {
             return next(new ErrorHandler("Refresh token is not valid or has expired", 401));
         }
@@ -150,17 +154,34 @@ export const updateAccessToken = CatchAsyncErrors(async (req: Request, res: Resp
             return next(new ErrorHandler("Refresh token payload is invalid", 400));
         }
 
-        const session: string | null = await redis.get(decoded.id as string);
+        let session: string | null;
+
+        try {
+            session = await redis.get(decoded.id as string);
+            console.log("Session from Redis:", session);
+        } catch (redisError) {
+            console.error("Redis error during refresh:", redisError);
+            return next(new ErrorHandler("Internal server error. Please try again later.", 500));
+        }
 
         if (!session) {
             return next(new ErrorHandler("Refresh token is not valid or has expired", 401));
         }
 
-        const user = session as unknown as IUser;
+        let user: IUser;;
+        
+        if (typeof session === 'string') {
+            user = JSON.parse(session);
+        } else {
+            user = session as IUser;
+        }
+        console.log("User reconstructed from session:", user);
 
         if (!user || !user._id) {
+            console.log("User object missing _id:", user);
             return next(new ErrorHandler("User session is invalid", 400));
         }
+
 
         const accessToken = jwt.sign({ id: user?._id }, ACCESS_TOKEN as string, {
             expiresIn: "5m",
@@ -170,13 +191,18 @@ export const updateAccessToken = CatchAsyncErrors(async (req: Request, res: Resp
             expiresIn: "1d",
         });
 
+        console.log("Assigning user to req...");
         req.user = user;
 
+        console.log("Setting cookies...");
         res.cookie("access_token", accessToken, accessTokenOptions);
         res.cookie("refresh_token", refreshToken, refreshTokenOptions);
+        console.log("Cookies set successfully.");
 
         // Update user in Redis with 30 days expiration
+        console.log("Updating Redis session...");
         await redis.set(user._id.toString(), JSON.stringify(user), { ex: 30 * 24 * 60 * 60 });
+        console.log("Redis session updated successfully.");
 
         // Upload session to Redis
         res.status(200).json({
@@ -185,7 +211,8 @@ export const updateAccessToken = CatchAsyncErrors(async (req: Request, res: Resp
         })
 
     } catch (error: any) {
-        return next(new ErrorHandler(error.message, 400));
+        console.error("Unexpected error during refresh:", error);
+        return next(new ErrorHandler("Internal server error", 500));
     }
 })
 
@@ -242,7 +269,7 @@ export const updateUserInfo = CatchAsyncErrors(async (req: Request, res: Respons
         if (user?.avatar?.public_id) {
             await cloudinary.v2.uploader.destroy(user.avatar.public_id);
         }
-        
+
         if (user && typeof avatar === "string") {
             const uploadResponse = await cloudinary.v2.uploader.upload(avatar, { folder: "avatars", width: 150, height: 150, crop: "fill" });
             user.avatar = {
@@ -270,7 +297,7 @@ export const updatePassword = CatchAsyncErrors(async (req: Request, res: Respons
     try {
         const { oldPassword, newPassword } = req.body as IUpdatePassword;
         console.log("Updating password", oldPassword, newPassword);
-        
+
 
         if (!oldPassword || !newPassword) {
             return next(new ErrorHandler("Please enter old and new password", 400));

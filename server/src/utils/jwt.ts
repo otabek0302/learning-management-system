@@ -1,4 +1,4 @@
-import { Response } from 'express';
+import { CookieOptions, Response } from 'express';
 import { IUser } from '../models/user.model';
 import { ACCESS_TOKEN_EXPIRE, REFRESH_TOKEN_EXPIRE, NODE_ENV } from '../config/config';
 
@@ -17,20 +17,20 @@ export const accessTokenExpire = parseInt(ACCESS_TOKEN_EXPIRE || '300', 10)
 export const refreshTokenExpire = parseInt(REFRESH_TOKEN_EXPIRE || '3600', 10)
 
 // Options for cookies
-export const accessTokenOptions: ITokenOptions = {
+export const accessTokenOptions: CookieOptions = {
     // 300 seconds = 5 minutes
-    expires: new Date(Date.now() + accessTokenExpire * 60 * 60 * 1000),
+    expires: new Date(Date.now() + accessTokenExpire * 60 * 1000),
     // 300 seconds = 5 minutes
-    maxAge: accessTokenExpire * 60 * 60 * 1000,
+    maxAge: accessTokenExpire * 60 * 1000,
     httpOnly: true,
     sameSite: 'lax',
 }
 
-export const refreshTokenOptions: ITokenOptions = {
+export const refreshTokenOptions: CookieOptions = {
     // 3600 seconds = 3 hours
-    expires: new Date(Date.now() + refreshTokenExpire * 24 * 60 * 60 * 1000),
+    expires: new Date(Date.now() + refreshTokenExpire * 60 * 60 * 1000),
     // 3600 seconds = 3 hours
-    maxAge: refreshTokenExpire * 24 * 60 * 60 * 1000,
+    maxAge: refreshTokenExpire * 60 * 60 * 1000,
     httpOnly: true,
     sameSite: 'lax',
 }
@@ -41,7 +41,8 @@ export const sendToken = (user: IUser, statusCode: number, res: Response) => {
 
     // Upload session to Redis
     // redis.set(user._id, JSON.stringify(user) as any);
-    redis.set(user._id.toString(), JSON.stringify(user.toObject() as any), { ex: 3600 });
+    // redis.set(user._id.toString(), JSON.stringify(user.toObject() as any), { ex: 3600 });
+    redis.set(user._id.toString(), JSON.stringify(user.toObject() as any), { ex: refreshTokenExpire * 60 }); // if minutes
 
 
     // Only set secure to true in production

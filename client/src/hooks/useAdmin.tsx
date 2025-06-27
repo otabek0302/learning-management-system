@@ -9,14 +9,19 @@ export const ProtectedAdmin = ({ children }: { children: React.ReactNode }) => {
   const isAuthenticated = userAuth();
   const { user } = useSelector((state: RootState) => state.auth);
 
-  // Wait for auth to load
-  if (isAuthenticated === null || user === undefined) return null;
+  // Wait until data are loaded
+  const isLoading = isAuthenticated === null || user === undefined;
 
-  // Not logged in
-  if (!isAuthenticated) redirect("/login");
+  if (isLoading) {
+    return <div className="flex items-center justify-center h-screen">Loading...</div>;
+  }
 
-  // Not an admin - middleware should have already handled this, but as a fallback
-  if (user && user.role !== "admin") {
+  if (!isAuthenticated) {
+    redirect("/login");
+  }
+
+  if (user?.role !== "admin") {
+    console.warn("Non-admin user attempted to access admin area:", user);
     redirect("/");
   }
 
