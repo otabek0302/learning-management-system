@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { signOut } from "next-auth/react";
 import { useAppDispatch } from "@/redux/hooks";
 import { userLoggedOut } from "@/redux/features/auth/authSlice";
-import { User, Settings, BookOpen, Bell, LogOut, Users, ShoppingCart } from "lucide-react";
+import { User, BookOpen, LogOut, Users, ShoppingCart } from "lucide-react";
 
 import Link from "next/link";
 

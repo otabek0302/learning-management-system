@@ -1,7 +1,12 @@
 "use client";
 import * as Yup from "yup";
 import { useState } from "react";
-import { useFormik } from "formik";
+
+import CreateCourseOption from "@/components/sections/admin/courses/create-course-option";
+import CreateCourseInformation from "@/components/sections/admin/courses/create-course-information";
+import CreateCourseData from "@/components/sections/admin/courses/create-course-data";
+import CreateCourseContent from "@/components/sections/admin/courses/create-course-content";
+import CreateCoursePreview from "@/components/sections/admin/courses/create-course-preview";
 
 const schema = Yup.object().shape({
   name: Yup.string().required("Course name is required").min(3, "Course name must be at least 3 characters").max(100, "Course name must not exceed 100 characters"),
@@ -16,219 +21,100 @@ const schema = Yup.object().shape({
 
 const CreateCoursePage = () => {
   const [active, setActive] = useState(0);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const formik = useFormik({
-    initialValues: {
-      name: "",
-      description: "",
-      price: "",
-      estimatedPrice: "",
-      tags: "",
-      level: "",
-      demoUrl: "",
-      thumbnail: "",
-    },
-    validationSchema: schema,
-    onSubmit: async (values) => {
-      try {
-        console.log("Form submitted with values:", values);
-        alert("Course created successfully");
-      } catch (error) {
-        console.error("Error creating course:", error);
-        alert("Error creating course. Please try again.");
-      }
-    },
+  const [courseInfo, setCourseInfo] = useState({
+    name: "",
+    description: "",
+    price: "",
+    estimatedPrice: "",
+    tags: "",
+    level: "",
+    demoUrl: "",
+    thumbnail: "",
   });
 
+  const validateAndSubmit = async () => {
+    const combinedErrors: Record<string, string> = {};
+
+    // 1️⃣ Validate courseInfo with Yup
+    try {
+      await schema.validate(courseInfo, { abortEarly: false });
+    } catch (validationError: any) {
+      if (validationError.inner) {
+        validationError.inner.forEach((err: any) => {
+          combinedErrors[err.path] = err.message;
+        });
+      }
+    }
+
+    // 2️⃣ Validate benefits manually (example: ensure titles are not empty)
+    benefits.forEach((benefit, idx) => {
+      if (!benefit.title.trim()) {
+        combinedErrors[`benefit_${idx}`] = "Benefit title cannot be empty";
+      }
+    });
+
+    // 3️⃣ Validate prerequisites manually
+    prerequisites.forEach((pre, idx) => {
+      if (!pre.title.trim()) {
+        combinedErrors[`prerequisite_${idx}`] = "Prerequisite title cannot be empty";
+      }
+    });
+
+    // 4️⃣ Validate course content manually (example: check video URL and title)
+    courseContent.forEach((content, idx) => {
+      if (!content.title.trim()) {
+        combinedErrors[`content_title_${idx}`] = "Content title cannot be empty";
+      }
+      if (!content.videoUrl.trim()) {
+        combinedErrors[`content_videoUrl_${idx}`] = "Content video URL cannot be empty";
+      }
+    });
+
+    // Update error state
+    setErrors(combinedErrors);
+
+    if (Object.keys(combinedErrors).length > 0) {
+      console.error("Validation failed:", combinedErrors);
+      alert("Please fix validation errors before submitting.");
+      return;
+    }
+
+    // If everything is valid, submit
+    const finalPayload = {
+      ...courseInfo,
+      benefits,
+      prerequisites,
+      courseContent,
+      courseData,
+    };
+    console.log("Final payload:", finalPayload);
+    alert("Course created successfully!");
+  };
+
+  const [benefits, setBenefits] = useState([{ title: "" }]);
+  const [prerequisites, setPrerequisites] = useState([{ title: "" }]);
+
+  const [courseContent, setCourseContent] = useState([
+    {
+      videoUrl: "",
+      title: "",
+      description: "",
+      videoSection: "Untitled Section",
+      links: [{ title: "", url: "" }],
+      suggestion: "",
+    },
+  ]);
+  const [courseData, setCourseData] = useState({});
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 p-4">
-      <form onSubmit={formik.handleSubmit} className="w-full max-w-2xl rounded-lg bg-white p-8 shadow-lg">
-        <h2 className="mb-6 text-3xl font-bold text-gray-800">Create New Course</h2>
-
-        {/* Course Name */}
-        <div className="mb-4">
-          <label className="mb-2 block text-sm font-medium text-gray-700">Course Name *</label>
-          <input 
-            type="text" 
-            name="name" 
-            onChange={formik.handleChange}
-            onBlur={formik.handleBlur}
-            value={formik.values.name} 
-            className={`w-full rounded-md border p-3 ${
-              formik.touched.name && formik.errors.name 
-                ? 'border-red-500 focus:border-red-500' 
-                : 'border-gray-300 focus:border-blue-500'
-            } focus:outline-none focus:ring-1 focus:ring-blue-500`}
-            placeholder="Enter course name"
-          />
-          {formik.touched.name && formik.errors.name && (
-            <p className="mt-1 text-sm text-red-500">{formik.errors.name}</p>
-          )}
-        </div>
-
-        {/* Description */}
-        <div className="mb-4">
-          <label className="mb-2 block text-sm font-medium text-gray-700">Description *</label>
-          <textarea 
-            name="description" 
-            onChange={formik.handleChange}
-            onBlur={formik.handleBlur}
-            value={formik.values.description} 
-            rows={4}
-            className={`w-full rounded-md border p-3 ${
-              formik.touched.description && formik.errors.description 
-                ? 'border-red-500 focus:border-red-500' 
-                : 'border-gray-300 focus:border-blue-500'
-            } focus:outline-none focus:ring-1 focus:ring-blue-500`}
-            placeholder="Enter course description"
-          />
-          {formik.touched.description && formik.errors.description && (
-            <p className="mt-1 text-sm text-red-500">{formik.errors.description}</p>
-          )}
-        </div>
-
-        {/* Price */}
-        <div className="mb-4">
-          <label className="mb-2 block text-sm font-medium text-gray-700">Price *</label>
-          <input 
-            type="number" 
-            name="price" 
-            onChange={formik.handleChange}
-            onBlur={formik.handleBlur}
-            value={formik.values.price} 
-            className={`w-full rounded-md border p-3 ${
-              formik.touched.price && formik.errors.price 
-                ? 'border-red-500 focus:border-red-500' 
-                : 'border-gray-300 focus:border-blue-500'
-            } focus:outline-none focus:ring-1 focus:ring-blue-500`}
-            placeholder="0.00"
-            min="0"
-            step="0.01"
-          />
-          {formik.touched.price && formik.errors.price && (
-            <p className="mt-1 text-sm text-red-500">{formik.errors.price}</p>
-          )}
-        </div>
-
-        {/* Estimated Price */}
-        <div className="mb-4">
-          <label className="mb-2 block text-sm font-medium text-gray-700">Estimated Price</label>
-          <input 
-            type="number" 
-            name="estimatedPrice" 
-            onChange={formik.handleChange}
-            onBlur={formik.handleBlur}
-            value={formik.values.estimatedPrice} 
-            className={`w-full rounded-md border p-3 ${
-              formik.touched.estimatedPrice && formik.errors.estimatedPrice 
-                ? 'border-red-500 focus:border-red-500' 
-                : 'border-gray-300 focus:border-blue-500'
-            } focus:outline-none focus:ring-1 focus:ring-blue-500`}
-            placeholder="0.00"
-            min="0"
-            step="0.01"
-          />
-          {formik.touched.estimatedPrice && formik.errors.estimatedPrice && (
-            <p className="mt-1 text-sm text-red-500">{formik.errors.estimatedPrice}</p>
-          )}
-        </div>
-
-        {/* Tags */}
-        <div className="mb-4">
-          <label className="mb-2 block text-sm font-medium text-gray-700">Tags *</label>
-          <input 
-            type="text" 
-            name="tags" 
-            onChange={formik.handleChange}
-            onBlur={formik.handleBlur}
-            value={formik.values.tags} 
-            className={`w-full rounded-md border p-3 ${
-              formik.touched.tags && formik.errors.tags 
-                ? 'border-red-500 focus:border-red-500' 
-                : 'border-gray-300 focus:border-blue-500'
-            } focus:outline-none focus:ring-1 focus:ring-blue-500`}
-            placeholder="e.g., React, JavaScript, Web Development"
-          />
-          {formik.touched.tags && formik.errors.tags && (
-            <p className="mt-1 text-sm text-red-500">{formik.errors.tags}</p>
-          )}
-        </div>
-
-        {/* Level */}
-        <div className="mb-4">
-          <label className="mb-2 block text-sm font-medium text-gray-700">Course Level *</label>
-          <select 
-            name="level" 
-            onChange={formik.handleChange}
-            onBlur={formik.handleBlur}
-            value={formik.values.level} 
-            className={`w-full rounded-md border p-3 ${
-              formik.touched.level && formik.errors.level 
-                ? 'border-red-500 focus:border-red-500' 
-                : 'border-gray-300 focus:border-blue-500'
-            } focus:outline-none focus:ring-1 focus:ring-blue-500`}
-          >
-            <option value="">Select a level</option>
-            <option value="Beginner">Beginner</option>
-            <option value="Intermediate">Intermediate</option>
-            <option value="Advanced">Advanced</option>
-          </select>
-          {formik.touched.level && formik.errors.level && (
-            <p className="mt-1 text-sm text-red-500">{formik.errors.level}</p>
-          )}
-        </div>
-
-        {/* Demo URL */}
-        <div className="mb-4">
-          <label className="mb-2 block text-sm font-medium text-gray-700">Demo URL *</label>
-          <input 
-            type="url" 
-            name="demoUrl" 
-            onChange={formik.handleChange}
-            onBlur={formik.handleBlur}
-            value={formik.values.demoUrl} 
-            className={`w-full rounded-md border p-3 ${
-              formik.touched.demoUrl && formik.errors.demoUrl 
-                ? 'border-red-500 focus:border-red-500' 
-                : 'border-gray-300 focus:border-blue-500'
-            } focus:outline-none focus:ring-1 focus:ring-blue-500`}
-            placeholder="https://example.com/demo"
-          />
-          {formik.touched.demoUrl && formik.errors.demoUrl && (
-            <p className="mt-1 text-sm text-red-500">{formik.errors.demoUrl}</p>
-          )}
-        </div>
-
-        {/* Thumbnail */}
-        <div className="mb-6">
-          <label className="mb-2 block text-sm font-medium text-gray-700">Thumbnail URL *</label>
-          <input 
-            type="url" 
-            name="thumbnail" 
-            onChange={formik.handleChange}
-            onBlur={formik.handleBlur}
-            value={formik.values.thumbnail} 
-            className={`w-full rounded-md border p-3 ${
-              formik.touched.thumbnail && formik.errors.thumbnail 
-                ? 'border-red-500 focus:border-red-500' 
-                : 'border-gray-300 focus:border-blue-500'
-            } focus:outline-none focus:ring-1 focus:ring-blue-500`}
-            placeholder="https://example.com/thumbnail.jpg"
-          />
-          {formik.touched.thumbnail && formik.errors.thumbnail && (
-            <p className="mt-1 text-sm text-red-500">{formik.errors.thumbnail}</p>
-          )}
-        </div>
-
-        {/* Submit Button */}
-        <button 
-          type="submit" 
-          disabled={formik.isSubmitting}
-          className="w-full rounded-md bg-blue-600 px-4 py-3 text-white font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {formik.isSubmitting ? "Creating Course..." : "Create Course"}
-        </button>
-      </form>
+    <div className="flex min-h-screen flex-col items-center justify-start p-4">
+      <CreateCourseOption active={active} setActive={setActive} />
+      {active === 0 && <CreateCourseInformation courseInfo={courseInfo} setCourseInfo={setCourseInfo} errors={errors} setErrors={setErrors} setActive={setActive} active={active} />}
+      {active === 1 && <CreateCourseData benefits={benefits} setBenefits={setBenefits} prerequisites={prerequisites} setPrerequisites={setPrerequisites} errors={errors} setActive={setActive} active={active} />}
+      {active === 2 && <CreateCourseContent courseContent={courseContent} setCourseContent={setCourseContent} errors={errors} setActive={setActive} active={active} />}
+      {active === 3 && <CreateCoursePreview />}
     </div>
   );
 };
