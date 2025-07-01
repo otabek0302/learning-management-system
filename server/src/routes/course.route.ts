@@ -1,5 +1,5 @@
 import express from "express";
-import { createCourse, getAllCourses, getAllCoursesAdmin, getCourseByUser, getSingleCourse, updateCourse, addComment, addReplyToComment, addReview, replyToReview, deleteCourse } from "../controller/course.controller";
+import { createCourse, getAllCourses, getAllCoursesAdmin, getCourseByUser, getSingleCourse, updateCourse, addComment, addReplyToComment, addReview, replyToReview, deleteCourse, generateVideoUrlController } from "../controller/course.controller";
 import { isAuthenticated, authorizeRoles } from "../middleware/auth";
 
 const router = express.Router();
@@ -33,6 +33,9 @@ router.put("/add-review/:id", isAuthenticated, addReview);
 
 // Reply to Review in Course -- Only for Admin
 router.put("/admin/reply-review", isAuthenticated, authorizeRoles("admin"), replyToReview);
+
+// Generate Video Url
+router.post("/generate-video-otp", generateVideoUrlController);
 
 // Delete Course -- Only for Admin
 router.delete("/admin/delete-course", isAuthenticated, authorizeRoles("admin"), deleteCourse);

@@ -18,41 +18,49 @@ interface CourseContent {
 interface CreateCourseContentProps {
   courseContent?: CourseContent[];
   setCourseContent?: React.Dispatch<React.SetStateAction<CourseContent[]>>;
-  errors?: Record<string, string>;
+  errors: Record<string, string>;
+  setErrors: React.Dispatch<React.SetStateAction<Record<string, string>>>;
   setActive: (active: number) => void;
   active: number;
 }
 
-const CreateCourseContent = ({
-  courseContent = [
-    {
-      videoUrl: "",
-      title: "",
-      description: "",
-      videoSection: "Untitled Section",
-      links: [{ title: "", url: "" }],
-      suggestion: "",
-    },
-  ],
-  setCourseContent,
-  errors = {},
-  setActive,
-  active,
-}: CreateCourseContentProps) => {
+const CreateCourseContent = ({ courseContent = [], setCourseContent, errors, setErrors, setActive, active }: CreateCourseContentProps) => {
   const handleSubmitPrevious = () => {
     setActive(active - 1);
   };
 
   const handleSubmitNext = () => {
-    // Simple validation
-    const hasEmptyFields = courseContent.some((content) => !content.title.trim() || !content.videoUrl.trim());
+    const newErrors = { ...errors };
+    let hasError = false;
 
-    if (hasEmptyFields) {
-      toast.error("Please fill in all video titles and URLs");
+    courseContent.forEach((content, idx) => {
+      if (!content.title.trim()) {
+        newErrors[`content_title_${idx}`] = "Content title cannot be empty";
+        hasError = true;
+      } else {
+        delete newErrors[`content_title_${idx}`];
+      }
+      if (!content.videoUrl.trim()) {
+        newErrors[`content_videoUrl_${idx}`] = "Content video URL cannot be empty";
+        hasError = true;
+      } else {
+        delete newErrors[`content_videoUrl_${idx}`];
+      }
+      if (!content.description.trim()) {
+        newErrors[`content_description_${idx}`] = "Content description cannot be empty";
+        hasError = true;
+      } else {
+        delete newErrors[`content_description_${idx}`];
+      }
+    });
+
+    setErrors(newErrors);
+
+    if (hasError) {
+      toast.error("Please fix the errors before proceeding.");
       return;
     }
 
-    console.log("Course Content:", courseContent);
     setActive(active + 1);
   };
 
@@ -128,7 +136,7 @@ const CreateCourseContent = ({
             {courseContent.length > 1 && (
               <Button type="button" variant="destructive" size="sm" onClick={() => removeVideoSection(sectionIndex)}>
                 <Trash2 className="h-4 w-4" />
-                Remove Section
+                <span className="hidden md:block">Remove Section</span>
               </Button>
             )}
           </div>
@@ -150,7 +158,7 @@ const CreateCourseContent = ({
             {/* Video URL */}
             <div className="flex flex-col gap-2">
               <Label>Video URL</Label>
-              <Input type="url" value={content.videoUrl} onChange={(e) => updateVideoSection(sectionIndex, "videoUrl", e.target.value)} placeholder="https://example.com/video" className={errors[`content_videoUrl_${sectionIndex}`] ? "border-red-500" : ""} />
+              <Input type="text" value={content.videoUrl} onChange={(e) => updateVideoSection(sectionIndex, "videoUrl", e.target.value)} placeholder="https://example.com/video" className={errors[`content_videoUrl_${sectionIndex}`] ? "border-red-500" : ""} />
               {errors[`content_videoUrl_${sectionIndex}`] && <span className="text-xs text-red-500">{errors[`content_videoUrl_${sectionIndex}`]}</span>}
             </div>
 
@@ -158,6 +166,7 @@ const CreateCourseContent = ({
             <div className="flex flex-col gap-2">
               <Label>Description</Label>
               <Textarea value={content.description} onChange={(e) => updateVideoSection(sectionIndex, "description", e.target.value)} placeholder="Enter video description" rows={3} />
+              {errors[`content_description_${sectionIndex}`] && <span className="text-xs text-red-500">{errors[`content_description_${sectionIndex}`]}</span>}
             </div>
 
             {/* Links */}
@@ -165,11 +174,11 @@ const CreateCourseContent = ({
               <div className="flex items-center justify-between">
                 <Label className="flex items-center gap-2">
                   <Link className="h-4 w-4" />
-                  Additional Links
+                  <span className="hidden md:block">Additional Links</span>
                 </Label>
                 <Button type="button" variant="outline" size="sm" onClick={() => addLink(sectionIndex)}>
                   <Plus className="h-4 w-4" />
-                  Add Link
+                  <span className="hidden md:block">Add Link</span>
                 </Button>
               </div>
 
@@ -190,7 +199,7 @@ const CreateCourseContent = ({
             <div className="flex flex-col gap-2">
               <Label className="flex items-center gap-2">
                 <FileText className="h-4 w-4" />
-                Suggestions
+                <span className="hidden md:block">Suggestions</span>
               </Label>
               <Textarea value={content.suggestion} onChange={(e) => updateVideoSection(sectionIndex, "suggestion", e.target.value)} placeholder="Any suggestions or notes for this section" rows={2} />
             </div>
@@ -201,17 +210,17 @@ const CreateCourseContent = ({
       {/* Add New Section Button */}
       <Button type="button" variant="outline" onClick={addVideoSection} className="w-full">
         <Plus className="h-4 w-4" />
-        Add New Video Section
+        <span className="hidden md:block">Add New Video Section</span>
       </Button>
 
       {/* Navigation Buttons */}
       <div className="flex items-center justify-center gap-2">
         <Button type="button" variant="outline" size="lg" onClick={handleSubmitPrevious} className="px-14">
           <ArrowLeft className="h-4 w-4" />
-          Back
+          <span className="hidden md:block">Back</span>
         </Button>
         <Button type="button" size="lg" onClick={handleSubmitNext} className="px-14">
-          Next
+          <span className="hidden md:block">Next</span>
           <ArrowRight className="h-4 w-4" />
         </Button>
       </div>

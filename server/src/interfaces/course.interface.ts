@@ -116,3 +116,8 @@ export interface IReplyToReviewRequestBody {
 export interface IDeleteCourseRequestBody {
     id: string;
 }
+
+// Generate Video Url Request Body
+export interface IGenerateVideoUrlRequestBody {
+    videoId: string;
+}

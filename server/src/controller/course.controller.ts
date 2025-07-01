@@ -1,13 +1,15 @@
 import { Request, Response, NextFunction } from "express";
 
 import { sendNotificationMail, updateCourseThumbnail, uploadCourseThumbnail, validateCourseData } from "../services/course.service";
-import { IAddCommentRequestBody, IAddReplyToCommentRequestBody, IAddReviewRequestBody, IComment, ICourse, ICreateCourseRequestBody, IDeleteCourseRequestBody, IReply, IReplyToReviewRequestBody, IReview, IThumbnail } from "../interfaces/course.interface";
+import { IAddCommentRequestBody, IAddReplyToCommentRequestBody, IAddReviewRequestBody, IComment, ICourse, ICreateCourseRequestBody, IDeleteCourseRequestBody, IGenerateVideoUrlRequestBody, IReply, IReplyToReviewRequestBody, IReview, IThumbnail } from "../interfaces/course.interface";
+import { VDOCIPHER_API_SECRET } from "../config/config";
 import { createNotification } from "../services/notification.service";
 
 import CatchAsyncErrors from "../middleware/catchAsyncErrors"
 import ErrorHandler from "../utils/ErrorHandler";
 import Course from "../models/course.model";
 import redis from "../utils/redis";
+import axios from "axios";
 
 // Upload Course
 export const createCourse = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
@@ -525,6 +527,35 @@ export const deleteCourse = CatchAsyncErrors(async (req: Request, res: Response,
             success: true,
             message: "Course deleted successfully"
         })
+    } catch (error: any) {
+        return next(new ErrorHandler(error.message, 500));
+    }
+})
+
+// Generate Video Url
+export const generateVideoUrlController = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { videoId } = req.body as IGenerateVideoUrlRequestBody;
+        console.log("videoId", videoId);
+        console.log(VDOCIPHER_API_SECRET);
+        
+
+        const response = await axios.get(`https://dev.vdocipher.com/api/videos/${videoId}/otp`, {
+            params: {
+                ttl: 3600
+            },
+            headers: {
+                Accept: "application/json",
+                "Content-Type": "application/json",
+                Authorization: `Apisecret ${VDOCIPHER_API_SECRET}`
+            }
+        });
+
+        console.log(response.data);
+
+
+        // Return the raw VdoCipher response (otp, playbackInfo)
+        res.status(200).json(response.data);
     } catch (error: any) {
         return next(new ErrorHandler(error.message, 500));
     }

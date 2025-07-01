@@ -56,8 +56,7 @@ const CreateCourseInformation = ({ courseInfo, setCourseInfo, errors, setErrors,
       setErrors({ ...errors, name: "Name is required", description: "Description is required", price: "Price is required", estimatedPrice: "Estimated price is required", tags: "Tags are required", level: "Level is required", demoUrl: "Demo URL is required", thumbnail: "Thumbnail is required" });
       return;
     }
-
-    console.log(courseInfo);
+    
     setActive(active + 1);
   };
 
@@ -141,13 +140,7 @@ const CreateCourseInformation = ({ courseInfo, setCourseInfo, errors, setErrors,
         <Label htmlFor="description" className="text-sm text-gray-500">
           Description
         </Label>
-        <Textarea
-          value={courseInfo.description}
-          onChange={(e) => setCourseInfo((prev: CourseInfo) => ({ ...prev, description: e.target.value }))}
-          placeholder="Enter course description"
-          className={errors.description ? "border-red-500" : ""}
-          rows={4}
-        />
+        <Textarea value={courseInfo.description} onChange={(e) => setCourseInfo((prev: CourseInfo) => ({ ...prev, description: e.target.value }))} placeholder="Enter course description" className={errors.description ? "border-red-500" : ""} rows={4} />
         {errors.description && <span className="text-xs text-red-500">{errors.description}</span>}
       </div>
 
@@ -201,7 +194,7 @@ const CreateCourseInformation = ({ courseInfo, setCourseInfo, errors, setErrors,
         <Label htmlFor="demoUrl" className="text-sm text-gray-500">
           Demo URL
         </Label>
-        <Input type="url" value={courseInfo.demoUrl} onChange={(e) => setCourseInfo((prev: CourseInfo) => ({ ...prev, demoUrl: e.target.value }))} placeholder="https://example.com/demo" className={errors.demoUrl ? "border-red-500" : ""} />
+        <Input type="text" value={courseInfo.demoUrl} onChange={(e) => setCourseInfo((prev: CourseInfo) => ({ ...prev, demoUrl: e.target.value }))} placeholder="https://example.com/demo" className={errors.demoUrl ? "border-red-500" : ""} />
         {errors.demoUrl && <span className="text-xs text-red-500">{errors.demoUrl}</span>}
       </div>
 
@@ -211,31 +204,13 @@ const CreateCourseInformation = ({ courseInfo, setCourseInfo, errors, setErrors,
           Thumbnail
         </Label>
         <div className="relative">
-          <input
-            type="file"
-            id="thumbnail"
-            accept="image/*"
-            onChange={handleFileChange}
-            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-          />
-          <div
-            className={`flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-6 transition ${
-              dragging ? "border-blue-500 bg-blue-50" : "border-gray-300"
-            } ${errors.thumbnail ? "border-red-500" : ""}`}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDropLeave}
-            onDrop={handleDrop}
-          >
+          <input type="file" id="thumbnail" accept="image/*" onChange={handleFileChange} className="absolute inset-0 h-full w-full cursor-pointer opacity-0" />
+          <div className={`flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-6 transition ${dragging ? "border-blue-500 bg-blue-50" : "border-gray-300"} ${errors.thumbnail ? "border-red-500" : ""}`} onDragOver={handleDragOver} onDragLeave={handleDropLeave} onDrop={handleDrop}>
             {courseInfo.thumbnail ? (
               <div className="relative">
-                <img
-                  src={courseInfo.thumbnail}
-                  alt="Thumbnail Preview"
-                  className="max-h-64 rounded-lg object-contain"
-                  onError={handleImageError}
-                />
-                <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-10 transition-all rounded-lg flex items-center justify-center">
-                  <p className="text-white opacity-0 hover:opacity-100 text-sm">Click to change image</p>
+                <img src={courseInfo.thumbnail} alt="Thumbnail Preview" className="max-h-64 rounded-lg object-contain" onError={handleImageError} />
+                <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-black bg-opacity-0 transition-all hover:bg-opacity-10">
+                  <p className="text-sm text-white opacity-0 hover:opacity-100">Click to change image</p>
                 </div>
               </div>
             ) : (
@@ -251,7 +226,7 @@ const CreateCourseInformation = ({ courseInfo, setCourseInfo, errors, setErrors,
 
       {/* Submit Button */}
       <Button type="submit" size="lg" className="mt-6 w-full">
-        Next
+        <span className="hidden md:block">Next</span>
         <ArrowRight className="h-4 w-4" />
       </Button>
     </form>

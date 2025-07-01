@@ -134,9 +134,6 @@ export const updateAccessToken = CatchAsyncErrors(async (req: Request, res: Resp
     try {
         const refresh_token = req.cookies.refresh_token as string | undefined;
 
-        console.log("Incoming refresh_token:", refresh_token);
-
-
         if (!refresh_token) {
             return next(new ErrorHandler("Please login to access this resource", 401));
         }
@@ -145,7 +142,6 @@ export const updateAccessToken = CatchAsyncErrors(async (req: Request, res: Resp
 
         try {
             decoded = jwt.verify(refresh_token, REFRESH_TOKEN as string) as IJwtPayload;
-            console.log("Decoded refresh token:", decoded);
         } catch (error) {
             return next(new ErrorHandler("Refresh token is not valid or has expired", 401));
         }
@@ -158,9 +154,7 @@ export const updateAccessToken = CatchAsyncErrors(async (req: Request, res: Resp
 
         try {
             session = await redis.get(decoded.id as string);
-            console.log("Session from Redis:", session);
         } catch (redisError) {
-            console.error("Redis error during refresh:", redisError);
             return next(new ErrorHandler("Internal server error. Please try again later.", 500));
         }
 
@@ -175,10 +169,8 @@ export const updateAccessToken = CatchAsyncErrors(async (req: Request, res: Resp
         } else {
             user = session as IUser;
         }
-        console.log("User reconstructed from session:", user);
 
         if (!user || !user._id) {
-            console.log("User object missing _id:", user);
             return next(new ErrorHandler("User session is invalid", 400));
         }
 
@@ -190,19 +182,15 @@ export const updateAccessToken = CatchAsyncErrors(async (req: Request, res: Resp
         const refreshToken = jwt.sign({ id: user?._id }, REFRESH_TOKEN as string, {
             expiresIn: "1d",
         });
-
-        console.log("Assigning user to req...");
+        
+        // Set user in request for further use
         req.user = user;
 
-        console.log("Setting cookies...");
         res.cookie("access_token", accessToken, accessTokenOptions);
         res.cookie("refresh_token", refreshToken, refreshTokenOptions);
-        console.log("Cookies set successfully.");
 
         // Update user in Redis with 30 days expiration
-        console.log("Updating Redis session...");
         await redis.set(user._id.toString(), JSON.stringify(user), { ex: 30 * 24 * 60 * 60 });
-        console.log("Redis session updated successfully.");
 
         // Upload session to Redis
         res.status(200).json({

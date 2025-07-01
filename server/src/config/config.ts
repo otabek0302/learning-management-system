@@ -56,3 +56,6 @@ export const SMTP_PORT = process.env.SMTP_PORT || "";
 export const SMTP_SERVICE = process.env.SMTP_SERVICE || "";
 export const SMTP_MAIL = process.env.SMTP_MAIL || "";
 export const SMTP_PASSWORD = process.env.SMTP_PASSWORD || "";
+
+// VdoCipher API configuration
+export const VDOCIPHER_API_SECRET = process.env.VDOCIPHER_API_SECRET || "";
