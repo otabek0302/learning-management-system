@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { signOut } from "next-auth/react";
 import { useAppDispatch } from "@/redux/hooks";
 import { userLoggedOut } from "@/redux/features/auth/authSlice";
-import { User, BookOpen, LogOut, Users, ShoppingCart } from "lucide-react";
+import { User, BookOpen, LogOut, Users, ShoppingCart, Settings } from "lucide-react";
 
 import Link from "next/link";
 
@@ -41,6 +41,10 @@ const AdminSidebar = () => {
           <Link href={"/admin/orders"} className={`flex items-center gap-3 rounded-lg px-3 py-2 text-gray-700 transition-colors hover:bg-gray-100 ${active === "orders" ? "bg-gray-100" : ""}`} onClick={() => handleActive("orders")}>
             <ShoppingCart className="h-5 w-5 text-primary" />
             <span>Orders</span>
+          </Link>
+          <Link href={"/admin/layout-page"} className={`flex items-center gap-3 rounded-lg px-3 py-2 text-gray-700 transition-colors hover:bg-gray-100 ${active === "layout" ? "bg-gray-100" : ""}`} onClick={() => handleActive("layout")}>
+            <Settings className="h-5 w-5 text-primary" />
+            <span>Layout Page</span>
           </Link>
         </nav>
 

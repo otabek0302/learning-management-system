@@ -1,4 +1,5 @@
 import React from "react";
+
 import { Plus, Trash2, ArrowLeft, ArrowRight, Video, Link, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +11,7 @@ interface CourseContent {
   videoUrl: string;
   title: string;
   description: string;
+  videoLength: number;
   videoSection: string;
   links: { title: string; url: string }[];
   suggestion: string;
@@ -72,6 +74,7 @@ const CreateCourseContent = ({ courseContent = [], setCourseContent, errors, set
           videoUrl: "",
           title: "",
           description: "",
+          videoLength: 0,
           videoSection: `Section ${prev.length + 1}`,
           links: [{ title: "", url: "" }],
           suggestion: "",
@@ -167,6 +170,13 @@ const CreateCourseContent = ({ courseContent = [], setCourseContent, errors, set
               <Label>Description</Label>
               <Textarea value={content.description} onChange={(e) => updateVideoSection(sectionIndex, "description", e.target.value)} placeholder="Enter video description" rows={3} />
               {errors[`content_description_${sectionIndex}`] && <span className="text-xs text-red-500">{errors[`content_description_${sectionIndex}`]}</span>}
+            </div>
+
+            {/* Video Length */}
+            <div className="flex flex-col gap-2">
+              <Label>Video Length (in minutes)</Label>
+              <Input type="number" value={content.videoLength} onChange={(e) => updateVideoSection(sectionIndex, "videoLength", e.target.value)} placeholder="Enter video length" className={errors[`content_videoLength_${sectionIndex}`] ? "border-red-500" : ""} min={0} />
+              {errors[`content_videoLength_${sectionIndex}`] && <span className="text-xs text-red-500">{errors[`content_videoLength_${sectionIndex}`]}</span>}
             </div>
 
             {/* Links */}

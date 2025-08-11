@@ -154,14 +154,14 @@ const ProfileDialog = ({ openEditDialog, setOpenEditDialog }: { openEditDialog: 
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {t("pages.profile.profile-dialog.updating")}
+                  <span className="hidden sm:block">{t("pages.profile.profile-dialog.updating")}</span>
                 </>
               ) : (
-                t("pages.profile.profile-dialog.update")
+                <span className="hidden sm:block">{t("pages.profile.profile-dialog.update")}</span>
               )}
             </Button>
             <Button type="button" variant="outline" className="bg-gray-200 hover:bg-gray-100" onClick={handleCancel} disabled={isLoading}>
-              {t("pages.profile.profile-dialog.cancel")}
+              <span className="hidden sm:block">{t("pages.profile.profile-dialog.cancel")}</span>
             </Button>
           </div>
         </form>

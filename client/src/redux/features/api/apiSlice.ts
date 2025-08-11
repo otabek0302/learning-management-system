@@ -4,20 +4,22 @@ import { userLoggedIn } from "../auth/authSlice";
 
 export const apiSlice = createApi({
   reducerPath: "api",
-  baseQuery: fetchBaseQuery({ baseUrl: process.env.NEXT_PUBLIC_API_URL }),
+  baseQuery: fetchBaseQuery({ 
+    baseUrl: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1",
+    credentials: "include",
+  }),
+  tagTypes: ['Layout', 'User', 'Course'],
   endpoints: (builder) => ({
     refreshToken: builder.query<RefreshTokenResponse, void>({
       query: () => ({
         url: "/users/refreshtoken",
         method: "GET",
-        credentials: "include" as const,
       }),
     }),
     loadUser: builder.query<LoginResponse, void>({
       query: () => ({
         url: "/users/me",
         method: "GET",
-        credentials: "include" as const,
       }),
       async onQueryStarted(arg, { queryFulfilled, dispatch }) {
         try {
@@ -27,7 +29,7 @@ export const apiSlice = createApi({
             user: result.data?.user,
           }));
         } catch (error) {
-          console.log(error);
+          console.error("Load user error:", error);
         }
       }
     }),

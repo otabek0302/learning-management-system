@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
 import axios from "axios";
+
+import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 
-const CoursePlayer = ({ videoUrl }: { videoUrl: string }) => {
+export const CoursePlayer = ({ videoUrl }: { videoUrl: string }) => {
   const [videoData, setVideoData] = useState({
     otp: "",
     playbackInfo: "",
@@ -53,5 +54,3 @@ const CoursePlayer = ({ videoUrl }: { videoUrl: string }) => {
     </div>
   );
 };
-
-export default CoursePlayer;

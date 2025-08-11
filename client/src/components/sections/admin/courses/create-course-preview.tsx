@@ -1,13 +1,14 @@
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Loader2 } from "lucide-react";
+import { CoursePlayer } from "./course-player";
 
-import CoursePlayer from "./course-player";
 
 interface Link {
   title: string;
   url: string;
 }
 interface CourseContentSection {
+  videoLength: number;
   videoUrl: string;
   title: string;
   description: string;
@@ -33,9 +34,10 @@ interface CreateCoursePreviewProps {
   active: number;
   setActive: (active: number) => void;
   handleSubmit: () => void;
+  isLoading: boolean;
 }
 
-const CreateCoursePreview: React.FC<CreateCoursePreviewProps> = ({ courseData, active, setActive, handleSubmit }) => {
+const CreateCoursePreview: React.FC<CreateCoursePreviewProps> = ({ courseData, active, setActive, handleSubmit, isLoading }) => {
   return (
     <div className="w-full max-w-4xl mx-auto p-6 flex flex-col gap-8">
       <div>
@@ -120,6 +122,10 @@ const CreateCoursePreview: React.FC<CreateCoursePreviewProps> = ({ courseData, a
                   <div className="font-medium">{section.title}</div>
                 </div>
                 <div>
+                  <span className="text-sm text-gray-500">Video Length</span>
+                  <div className="font-medium">{section.videoLength}</div>
+                </div>
+                <div>
                   <span className="text-sm text-gray-500">Video URL</span>
                   <CoursePlayer videoUrl={section.videoUrl} />
                 </div>
@@ -156,13 +162,13 @@ const CreateCoursePreview: React.FC<CreateCoursePreviewProps> = ({ courseData, a
 
       {/* Buttons */}
       <div className="flex gap-4 justify-end">
-        <Button type="button" variant="outline" onClick={() => setActive(active - 1)}>
+        <Button type="button" variant="outline" onClick={() => setActive(active - 1)} disabled={isLoading}>
           <ArrowLeft className="h-4 w-4 mr-1" />
           <span className="hidden md:inline">Back</span>
         </Button>
-        <Button type="button" onClick={handleSubmit}>
-          <CheckCircle2 className="h-4 w-4 mr-1" />
-          <span className="hidden md:inline">Submit</span>
+        <Button type="button" onClick={handleSubmit} disabled={isLoading}>
+          {isLoading ? <Loader2 className="h-4 w-4 mr-1" /> : <CheckCircle2 className="h-4 w-4 mr-1" />}
+          <span className="hidden md:inline">{isLoading ? "Submitting..." : "Submit"}</span>
         </Button>
       </div>
     </div>

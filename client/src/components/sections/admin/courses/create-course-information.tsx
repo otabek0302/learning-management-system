@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import { useGetAllLayoutsQuery } from "@/redux/features/layout-page/layoutApi";
 
 interface CourseInfo {
   name: string;
@@ -15,6 +16,7 @@ interface CourseInfo {
   estimatedPrice: string;
   tags: string;
   level: string;
+  category: string;
   demoUrl: string;
   thumbnail: string;
 }
@@ -31,22 +33,32 @@ interface CreateCourseInformationProps {
 const CreateCourseInformation = ({ courseInfo, setCourseInfo, errors, setErrors, setActive, active }: CreateCourseInformationProps) => {
   const [dragging, setDragging] = useState(false);
   const [tags, setTags] = useState<string[]>([]);
+  const [categories, setCategories] = useState<string[]>([]);
 
-  // Sync tags with courseInfo
+  const { data: categoriesResponse } = useGetAllLayoutsQuery("category", {});
+
   useEffect(() => {
-    if (courseInfo.tags) {
+    if (categoriesResponse) {
+      setCategories(categoriesResponse.layouts);
+    }
+  }, [categoriesResponse]);
+
+  useEffect(() => {
+    if (courseInfo.tags && tags.length === 0) {
       const tagsArray = courseInfo.tags
         .split(",")
         .map((tag: string) => tag.trim())
         .filter((tag: string) => tag);
       setTags(tagsArray);
     }
-  }, [courseInfo.tags]);
+  }, [courseInfo.tags, tags.length]);
 
-  // Update courseInfo when tags change
   useEffect(() => {
-    setCourseInfo((prev: CourseInfo) => ({ ...prev, tags: tags.join(", ") }));
-  }, [tags, setCourseInfo]);
+    const currentTagsString = tags.join(", ");
+    if (courseInfo.tags !== currentTagsString) {
+      setCourseInfo((prev: CourseInfo) => ({ ...prev, tags: currentTagsString }));
+    }
+  }, [tags, setCourseInfo, courseInfo.tags]);
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -56,7 +68,7 @@ const CreateCourseInformation = ({ courseInfo, setCourseInfo, errors, setErrors,
       setErrors({ ...errors, name: "Name is required", description: "Description is required", price: "Price is required", estimatedPrice: "Estimated price is required", tags: "Tags are required", level: "Level is required", demoUrl: "Demo URL is required", thumbnail: "Thumbnail is required" });
       return;
     }
-    
+
     setActive(active + 1);
   };
 
@@ -169,14 +181,14 @@ const CreateCourseInformation = ({ courseInfo, setCourseInfo, errors, setErrors,
         <Label htmlFor="tags" className="text-sm text-gray-500">
           Tags
         </Label>
-        <TagInput value={tags} onChange={setTags} placeholder="e.g., React, JavaScript, Python" error={!!errors.tags} />
+        <TagInput key={courseInfo.tags} value={tags} onChange={setTags} placeholder="e.g., React, JavaScript, Python" error={!!errors.tags} />
         {errors.tags && <span className="text-xs text-red-500">{errors.tags}</span>}
       </div>
 
       {/* Level */}
       <div className="flex flex-col gap-2">
         <Label className="text-sm text-gray-500">Course Level</Label>
-        <Select value={courseInfo.level} onValueChange={(value) => setCourseInfo((prev: CourseInfo) => ({ ...prev, level: value }))}>
+        <Select key={courseInfo.level} value={courseInfo.level} onValueChange={(value) => setCourseInfo((prev: CourseInfo) => ({ ...prev, level: value }))}>
           <SelectTrigger className={errors.level ? "border-red-500" : ""}>
             <SelectValue placeholder="Select a level" />
           </SelectTrigger>
@@ -187,6 +199,24 @@ const CreateCourseInformation = ({ courseInfo, setCourseInfo, errors, setErrors,
           </SelectContent>
         </Select>
         {errors.level && <span className="text-xs text-red-500">{errors.level}</span>}
+      </div>
+
+      {/* Categories */}
+      <div className="flex flex-col gap-2">
+        <Label className="text-sm text-gray-500">Course Categories</Label>
+        <Select key={courseInfo.category} value={courseInfo.category} onValueChange={(value) => setCourseInfo((prev: CourseInfo) => ({ ...prev, category: value }))}>
+          <SelectTrigger className={errors.category ? "border-red-500" : ""}>
+            <SelectValue placeholder="Select a category" />
+          </SelectTrigger>
+          <SelectContent>
+            {categories.map((category: any) => (
+              <SelectItem key={category._id} value={category.type}>
+                {category.type.charAt(0).toUpperCase() + category.type.slice(1)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {errors.category && <span className="text-xs text-red-500">{errors.category}</span>}
       </div>
 
       {/* Demo URL */}

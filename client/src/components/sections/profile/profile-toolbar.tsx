@@ -9,7 +9,7 @@ const ProfileToolbar = ({ openEditDialog, setOpenEditDialog }: { openEditDialog:
   return (
     <div className="flex items-center justify-between gap-4">
       <h3 className="ml-1 text-xl font-bold tracking-tight">{t("pages.profile.profile-toolbar.title")}</h3>
-      <Button variant="outline" className="cursor-pointer bg-primary text-white rounded-lg border-none hover:bg-primary/90 hover:text-white" onClick={() => setOpenEditDialog(!openEditDialog)}>
+      <Button variant="default" className="cursor-pointer rounded-lg" onClick={() => setOpenEditDialog(!openEditDialog)}>
         {t("pages.profile.profile-toolbar.edit-profile")}
       </Button>
     </div>

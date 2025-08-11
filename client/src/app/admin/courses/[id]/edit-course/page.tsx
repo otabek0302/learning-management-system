@@ -2,8 +2,8 @@
 
 import { toast } from "sonner";
 import { useEffect, useState } from "react";
-import { useCreateCourseMutation } from "@/redux/features/courses/courseApi";
-import { useRouter } from "next/navigation";
+import { useUpdateCourseMutation, useGetSingleCourseAdminQuery } from "@/redux/features/courses/courseApi";
+import { useRouter, useParams } from "next/navigation";
 
 import CreateCourseOption from "@/components/sections/admin/courses/create-course-option";
 import CreateCourseInformation from "@/components/sections/admin/courses/create-course-information";
@@ -11,10 +11,14 @@ import CreateCourseData from "@/components/sections/admin/courses/create-course-
 import CreateCourseContent from "@/components/sections/admin/courses/create-course-content";
 import CreateCoursePreview from "@/components/sections/admin/courses/create-course-preview";
 
-const CreateCoursePage = () => {
+const EditCoursePage = () => {
   const router = useRouter();
+  const params = useParams();
+  const courseId = params.id as string;
   
-  const [createCourse, { isLoading, isSuccess, isError }] = useCreateCourseMutation();
+  const [updateCourse, { isLoading, isSuccess, isError }] = useUpdateCourseMutation();
+  const { data: courseData, isLoading: isLoadingCourse, error } = useGetSingleCourseAdminQuery(courseId);
+  
   const [active, setActive] = useState(0);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -25,18 +29,15 @@ const CreateCoursePage = () => {
     estimatedPrice: "",
     tags: "",
     level: "",
-    category: "",
     demoUrl: "",
     thumbnail: "",
   });
-  
   const [courseContent, setCourseContent] = useState([
     {
       videoUrl: "",
       title: "",
       description: "",
       videoSection: "Untitled Section",
-      videoLength: 0,
       links: [{ title: "", url: "" }],
       suggestion: "",
     },
@@ -44,15 +45,47 @@ const CreateCoursePage = () => {
   const [benefits, setBenefits] = useState([{ title: "" }]);
   const [prerequisites, setPrerequisites] = useState([{ title: "" }]);
 
+  // Pre-populate form data when course data is loaded
+  useEffect(() => {
+    if (courseData?.course) {
+      const course = courseData.course;
+      
+      setCourseInfo({
+        name: course.name || "",
+        description: course.description || "",
+        price: course.price?.toString() || "",
+        estimatedPrice: course.estimatedPrice?.toString() || "",
+        tags: course.tags || "",
+        level: course.level || "",
+        demoUrl: course.demoUrl || "",
+        thumbnail: course.thumbnail?.url || "",
+      });
+
+      setBenefits(course.benefits?.length > 0 ? course.benefits : [{ title: "" }]);
+      setPrerequisites(course.prerequisites?.length > 0 ? course.prerequisites : [{ title: "" }]);
+      
+      if (course.courseData?.length > 0) {
+        setCourseContent(course.courseData.map((content: any) => ({
+          videoUrl: content.videoUrl || "",
+          title: content.title || "",
+          description: content.description || "",
+          videoSection: content.videoSection || "Untitled Section",
+          links: content.links?.length > 0 ? content.links : [{ title: "", url: "" }],
+          suggestion: content.suggestion || "",
+        })));
+      }
+    }
+  }, [courseData]);
+
   useEffect(() => {
     if (isSuccess) {
-      toast.success("Course created successfully!");
+      toast.success("Course updated successfully!");
       router.push("/admin/courses");
     }
     if (isError) {
-      toast.error("Something went wrong!");
+      toast.error("Something went wrong while updating the course!");
     }
-  }, [isSuccess, isError]);
+  }, [isSuccess, isError, router]);
 
   const handleSubmit = async () => {
     // Format the benefits and prerequisites
@@ -64,7 +97,6 @@ const CreateCoursePage = () => {
       videoUrl: content.videoUrl,
       title: content.title,
       description: content.description,
-      videoLength: content.videoLength,
       videoSection: content.videoSection,
       links: content.links.map((link) => ({ title: link.title, url: link.url })),
       suggestion: content.suggestion,
@@ -77,8 +109,36 @@ const CreateCoursePage = () => {
       prerequisites: formattedPrerequisites,
       courseData: formattedCourseContent,
     };
-    await createCourse(data as any);
+    
+    await updateCourse({ id: courseId, data: data as any });
   };
+
+  if (isLoadingCourse) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+          <p className="text-muted-foreground">Loading course data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <p className="text-destructive">Error loading course. Please try again.</p>
+          <button 
+            onClick={() => router.push("/admin/courses")}
+            className="mt-4 rounded-lg bg-primary px-4 py-2 text-white hover:bg-primary/90"
+          >
+            Back to Courses
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-start p-4">
@@ -91,4 +151,4 @@ const CreateCoursePage = () => {
   );
 };
 
-export default CreateCoursePage;
+export default EditCoursePage;

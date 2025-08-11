@@ -18,6 +18,8 @@ export const useAuthInitializer = () => {
                     await store.dispatch(
                         apiSlice.endpoints.loadUser.initiate(undefined, { forceRefetch: true })
                     );
+                } else {
+                    console.log('Refresh token failed, user not authenticated');
                 }
             } catch (err) {
                 console.error('Auth init failed:', err);

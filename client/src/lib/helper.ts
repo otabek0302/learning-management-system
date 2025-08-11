@@ -5,3 +5,10 @@ export const toBase64 = (file: File): Promise<string> =>
         reader.onload = () => resolve(reader.result as string);
         reader.onerror = reject;
     });
+
+export const formatPrice = (price: number) => {
+    return new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: "USD",
+    }).format(price);
+};

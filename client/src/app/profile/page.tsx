@@ -11,7 +11,7 @@ const ProfilePage = () => {
   const [openEditDialog, setOpenEditDialog] = useState(false);
 
   return (
-    <div className="h-full overflow-y-auto p-4">
+    <div className="h-full overflow-y-auto p-4 pr-0">
       <ProfileToolbar openEditDialog={openEditDialog} setOpenEditDialog={setOpenEditDialog} />
       <ProfileInformation />
       <UpdatedPassword />
