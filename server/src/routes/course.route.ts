@@ -1,5 +1,5 @@
 import express from "express";
-import { createCourse, getAllCourses, getAllCoursesAdmin, getCourseByUser, getSingleCourse, updateCourse, addComment, addReplyToComment, addReview, replyToReview, deleteCourse, generateVideoUrlController } from "../controller/course.controller";
+import { createCourse, getAllCourses, getAllCoursesAdmin, getCourseByUser, getSingleCourse, getSingleCourseAdmin, updateCourse, addComment, addReplyToComment, addReview, replyToReview, deleteCourse, generateVideoUrlController } from "../controller/course.controller";
 import { isAuthenticated, authorizeRoles } from "../middleware/auth";
 
 const router = express.Router();
@@ -12,6 +12,9 @@ router.put("/admin/update-course/:id", isAuthenticated, authorizeRoles("admin"),
 
 // Get Single Course
 router.get("/get-single-course/:id", getSingleCourse);
+
+// Get Single Course for Admin - Full data for editing
+router.get("/admin/get-single-course/:id", isAuthenticated, authorizeRoles("admin"), getSingleCourseAdmin);
 
 // Get All Courses
 router.get("/get-all-courses", getAllCourses);

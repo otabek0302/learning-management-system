@@ -7,6 +7,7 @@ export interface ICourse extends Document {
     _id: string;
     name: string;
     description: string;
+    category: string;
     price: number;
     estimatedPrice?: number;
     thumbnail: IThumbnail;
@@ -52,6 +53,7 @@ export interface IThumbnail extends Document {
 export interface ICourseData extends Document {
     title: string;
     description: string;
+    category: string;
     videoUrl: string;
     videoSection: string;
     videoLength: number;

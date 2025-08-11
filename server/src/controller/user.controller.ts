@@ -143,6 +143,7 @@ export const updateAccessToken = CatchAsyncErrors(async (req: Request, res: Resp
         try {
             decoded = jwt.verify(refresh_token, REFRESH_TOKEN as string) as IJwtPayload;
         } catch (error) {
+            console.error("JWT verification failed:", error);
             return next(new ErrorHandler("Refresh token is not valid or has expired", 401));
         }
 
@@ -155,6 +156,7 @@ export const updateAccessToken = CatchAsyncErrors(async (req: Request, res: Resp
         try {
             session = await redis.get(decoded.id as string);
         } catch (redisError) {
+            console.error("Redis error:", redisError);
             return next(new ErrorHandler("Internal server error. Please try again later.", 500));
         }
 
@@ -162,18 +164,22 @@ export const updateAccessToken = CatchAsyncErrors(async (req: Request, res: Resp
             return next(new ErrorHandler("Refresh token is not valid or has expired", 401));
         }
 
-        let user: IUser;;
+        let user: IUser;
         
-        if (typeof session === 'string') {
-            user = JSON.parse(session);
-        } else {
-            user = session as IUser;
+        try {
+            if (typeof session === 'string') {
+                user = JSON.parse(session);
+            } else {
+                user = session as IUser;
+            }
+        } catch (parseError) {
+            console.error("Session parsing error:", parseError);
+            return next(new ErrorHandler("User session is invalid", 400));
         }
 
         if (!user || !user._id) {
             return next(new ErrorHandler("User session is invalid", 400));
         }
-
 
         const accessToken = jwt.sign({ id: user?._id }, ACCESS_TOKEN as string, {
             expiresIn: "5m",
@@ -533,14 +539,14 @@ export const searchUsers = CatchAsyncErrors(async (req: Request, res: Response, 
 // Get User By Id
 export const fetchUserById = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
     try {
-        // Get user id from body
-        const { id } = req.body as IGetUserById;
+        // Get user id from params
+        const { id } = req.params;
 
         // Get user by id
         const user = await User.findById(id).select("-password").lean();
 
         if (!user) {
-            return next(new ErrorHandler("User not found", 400));
+            return next(new ErrorHandler("User not found", 404));
         }
 
         res.status(200).json({
@@ -596,6 +602,94 @@ export const updateUserRole = CatchAsyncErrors(async (req: Request, res: Respons
         res.status(200).json({
             success: true,
             message: "User role updated successfully"
+        })
+    } catch (error: any) {
+        return next(new ErrorHandler(error.message, 400));
+    }
+})
+
+// Create User -- Admin
+export const createUser = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { name, email, password, role } = req.body;
+
+        if (!name || !email || !password) {
+            return next(new ErrorHandler("Please provide name, email and password", 400));
+        }
+
+        // Check if user already exists
+        const existingUser = await User.findOne({ email });
+        if (existingUser) {
+            return next(new ErrorHandler("User with this email already exists", 400));
+        }
+
+        // Create user
+        const user = await User.create({
+            name,
+            email,
+            password,
+            role: role || "user",
+            isVerified: true // Admin created users are verified by default
+        });
+
+        res.status(201).json({
+            success: true,
+            message: "User created successfully",
+            user: {
+                _id: user._id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+                isVerified: user.isVerified,
+                createdAt: user.createdAt
+            }
+        })
+    } catch (error: any) {
+        return next(new ErrorHandler(error.message, 400));
+    }
+})
+
+// Update User -- Admin
+export const updateUser = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { id } = req.params;
+        const { name, email, role, isVerified } = req.body;
+
+        // Get user by id
+        const user = await User.findById(id);
+
+        if (!user) {
+            return next(new ErrorHandler("User not found", 404));
+        }
+
+        // Check if email is being changed and if it already exists
+        if (email && email !== user.email) {
+            const existingUser = await User.findOne({ email });
+            if (existingUser) {
+                return next(new ErrorHandler("User with this email already exists", 400));
+            }
+        }
+
+        // Update user fields
+        if (name) user.name = name;
+        if (email) user.email = email;
+        if (role) user.role = role;
+        if (typeof isVerified === 'boolean') user.isVerified = isVerified;
+
+        await user.save();
+
+        res.status(200).json({
+            success: true,
+            message: "User updated successfully",
+            user: {
+                _id: user._id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+                isVerified: user.isVerified,
+                createdAt: user.createdAt,
+                updatedAt: user.updatedAt
+            }
         })
     } catch (error: any) {
         return next(new ErrorHandler(error.message, 400));

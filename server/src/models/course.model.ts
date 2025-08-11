@@ -26,6 +26,7 @@ const commentSchema = new Schema<IComment>({
 const courseDataSchema = new Schema<ICourseData>({
     title: String,
     description: String,
+    category: String,
     videoUrl: String,
     videoSection: String,
     videoLength: Number,
@@ -41,6 +42,10 @@ const courseSchema = new Schema<ICourse>({
         required: true,
     },
     description: {
+        type: String,
+        required: true,
+    },
+    category: {
         type: String,
         required: true,
     },

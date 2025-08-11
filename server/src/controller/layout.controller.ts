@@ -1,9 +1,9 @@
 import { Request, Response, NextFunction } from "express";
 import { Layout as LayoutType } from "../interfaces/layout.interface";
+import { BannerImage } from "../interfaces/layout.interface";
 
 import ErrorHandler from "../utils/ErrorHandler";
 import CatchAsyncErrors from "../middleware/catchAsyncErrors";
-import { BannerImage } from "../interfaces/layout.interface";
 import cloudinary from "cloudinary";
 import Layout from "../models/layout.model";
 
@@ -67,7 +67,8 @@ export const createLayout = CatchAsyncErrors(async (req: Request, res: Response,
 // Edit Layout -- Only for Admin
 export const editLayout = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
     try {
-        // Get type from body
+        // Get id from params and type from body
+        const { id } = req.params as { id: string };
         const { type } = req.body as LayoutType;
 
         // Check if type is provided
@@ -80,8 +81,8 @@ export const editLayout = CatchAsyncErrors(async (req: Request, res: Response, n
             return next(new ErrorHandler("Invalid type", 400));
         }
 
-        // Find existing layout by type
-        const existingLayout = await Layout.findOne({ type: type.toLowerCase() });
+        // Find existing layout by ID
+        const existingLayout = await Layout.findById(id);
 
         if (!existingLayout) {
             return next(new ErrorHandler("Layout not found", 404));
@@ -92,8 +93,10 @@ export const editLayout = CatchAsyncErrors(async (req: Request, res: Response, n
             const { title, subTitle, image } = req.body;
             
             if (image) {
-                // Delete old image from cloudinary
-                await cloudinary.v2.uploader.destroy(existingLayout.banner.image.public_id);
+                // Only delete old image if it exists and we're uploading a new one
+                if (existingLayout.banner?.image?.public_id) {
+                    await cloudinary.v2.uploader.destroy(existingLayout.banner.image.public_id);
+                }
                 
                 // Upload new image
                 const cloudImage = await cloudinary.v2.uploader.upload(image, { folder: "layout" });
@@ -129,11 +132,43 @@ export const editLayout = CatchAsyncErrors(async (req: Request, res: Response, n
     }
 });
 
+// Delete Layout -- Only for Admin
+export const deleteLayout = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        // Get id from params
+        const { id } = req.params as { id: string };
+
+        // Find layout
+        const layout = await Layout.findOne({ _id: id });
+
+        // If layout is not found, return error
+        if (!layout) {
+            return next(new ErrorHandler("Layout not found", 404));
+        }
+
+        if (layout.type === "banner" && layout.banner?.image?.public_id) {
+            // Delete image from cloudinary
+            await cloudinary.v2.uploader.destroy(layout.banner.image.public_id);
+        }
+
+        // Delete layout
+        await Layout.findOneAndDelete({ _id: id });
+
+        // Return success message
+        res.status(200).json({
+            success: true,
+            message: "Layout deleted successfully",
+        });
+    } catch (error: any) {
+        return next(new ErrorHandler(error.message, 500));
+    }
+})
+
 // Get Layout -- Only for Admin
 export const getLayout = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
     try {
         // Get type from query
-        const { type } = req.body as LayoutType;
+        const { type } = req.params as { type: string };
         
         // Get layout by type
         const layout = await Layout.findOne({ type: type.toLowerCase() });
@@ -152,3 +187,43 @@ export const getLayout = CatchAsyncErrors(async (req: Request, res: Response, ne
         return next(new ErrorHandler(error.message, 500));
     }
 })
+
+// Get Layout By ID -- Only for Admin
+export const getLayoutById = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        // Get id from params
+        const { id } = req.params as { id: string };
+        
+        // Get layout by id
+        const layout = await Layout.findById(id);
+        
+        // If layout is not found, return error
+        if (!layout) {
+            return next(new ErrorHandler("Layout not found", 404));
+        }
+
+        // Return layout
+        res.status(200).json({
+            success: true,
+            layout,
+        });
+    } catch (error: any) {
+        return next(new ErrorHandler(error.message, 500));
+    }
+})
+
+// Get All Layouts -- Only for Admin
+export const getAllLayouts = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        // Get all layouts
+        const layouts = await Layout.find({});
+        
+        // Return layouts
+        res.status(200).json({
+            success: true,
+            layouts,
+        });
+    } catch (error: any) {
+        return next(new ErrorHandler(error.message, 500));
+    }
+});

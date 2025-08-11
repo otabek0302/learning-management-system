@@ -44,7 +44,6 @@ export const isAuthenticated = CatchAsyncErrors(async (req: Request, res: Respon
     next();
 });
 
-
 // Validate the user roles
 export const authorizeRoles = (...roles: string[]) => {
     return (req: Request, res: Response, next: NextFunction) => {

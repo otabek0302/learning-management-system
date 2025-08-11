@@ -14,7 +14,7 @@ import UserRouter from "./routes/user.route";
 import CourseRouter from "./routes/course.route";
 import OrderRouter from "./routes/order.route";
 import NotificationRouter from "./routes/notification.route";
-import DashboardRouter from "./routes/dashboard.route";
+import AnalyticRouter from "./routes/analytic.route";
 import LayoutRouter from "./routes/layout.route";
 
 // Initialize express
@@ -43,7 +43,7 @@ app.use("/api/v1/users", UserRouter)
 app.use("/api/v1/courses", CourseRouter)
 app.use("/api/v1/orders", OrderRouter)
 app.use("/api/v1/notifications", NotificationRouter)
-app.use("/api/v1/dashboard", DashboardRouter)
+app.use("/api/v1/analytics", AnalyticRouter)
 app.use("/api/v1/layout", LayoutRouter)
 // Unknown route
 app.all("*", (req: Request, res: Response, next: NextFunction) => {

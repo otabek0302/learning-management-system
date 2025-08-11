@@ -7,11 +7,14 @@ import sendMail from "../utils/sendMail";
 
 // Validate Course Data
 export const validateCourseData = async (data: ICourse, res: Response, next: NextFunction) => {
-    const { name, description, price, estimatedPrice, thumbnail, tags, level, demoUrl, benefits, prerequisites, reviews, courseData, ratings, purchased } = data;
+    const { name, description, price, estimatedPrice, thumbnail, tags, level, demoUrl, benefits, prerequisites, courseData } = data;
 
-    if (!name || !description || !price || !estimatedPrice || !thumbnail || !tags || !level || !demoUrl || !benefits || !prerequisites || !reviews || !courseData || !ratings || !purchased) {
-        return next(new ErrorHandler("All fields are required", 400));
+    if (!name || !description || !price || !estimatedPrice || !thumbnail || !tags || !level || !demoUrl || !benefits || !prerequisites || !courseData) {
+        console.log("All fields are required");
+        next(new ErrorHandler("All fields are required", 400));
+        return false;
     }
+    return true;
 }
 
 // Upload Course Thumbnail

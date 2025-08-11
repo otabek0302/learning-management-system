@@ -11,93 +11,7 @@ import Course from "../models/course.model";
 import redis from "../utils/redis";
 import axios from "axios";
 
-// Upload Course
-export const createCourse = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
-    try {
-        // Validate request body
-        const courseData: Partial<ICreateCourseRequestBody> = req.body;
-
-        // Validate course data
-        validateCourseData(req.body, res, next);
-
-        // Upload course thumbnail
-        const thumbnailResponse = await uploadCourseThumbnail(courseData.thumbnail as string);
-
-        // Create course
-        const course = await Course.create({
-            ...courseData,
-            thumbnail: {
-                public_id: thumbnailResponse.public_id,
-                url: thumbnailResponse.secure_url,
-            }
-        });
-
-        // If course is not created
-        if (!course) {
-            return next(new ErrorHandler("Course not created", 400));
-        }
-
-        // Create Notification
-        await createNotification({
-            user: req.user?._id || "",
-            title: "New Course",
-            message: `You have a new course ${course.name}`
-        });
-
-        // Return success response
-        res.status(201).json({
-            success: true,
-            course
-        })
-    } catch (error: any) {
-        return next(new ErrorHandler(error.message, 500));
-    }
-})
-
-// Update Course
-export const updateCourse = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
-    try {
-        // Get course id from params
-        const courseData: Partial<ICourse> = req.body;
-
-        const isExist = await Course.findById(req.params.id);
-
-        if (!isExist) {
-            return next(new ErrorHandler("Course not found", 404));
-        }
-
-        if (courseData.thumbnail) {
-            // @ts-ignore
-            const updatedThumbnail = await updateCourseThumbnail(isExist as ICourse, courseData.thumbnail as string);
-
-            courseData.thumbnail = {
-                public_id: updatedThumbnail.public_id,
-                url: updatedThumbnail.secure_url
-            } as IThumbnail;
-        }
-
-        // Update course
-        const course = await Course.findByIdAndUpdate(req.params.id, { $set: courseData }, { new: true });
-
-        // Create Notification
-        await createNotification({
-            user: req.user?._id || "",
-            title: "Course Updated",
-            message: `You have updated your course ${course?.name}`
-        });
-
-        // Return success response
-        res.status(200).json({
-            success: true,
-            message: "Course updated successfully",
-            course
-        })
-    } catch (error: any) {
-        return next(new ErrorHandler(error.message, 500));
-    }
-})
-
-// Get Single Course - With Purchased Course
+// Get Single Course -- User
 export const getSingleCourse = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
     try {
         // Check if course is cached
@@ -135,7 +49,7 @@ export const getSingleCourse = CatchAsyncErrors(async (req: Request, res: Respon
     }
 })
 
-// Get All Courses with Purchased Course
+// Get All Courses -- User
 export const getAllCourses = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
     try {
 
@@ -182,7 +96,7 @@ export const getAllCourses = CatchAsyncErrors(async (req: Request, res: Response
     }
 })
 
-// Get course content - only for subscribed users
+// Get course content -- User
 export const getCourseByUser = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
     try {
         // Get courses of user
@@ -213,7 +127,7 @@ export const getCourseByUser = CatchAsyncErrors(async (req: Request, res: Respon
     }
 })
 
-// Add Comment in Course 
+// Add Comment in Course -- User
 export const addComment = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
     try {
         // Get course id, content id and question from body
@@ -266,7 +180,7 @@ export const addComment = CatchAsyncErrors(async (req: Request, res: Response, n
     }
 })
 
-// Add Reply to Comment in Course
+// Add Reply to Comment in Course -- User
 export const addReplyToComment = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
     try {
         // Get course id, content id and comment id from body
@@ -339,7 +253,7 @@ export const addReplyToComment = CatchAsyncErrors(async (req: Request, res: Resp
     }
 })
 
-// Add Review in Course
+// Add Review in Course -- User
 export const addReview = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
     try {
         // Get review, rating and user id from body
@@ -407,7 +321,7 @@ export const addReview = CatchAsyncErrors(async (req: Request, res: Response, ne
     }
 })
 
-// Reply to Review in Course
+// Reply to Review in Course -- User
 export const replyToReview = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
     try {
         // Get reply, review id and course id from body
@@ -471,8 +385,140 @@ export const replyToReview = CatchAsyncErrors(async (req: Request, res: Response
 })
 
 // Admin Routes
-// Get All Courses
 
+// Create Course -- Admin
+export const createCourse = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        // Validate request body
+        const courseData: Partial<ICreateCourseRequestBody> = req.body;
+
+        // Validate course data
+        const isValid = await validateCourseData(req.body, res, next);
+        if (!isValid) {
+            return;
+        }
+
+        // Upload course thumbnail
+        const thumbnailResponse = await uploadCourseThumbnail(courseData.thumbnail as string);
+
+        // Convert string prices to numbers
+        const processedCourseData = {
+            ...courseData,
+            ccourseContent: courseData.courseData,
+            price: Number(courseData.price),
+            estimatedPrice: Number(courseData.estimatedPrice),
+        };
+
+        // Create course
+        const course = await Course.create({
+            ...processedCourseData,
+            thumbnail: {
+                public_id: thumbnailResponse.public_id,
+                url: thumbnailResponse.secure_url,
+            }
+        });
+
+        // If course is not created
+        if (!course) {
+            return next(new ErrorHandler("Course not created", 400));
+        }
+
+        // Create Notification
+        await createNotification({
+            user: req.user?._id || "",
+            title: "New Course",
+            message: `You have a new course ${course.name}`
+        });
+
+        // Return success response
+        res.status(201).json({
+            success: true,
+            course
+        })
+    } catch (error: any) {
+        return next(new ErrorHandler(error.message, 500));
+    }
+})
+
+// Update Course -- Admin
+export const updateCourse = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        // Get course id from params
+        const courseData: Partial<ICourse> = req.body;
+
+        const isExist = await Course.findById(req.params.id);
+
+        if (!isExist) {
+            return next(new ErrorHandler("Course not found", 404));
+        }
+
+        // Only process thumbnail if it's a new base64 image (not an existing URL)
+        const thumbnailData = courseData.thumbnail as any;
+        if (thumbnailData && typeof thumbnailData === 'string' && thumbnailData.startsWith('data:image')) {
+            // @ts-ignore
+            const updatedThumbnail = await updateCourseThumbnail(isExist as ICourse, thumbnailData);
+
+            courseData.thumbnail = {
+                public_id: updatedThumbnail.public_id,
+                url: updatedThumbnail.secure_url
+            } as IThumbnail;
+        } else if (thumbnailData && typeof thumbnailData === 'string' && !thumbnailData.startsWith('data:image')) {
+            // If it's an existing URL, keep the existing thumbnail data
+            delete courseData.thumbnail;
+        }
+
+        // Update course
+        const course = await Course.findByIdAndUpdate(req.params.id, { $set: courseData }, { new: true });
+
+        // Create Notification
+        await createNotification({
+            user: req.user?._id || "",
+            title: "Course Updated",
+            message: `You have updated your course ${course?.name}`
+        });
+
+        // Return success response
+        res.status(200).json({
+            success: true,
+            message: "Course updated successfully",
+            course
+        })
+    } catch (error: any) {
+        return next(new ErrorHandler(error.message, 500));
+    }
+})
+
+// Delete Course -- Admin
+export const deleteCourse = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        // Get course id from body
+        const { id } = req.body as IDeleteCourseRequestBody;
+
+        // Check if course exists
+        const course = await Course.findById(id);
+
+        // Check if course exists
+        if (!course) {
+            return next(new ErrorHandler("Course not found", 400));
+        }
+
+        // Delete course
+        await course.deleteOne();
+
+        // Delete course from redis
+        await redis.del(id);
+
+        // Return success response
+        res.status(200).json({
+            success: true,
+            message: "Course deleted successfully"
+        })
+    } catch (error: any) {
+        return next(new ErrorHandler(error.message, 500));
+    }
+})
+
+// Get All Courses -- Admin
 export const getAllCoursesAdmin = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
     try {
         const page = parseInt(req.query.page as string) || 1;
@@ -503,30 +549,22 @@ export const getAllCoursesAdmin = CatchAsyncErrors(async (req: Request, res: Res
     }
 })
 
-export const deleteCourse = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
+// Get Single Course -- Admin
+export const getSingleCourseAdmin = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
     try {
-        // Get course id from body
-        const { id } = req.body as IDeleteCourseRequestBody;
+        // Get course id from params - no field exclusions for admin
+        const course = await Course.findById(req.params.id);
 
-        // Check if course exists
-        const course = await Course.findById(id);
-
-        // Check if course exists
         if (!course) {
-            return next(new ErrorHandler("Course not found", 400));
+            return next(new ErrorHandler("Course not found", 404));
         }
-
-        // Delete course
-        await course.deleteOne();
-
-        // Delete course from redis
-        await redis.del(id);
 
         // Return success response
         res.status(200).json({
             success: true,
-            message: "Course deleted successfully"
+            course
         })
+
     } catch (error: any) {
         return next(new ErrorHandler(error.message, 500));
     }
@@ -538,7 +576,7 @@ export const generateVideoUrlController = CatchAsyncErrors(async (req: Request, 
         const { videoId } = req.body as IGenerateVideoUrlRequestBody;
         console.log("videoId", videoId);
         console.log(VDOCIPHER_API_SECRET);
-        
+
 
         const response = await axios.get(`https://dev.vdocipher.com/api/videos/${videoId}/otp`, {
             params: {

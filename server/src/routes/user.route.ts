@@ -1,7 +1,7 @@
 import express from "express";
 const router = express.Router();
 
-import { activateUser, deleteUser, fetchUserById, forgotPassword, getAllUsers, getUserInfo, loginUser, logoutUser, registerUser, resetPassword, searchUsers, socialAuth, updateAccessToken, updatePassword, updateProfilePicture, updateUserInfo, updateUserRole, verifyForgotPasswordCode } from "../controller/user.controller";
+import { activateUser, createUser, deleteUser, fetchUserById, forgotPassword, getAllUsers, getUserInfo, loginUser, logoutUser, registerUser, resetPassword, searchUsers, socialAuth, updateAccessToken, updatePassword, updateProfilePicture, updateUser, updateUserInfo, updateUserRole, verifyForgotPasswordCode } from "../controller/user.controller";
 import { authorizeRoles, isAuthenticated } from "../middleware/auth";
 
 // User Routes
@@ -17,7 +17,7 @@ router.post('/login', loginUser);
 router.get('/logout', isAuthenticated, authorizeRoles("admin"), logoutUser);
 
 // Refresh Token
-router.get('/refreshtoken', isAuthenticated, updateAccessToken);
+router.get('/refreshtoken', updateAccessToken);
 
 // Get User Info
 router.get('/me', isAuthenticated, getUserInfo);
@@ -49,7 +49,7 @@ router.post('/reset-password', resetPassword);
 router.get('/admin/users', isAuthenticated, authorizeRoles("admin"), getAllUsers);
 
 // Get User by ID -- Only for Admin
-router.get('/admin/get-user', isAuthenticated, authorizeRoles("admin"), fetchUserById);
+router.get('/admin/get-user/:id', isAuthenticated, authorizeRoles("admin"), fetchUserById);
 
 // Delete User -- Only for Admin
 router.delete('/admin/delete-user', isAuthenticated, authorizeRoles("admin"), deleteUser);
@@ -59,5 +59,11 @@ router.get('/admin/search-users', isAuthenticated, authorizeRoles("admin"), sear
 
 // Update User Role -- Only for Admin
 router.put('/admin/update-role', isAuthenticated, authorizeRoles("admin"), updateUserRole);
+
+// Create User -- Only for Admin
+router.post('/admin/create-user', isAuthenticated, authorizeRoles("admin"), createUser);
+
+// Update User -- Only for Admin
+router.put('/admin/update-user/:id', isAuthenticated, authorizeRoles("admin"), updateUser);
 
 export default router;
