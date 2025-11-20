@@ -145,11 +145,11 @@ const UserDetailsPage = () => {
             <CardContent>
               {user.courses && user.courses.length > 0 ? (
                 <div className="space-y-3">
-                  {user.courses.map((course: any, index: number) => (
+                  {user.courses.map((course: { _id: string; courseId?: { name: string }; enrolledAt?: string }, index: number) => (
                     <div key={index} className="flex items-center justify-between rounded-lg border p-3">
                       <div>
                         <p className="font-medium">{course.courseId?.name || `Course ${index + 1}`}</p>
-                        <p className="text-sm text-muted-foreground">Enrolled on {format(new Date(course.enrolledAt || user.createdAt), "MMM dd, yyyy")}</p>
+                        <p className="text-sm text-muted-foreground">Enrolled on {format(new Date((course.enrolledAt as string) || user.createdAt), "MMM dd, yyyy")}</p>
                       </div>
                       <Badge variant="outline">Enrolled</Badge>
                     </div>

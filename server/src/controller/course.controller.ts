@@ -1,12 +1,12 @@
 import { Request, Response, NextFunction } from "express";
 
-import { sendNotificationMail, updateCourseThumbnail, uploadCourseThumbnail, validateCourseData } from "../services/course.service";
+import { sendNotificationMail, updateCourseThumbnail, uploadCourseThumbnail, validateCourseData, calculateCourseTotals } from "../services/course.service";
 import { IAddCommentRequestBody, IAddReplyToCommentRequestBody, IAddReviewRequestBody, IComment, ICourse, ICreateCourseRequestBody, IDeleteCourseRequestBody, IGenerateVideoUrlRequestBody, IReply, IReplyToReviewRequestBody, IReview, IThumbnail } from "../interfaces/course.interface";
 import { VDOCIPHER_API_SECRET } from "../config/config";
 import { createNotification } from "../services/notification.service";
 
-import CatchAsyncErrors from "../middleware/catchAsyncErrors"
-import ErrorHandler from "../utils/ErrorHandler";
+import CatchAsyncErrors from "../middleware/catch-async-errors"
+import ErrorHandler from "../utils/error-handler";
 import Course from "../models/course.model";
 import redis from "../utils/redis";
 import axios from "axios";
@@ -404,7 +404,7 @@ export const createCourse = CatchAsyncErrors(async (req: Request, res: Response,
         // Convert string prices to numbers
         const processedCourseData = {
             ...courseData,
-            ccourseContent: courseData.courseData,
+            courseData: courseData.courseData,
             price: Number(courseData.price),
             estimatedPrice: Number(courseData.estimatedPrice),
         };
@@ -422,6 +422,9 @@ export const createCourse = CatchAsyncErrors(async (req: Request, res: Response,
         if (!course) {
             return next(new ErrorHandler("Course not created", 400));
         }
+
+        // Calculate and update totalLessons and totalDuration
+        await calculateCourseTotals(course);
 
         // Create Notification
         await createNotification({
@@ -469,6 +472,13 @@ export const updateCourse = CatchAsyncErrors(async (req: Request, res: Response,
 
         // Update course
         const course = await Course.findByIdAndUpdate(req.params.id, { $set: courseData }, { new: true });
+
+        if (!course) {
+            return next(new ErrorHandler("Course not found", 404));
+        }
+
+        // Calculate and update totalLessons and totalDuration
+        await calculateCourseTotals(course);
 
         // Create Notification
         await createNotification({
@@ -522,7 +532,7 @@ export const deleteCourse = CatchAsyncErrors(async (req: Request, res: Response,
 export const getAllCoursesAdmin = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
     try {
         const page = parseInt(req.query.page as string) || 1;
-        const limit = 12;
+        const limit = parseInt(req.query.limit as string) || 12;
         const skip = (page - 1) * limit;
 
         // Create base query excluding the requesting user and password
@@ -532,7 +542,7 @@ export const getAllCoursesAdmin = CatchAsyncErrors(async (req: Request, res: Res
         const totalCourses = await Course.countDocuments();
 
         // Execute paginated query
-        const courses = await baseQuery.skip(skip).limit(limit);
+        const courses = await baseQuery;
 
         res.status(200).json({
             success: true,

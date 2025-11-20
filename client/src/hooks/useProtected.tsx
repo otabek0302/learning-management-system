@@ -1,10 +1,10 @@
 "use client";
 
 import { redirect } from "next/navigation";
-import { userAuth } from "./userAuth";
+import { useUserAuth } from "./userAuth";
 
 export const Protected = ({ children }: { children: React.ReactNode }) => {
-  const isAuthenticated = userAuth();
+  const isAuthenticated = useUserAuth();
 
   // If we're still loading the session, return null
   if (isAuthenticated === null) return null;

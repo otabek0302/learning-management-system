@@ -4,15 +4,15 @@ import { accessTokenOptions, refreshTokenOptions, sendToken } from "../utils/jwt
 import { IJwtPayload } from "../@types/auth.types";
 import { ISocialAuthRequest, IUser } from "../@types/user.types";
 
-import { checkUserExist, createActivationToken, getUserById, verifyActivationToken, createForgotPasswordToken, verifyForgotPasswordToken } from "../services/user.service";
+import { checkUserExist, createActivationToken, verifyActivationToken, createForgotPasswordToken, verifyForgotPasswordToken } from "../services/user.service";
 import { ILogin, IRegister, IUpdatePassword, IUpdateUserInfo, IUpdateUserAvatar, IForgotPassword, IForgotPasswordRequest, IResetPassword, IUpdateUserRole, IDeleteUser, IGetUserById } from "../interfaces/user.interface";
 import { createNotification } from "../services/notification.service";
 
 import jwt from "jsonwebtoken";
-import CatchAsyncErrors from "../middleware/catchAsyncErrors"
-import ErrorHandler from "../utils/ErrorHandler";
+import CatchAsyncErrors from "../middleware/catch-async-errors"
+import ErrorHandler from "../utils/error-handler";
 import User from "../models/user.model";
-import sendMail from "../utils/sendMail";
+import sendMail from "../utils/send-mails";
 import redis from "../utils/redis";
 import cloudinary from "cloudinary";
 
@@ -213,11 +213,25 @@ export const updateAccessToken = CatchAsyncErrors(async (req: Request, res: Resp
 // User services
 export const getUserInfo = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const userId = req.user?._id;
+        if (!req.user || !req.user._id) {
+            return next(new ErrorHandler("User not authenticated", 401));
+        }
 
-        getUserById(userId, res);
+        const user = req.user;
+        const userIdString = typeof user._id === 'string' ? user._id : user._id.toString();
+        
+        const accessToken = jwt.sign({ id: userIdString }, ACCESS_TOKEN as string, {
+            expiresIn: "5m",
+        });
+
+        res.status(200).json({
+            success: true,
+            user,
+            accessToken
+        });
     } catch (error: any) {
-        return next(new ErrorHandler(error.message, 400));
+        console.error("Error in getUserInfo:", error);
+        return next(new ErrorHandler(error.message || "Failed to get user information", 500));
     }
 })
 
@@ -486,7 +500,7 @@ export const getAllUsers = CatchAsyncErrors(async (req: Request, res: Response, 
     try {
         // Get page and limit from query params
         const page = parseInt(req.query.page as string) || 1;
-        const limit = 12;
+        const limit = parseInt(req.query.limit as string) || 12;
         const skip = (page - 1) * limit;
 
         // Create base query excluding the requesting user and password
@@ -509,28 +523,6 @@ export const getAllUsers = CatchAsyncErrors(async (req: Request, res: Response, 
             }
         });
 
-    } catch (error: any) {
-        return next(new ErrorHandler(error.message, 400));
-    }
-})
-
-// Search Users
-export const searchUsers = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
-    try {
-        // Get search query from query params
-        const { search } = req.query as { search: string };
-        console.log(search);
-
-
-        // Search users by name or email
-        const users = await User.find({
-            $or: [{ name: { $regex: search, $options: "i" } }, { email: { $regex: search, $options: "i" } }]
-        }).select("-password").lean();
-
-        res.status(200).json({
-            success: true,
-            users
-        })
     } catch (error: any) {
         return next(new ErrorHandler(error.message, 400));
     }

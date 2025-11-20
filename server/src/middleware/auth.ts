@@ -3,8 +3,8 @@
 import { Request, Response, NextFunction } from "express";
 import { ACCESS_TOKEN } from "../config/config";
 
-import CatchAsyncErrors from "./catchAsyncErrors";
-import ErrorHandler from "../utils/ErrorHandler";
+import CatchAsyncErrors from "./catch-async-errors";
+import ErrorHandler from "../utils/error-handler";
 import jwt from "jsonwebtoken";
 import redis from "../utils/redis";
 import { IJwtPayload } from "../@types/auth.types";
@@ -32,12 +32,14 @@ export const isAuthenticated = CatchAsyncErrors(async (req: Request, res: Respon
     const userData: string | null = await redis.get(decoded.id);
 
     if (!userData) {
-        return next(new ErrorHandler("User not found!", 404));
+        return next(new ErrorHandler("User session expired or not found. Please login again.", 401));
     }
 
     try {
-        req.user = userData;
+        const parsedUser = typeof userData === 'string' ? JSON.parse(userData) : userData;
+        req.user = parsedUser as any;
     } catch (error) {
+        console.error("Error parsing user data from Redis:", error);
         return next(new ErrorHandler("Failed to parse user data", 500));
     }
 

@@ -1,7 +1,7 @@
 import express from "express";
 const router = express.Router();
 
-import { activateUser, createUser, deleteUser, fetchUserById, forgotPassword, getAllUsers, getUserInfo, loginUser, logoutUser, registerUser, resetPassword, searchUsers, socialAuth, updateAccessToken, updatePassword, updateProfilePicture, updateUser, updateUserInfo, updateUserRole, verifyForgotPasswordCode } from "../controller/user.controller";
+import { activateUser, createUser, deleteUser, fetchUserById, forgotPassword, getAllUsers, getUserInfo, loginUser, logoutUser, registerUser, resetPassword, socialAuth, updateAccessToken, updatePassword, updateProfilePicture, updateUser, updateUserInfo, updateUserRole, verifyForgotPasswordCode } from "../controller/user.controller";
 import { authorizeRoles, isAuthenticated } from "../middleware/auth";
 
 // User Routes
@@ -53,9 +53,6 @@ router.get('/admin/get-user/:id', isAuthenticated, authorizeRoles("admin"), fetc
 
 // Delete User -- Only for Admin
 router.delete('/admin/delete-user', isAuthenticated, authorizeRoles("admin"), deleteUser);
-
-// Search Users -- Only for Admin
-router.get('/admin/search-users', isAuthenticated, authorizeRoles("admin"), searchUsers);
 
 // Update User Role -- Only for Admin
 router.put('/admin/update-role', isAuthenticated, authorizeRoles("admin"), updateUserRole);

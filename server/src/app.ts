@@ -16,6 +16,12 @@ import OrderRouter from "./routes/order.route";
 import NotificationRouter from "./routes/notification.route";
 import AnalyticRouter from "./routes/analytic.route";
 import LayoutRouter from "./routes/layout.route";
+import EnrollmentRouter from "./routes/enrollment.route";
+import ProgressRouter from "./routes/progress.route";
+import QuizRouter from "./routes/quiz.route";
+import CertificateRouter from "./routes/certificate.route";
+import CouponRouter from "./routes/coupon.route";
+import VideoRouter from "./routes/video.route";
 
 // Initialize express
 const app = express();
@@ -45,6 +51,12 @@ app.use("/api/v1/orders", OrderRouter)
 app.use("/api/v1/notifications", NotificationRouter)
 app.use("/api/v1/analytics", AnalyticRouter)
 app.use("/api/v1/layout", LayoutRouter)
+app.use("/api/v1/enrollments", EnrollmentRouter)
+app.use("/api/v1/progress", ProgressRouter)
+app.use("/api/v1/quiz", QuizRouter)
+app.use("/api/v1/certificates", CertificateRouter)
+app.use("/api/v1/coupons", CouponRouter)
+app.use("/api/v1/videos", VideoRouter)
 // Unknown route
 app.all("*", (req: Request, res: Response, next: NextFunction) => {
     const err: any = new Error(`Cannot find ${req.originalUrl} on this server!`);

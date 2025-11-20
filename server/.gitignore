@@ -17,6 +17,9 @@
 /.next/
 /out/
 
+# uploads (temporary files)
+/uploads/
+
 # production
 /build
 

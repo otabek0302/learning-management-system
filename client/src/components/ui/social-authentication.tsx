@@ -50,7 +50,7 @@ export const SocialAuthentication = () => {
     try {
       setIsGoogleLoading(true);
       await signIn("google");
-    } catch (error) {
+    } catch {
       toast.error(t("messages.errors.social_sign_in"));
       setIsGoogleLoading(false);
     }
@@ -60,7 +60,7 @@ export const SocialAuthentication = () => {
     try {
       setIsGithubLoading(true);
       await signIn("github");
-    } catch (error) {
+    } catch {
       toast.error(t("messages.errors.social_sign_in"));
       setIsGithubLoading(false);
     }

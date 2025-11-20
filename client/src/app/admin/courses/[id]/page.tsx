@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatPrice } from "@/lib/helper";
 import { AccordionSections } from "@/components/sections/admin/courses/course-accordion-content";
+import { toast } from "sonner";
 
 const CourseDetailsPage = () => {
   const router = useRouter();
@@ -26,9 +27,14 @@ const CourseDetailsPage = () => {
   };
 
   const handleDelete = async () => {
-    if (window.confirm("Are you sure you want to delete this course?")) {
-      await deleteCourse(courseId);
-      router.push("/admin/courses");
+    if (window.confirm("Are you sure you want to delete this course? This action cannot be undone.")) {
+      try {
+        await deleteCourse(courseId).unwrap();
+        toast.success("Course deleted successfully");
+        router.push("/admin/courses");
+      } catch (error: any) {
+        toast.error(error?.data?.message || "Failed to delete course");
+      }
     }
   };
 
@@ -91,9 +97,9 @@ const CourseDetailsPage = () => {
             <p className="text-sm font-light text-muted-foreground">{course.description}</p>
           </div>
           <div className="mt-2 flex flex-wrap gap-2">
-            {course.tags.split(",").map((tag: string, idx: number) => (
+            {(Array.isArray(course.tags) ? course.tags : course.tags?.split(",") || []).map((tag: string, idx: number) => (
               <Badge key={idx} variant="secondary" className="text-xs">
-                {tag.trim()}
+                {typeof tag === 'string' ? tag.trim() : tag}
               </Badge>
             ))}
           </div>
@@ -144,9 +150,9 @@ const CourseDetailsPage = () => {
         <div className="mb-8">
           <h4 className="mb-2 text-lg font-semibold text-foreground">Benefits</h4>
           <ul className="list-disc space-y-1 pl-6">
-            {course.benefits.map((b: any) => (
-              <li key={b._id} className="text-base text-muted-foreground">
-                {b.title}
+            {course.benefits.map((b: string | { title: string }, index: number) => (
+              <li key={index} className="text-base text-muted-foreground">
+                {typeof b === 'string' ? b : b.title}
               </li>
             ))}
           </ul>
@@ -158,9 +164,9 @@ const CourseDetailsPage = () => {
         <div className="mb-8">
           <h4 className="mb-2 text-lg font-semibold text-foreground">Prerequisites</h4>
           <ul className="list-disc space-y-1 pl-6">
-            {course.prerequisites.map((p: any) => (
-              <li key={p._id} className="text-base text-muted-foreground">
-                {p.title}
+            {course.prerequisites.map((p: string | { title: string }, index: number) => (
+              <li key={index} className="text-base text-muted-foreground">
+                {typeof p === 'string' ? p : p.title}
               </li>
             ))}
           </ul>

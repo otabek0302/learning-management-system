@@ -16,11 +16,11 @@ export const CoursePlayer = ({ videoUrl }: { videoUrl: string }) => {
       .post(`${process.env.NEXT_PUBLIC_API_URL}/courses/generate-video-otp`, {
         videoId: videoUrl,
       })
-      .then((res: any) => {
+      .then((res: { data: { otp: string; playbackInfo: string } }) => {
         setVideoData(res.data);
         setLoading(false);
       })
-      .catch((err: any) => {
+      .catch((err: unknown) => {
         setLoading(false);
         console.log(err);
       });

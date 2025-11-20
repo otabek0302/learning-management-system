@@ -2,8 +2,8 @@ import { Response, NextFunction } from "express";
 import { ICourse } from "../interfaces/course.interface";
 
 import cloudinary from "cloudinary";
-import ErrorHandler from "../utils/ErrorHandler";
-import sendMail from "../utils/sendMail";
+import ErrorHandler from "../utils/error-handler";
+import sendMail from "../utils/send-mails";
 
 // Validate Course Data
 export const validateCourseData = async (data: ICourse, res: Response, next: NextFunction) => {
@@ -51,4 +51,21 @@ export const sendNotificationMail = async (data: any, email: string) => {
     } catch (error: any) {
         return new ErrorHandler(error.message, 500);
     }
+}
+
+// Calculate and update course totals (totalLessons and totalDuration)
+export const calculateCourseTotals = async (course: ICourse) => {
+    if (!course) return;
+
+    // Calculate total lessons
+    course.totalLessons = course.courseData?.length || 0;
+
+    // Calculate total duration (sum of all lesson video lengths)
+    course.totalDuration = course.courseData?.reduce(
+        (sum, lesson) => sum + (lesson.videoLength || 0),
+        0
+    ) || 0;
+
+    // Save the course with updated totals
+    await course.save();
 }

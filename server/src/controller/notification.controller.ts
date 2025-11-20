@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 
-import ErrorHandler from "../utils/ErrorHandler";
-import catchAsyncErrors from "../middleware/catchAsyncErrors";
+import ErrorHandler from "../utils/error-handler";
+import catchAsyncErrors from "../middleware/catch-async-errors";
 import Notification from "../models/notification.model";
 import cron from "node-cron";
 

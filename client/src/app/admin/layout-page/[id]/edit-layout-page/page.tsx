@@ -67,19 +67,6 @@ const EditLayoutPage = () => {
     }
   }, [existingLayout]);
 
-  const handleTypeChange = (newType: string) => {
-    setType(newType);
-
-    if (newType !== "banner") {
-      setBanner({ title: "", subTitle: "", image: null, imagePreview: "" });
-    }
-    if (newType !== "faq") {
-      setFaq([{ question: "", answer: "" }]);
-    }
-    if (newType !== "categories") {
-      setCategories([{ title: "" }]);
-    }
-  };
 
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -134,7 +121,7 @@ const EditLayoutPage = () => {
 
             {banner.imagePreview && (
               <div className="relative h-80 w-full overflow-hidden rounded-lg border">
-                <img src={banner.imagePreview} alt="Banner preview" className="h-full w-full object-cover" />
+                <Image src={banner.imagePreview} alt="Banner preview" fill className="object-cover" />
                 <Button type="button" variant="destructive" size="sm" onClick={removeImage} className="absolute right-2 top-2 h-8 w-8 p-0">
                   <Trash className="h-4 w-4" />
                 </Button>

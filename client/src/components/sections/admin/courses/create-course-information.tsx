@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
-import { Upload, Image as ImageIcon, ArrowRight } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import Image from "next/image";
+import { Upload, ArrowRight, Video, Loader2, CheckCircle2 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { TagInput } from "@/components/ui/tags-input";
 import { Button } from "@/components/ui/button";
@@ -8,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { useGetAllLayoutsQuery } from "@/redux/features/layout-page/layoutApi";
+import { useUploadVideoMutation } from "@/redux/features/courses/courseApi";
 
 interface CourseInfo {
   name: string;
@@ -34,6 +36,10 @@ const CreateCourseInformation = ({ courseInfo, setCourseInfo, errors, setErrors,
   const [dragging, setDragging] = useState(false);
   const [tags, setTags] = useState<string[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
+  const [isUploadingDemo, setIsUploadingDemo] = useState(false);
+  const [demoUploadProgress, setDemoUploadProgress] = useState(0);
+  const demoVideoInputRef = useRef<HTMLInputElement>(null);
+  const [uploadVideo] = useUploadVideoMutation();
 
   const { data: categoriesResponse } = useGetAllLayoutsQuery("category", {});
 
@@ -99,7 +105,7 @@ const CreateCourseInformation = ({ courseInfo, setCourseInfo, errors, setErrors,
         return;
       }
       const reader = new FileReader();
-      reader.onload = (e) => {
+      reader.onload = () => {
         if (reader.readyState === 2) {
           setCourseInfo((prev: CourseInfo) => ({ ...prev, thumbnail: reader.result as string }));
         }
@@ -122,7 +128,7 @@ const CreateCourseInformation = ({ courseInfo, setCourseInfo, errors, setErrors,
         return;
       }
       const reader = new FileReader();
-      reader.onload = (e) => {
+      reader.onload = () => {
         if (reader.readyState === 2) {
           setCourseInfo((prev: CourseInfo) => ({ ...prev, thumbnail: reader.result as string }));
         }
@@ -131,9 +137,77 @@ const CreateCourseInformation = ({ courseInfo, setCourseInfo, errors, setErrors,
     }
   };
 
-  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
-    e.currentTarget.src = "";
+  const handleImageError = () => {
     setCourseInfo((prev: CourseInfo) => ({ ...prev, thumbnail: "" }));
+  };
+
+  const handleDemoVideoUpload = async (file: File) => {
+    // Validate file type
+    const allowedTypes = ["video/mp4", "video/mkv", "video/mov"];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error("Invalid video format. Please upload MP4, MKV, or MOV files.");
+      return;
+    }
+
+    // Validate file size (1GB = 1024 * 1024 * 1024 bytes)
+    const maxSize = 1024 * 1024 * 1000; // 1GB
+    if (file.size > maxSize) {
+      toast.error("Video file size exceeds 1GB limit.");
+      return;
+    }
+
+    setIsUploadingDemo(true);
+    setDemoUploadProgress(0);
+
+    try {
+      const formData = new FormData();
+      formData.append("video", file);
+
+      // Use axios directly for progress tracking
+      const axios = (await import("axios")).default;
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
+      
+      const response = await axios.post(`${apiUrl}/videos/upload`, formData, {
+        withCredentials: true,
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+        onUploadProgress: (progressEvent) => {
+          if (progressEvent.total) {
+            const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+            setDemoUploadProgress(percentCompleted);
+          }
+        },
+      });
+
+      if (response.data.success && response.data.publicId) {
+        // Store Cloudinary publicId in demoUrl
+        setCourseInfo((prev: CourseInfo) => ({ ...prev, demoUrl: response.data.publicId }));
+        setDemoUploadProgress(100);
+        toast.success("Demo video uploaded successfully!");
+      }
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || "Failed to upload demo video. Please try again.");
+      console.error("Demo video upload error:", error);
+      setDemoUploadProgress(0);
+    } finally {
+      // Small delay to show 100% before hiding progress
+      setTimeout(() => {
+        setIsUploadingDemo(false);
+        setDemoUploadProgress(0);
+        // Reset file input
+        if (demoVideoInputRef.current) {
+          demoVideoInputRef.current.value = "";
+        }
+      }, 1000);
+    }
+  };
+
+  const handleDemoVideoFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      handleDemoVideoUpload(file);
+    }
   };
 
   return (
@@ -209,7 +283,7 @@ const CreateCourseInformation = ({ courseInfo, setCourseInfo, errors, setErrors,
             <SelectValue placeholder="Select a category" />
           </SelectTrigger>
           <SelectContent>
-            {categories.map((category: any) => (
+            {categories.map((category: { _id: string; type: string }) => (
               <SelectItem key={category._id} value={category.type}>
                 {category.type.charAt(0).toUpperCase() + category.type.slice(1)}
               </SelectItem>
@@ -219,13 +293,77 @@ const CreateCourseInformation = ({ courseInfo, setCourseInfo, errors, setErrors,
         {errors.category && <span className="text-xs text-red-500">{errors.category}</span>}
       </div>
 
-      {/* Demo URL */}
+      {/* Demo Video Upload */}
       <div className="flex flex-col gap-2">
         <Label htmlFor="demoUrl" className="text-sm text-gray-500">
-          Demo URL
+          Demo Video
         </Label>
-        <Input type="text" value={courseInfo.demoUrl} onChange={(e) => setCourseInfo((prev: CourseInfo) => ({ ...prev, demoUrl: e.target.value }))} placeholder="https://example.com/demo" className={errors.demoUrl ? "border-red-500" : ""} />
-        {errors.demoUrl && <span className="text-xs text-red-500">{errors.demoUrl}</span>}
+        <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-2">
+              <input
+                ref={demoVideoInputRef}
+                type="file"
+                accept="video/mp4,video/mkv,video/mov"
+                onChange={handleDemoVideoFileChange}
+                className="hidden"
+                id="demo-video-upload"
+                disabled={isUploadingDemo}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => demoVideoInputRef.current?.click()}
+                disabled={isUploadingDemo}
+                className="w-full sm:w-auto"
+              >
+                {isUploadingDemo ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Uploading...
+                  </>
+                ) : (
+                  <>
+                    <Video className="mr-2 h-4 w-4" />
+                    Upload Demo Video
+                  </>
+                )}
+              </Button>
+              {courseInfo.demoUrl && !isUploadingDemo && !courseInfo.demoUrl.startsWith("http") && (
+                <div className="flex items-center gap-2 text-sm text-green-600">
+                  <CheckCircle2 className="h-4 w-4" />
+                  <span>Demo video uploaded</span>
+                </div>
+              )}
+            </div>
+            {/* Upload Progress Bar */}
+            {isUploadingDemo && (
+              <div className="w-full">
+                <div className="mb-1 flex items-center justify-between text-xs text-gray-600">
+                  <span>Uploading video...</span>
+                  <span className="font-semibold">{demoUploadProgress}%</span>
+                </div>
+                <div className="h-2 w-full overflow-hidden rounded-full bg-gray-200">
+                  <div
+                    className="h-full bg-blue-600 transition-all duration-300 ease-out"
+                    style={{ width: `${demoUploadProgress}%` }}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+          <Input 
+            type="text" 
+            value={courseInfo.demoUrl} 
+            onChange={(e) => setCourseInfo((prev: CourseInfo) => ({ ...prev, demoUrl: e.target.value }))} 
+            placeholder="Upload video OR enter external URL (e.g., https://example.com/demo)" 
+            className={errors.demoUrl ? "border-red-500" : ""}
+          />
+          <p className="text-xs text-muted-foreground">
+            Upload MP4, MKV, or MOV files (max 1GB) to Cloudinary, or enter an external video URL manually. If uploaded, the Cloudinary public ID will be stored.
+          </p>
+          {errors.demoUrl && <span className="text-xs text-red-500">{errors.demoUrl}</span>}
+        </div>
       </div>
 
       {/* Thumbnail Upload */}
@@ -238,7 +376,7 @@ const CreateCourseInformation = ({ courseInfo, setCourseInfo, errors, setErrors,
           <div className={`flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-6 transition ${dragging ? "border-blue-500 bg-blue-50" : "border-gray-300"} ${errors.thumbnail ? "border-red-500" : ""}`} onDragOver={handleDragOver} onDragLeave={handleDropLeave} onDrop={handleDrop}>
             {courseInfo.thumbnail ? (
               <div className="relative">
-                <img src={courseInfo.thumbnail} alt="Thumbnail Preview" className="max-h-64 rounded-lg object-contain" onError={handleImageError} />
+                <Image src={courseInfo.thumbnail} alt="Thumbnail Preview" width={512} height={256} className="max-h-64 rounded-lg object-contain" onError={handleImageError} />
                 <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-black bg-opacity-0 transition-all hover:bg-opacity-10">
                   <p className="text-sm text-white opacity-0 hover:opacity-100">Click to change image</p>
                 </div>

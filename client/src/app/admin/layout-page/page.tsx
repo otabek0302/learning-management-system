@@ -3,7 +3,6 @@
 import React from "react";
 import LayoutPagePreview from "@/components/sections/admin/layout-page/layout-page-preview";
 
-import { Layout } from "@/interfaces/layout.interface";
 import { useDeleteLayoutMutation, useGetAllLayoutsQuery } from "@/redux/features/layout-page/layoutApi";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -15,10 +14,15 @@ interface LayoutPagePreviewProps {
   isLoading?: boolean;
 }
 
+interface Layout {
+  _id: string;
+  type: string;
+}
+
 const LayoutPageClient: React.FC<LayoutPagePreviewProps> = () => {
   const router = useRouter();
   const { data: layoutsResponse, isLoading, error, refetch } = useGetAllLayoutsQuery({});
-  const [deleteLayout, { isLoading: isDeleting }] = useDeleteLayoutMutation();
+  const [deleteLayout] = useDeleteLayoutMutation();
 
   const layouts = layoutsResponse?.layouts || [];
 
@@ -36,7 +40,7 @@ const LayoutPageClient: React.FC<LayoutPagePreviewProps> = () => {
         await deleteLayout(layoutId);
         toast.success("Layout deleted successfully");
         refetch();
-      } catch (error) {
+      } catch {
         toast.error("Failed to delete layout");
       }
     }
@@ -99,7 +103,7 @@ const LayoutPageClient: React.FC<LayoutPagePreviewProps> = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {layouts.map((layout: any) => (
+            {layouts.map((layout: Layout) => (
               <LayoutPagePreview key={layout._id} layout={layout} onView={handleView} onEdit={handleEdit} onDelete={handleDelete} />
             ))}
           </div>

@@ -10,6 +10,9 @@ const poppins = Poppins({
   variable: "--font-poppins",
   weight: ["400", "500", "600", "700"],
   subsets: ["latin"],
+  display: "swap",
+  preload: true,
+  adjustFontFallback: true,
 });
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

@@ -13,13 +13,11 @@ const nextConfig = {
   images: {
     domains: ["res.cloudinary.com"],
   },
-  experimental: {
-    turbo: {
-      rules: {
-        "*.svg": {
-          loaders: ["@svgr/webpack"],
-          as: "*.js",
-        },
+  turbopack: {
+    rules: {
+      "*.svg": {
+        loaders: ["@svgr/webpack"],
+        as: "*.js",
       },
     },
   },
@@ -31,6 +29,23 @@ const nextConfig = {
         permanent: true,
       },
     ];
+  },
+  onDemandEntries: {
+    maxInactiveAge: 25 * 1000,
+    pagesBufferLength: 2,
+  },
+  webpack: (config: any, { dev, isServer }: { dev: boolean; isServer: boolean }) => {
+    if (dev && !isServer) {
+      config.devtool = "eval-source-map";
+      config.optimization = {
+        ...config.optimization,
+        minimize: false,
+      };
+    }
+    return config;
+  },
+  experimental: {
+    optimizePackageImports: ["@reduxjs/toolkit", "react-redux"],
   },
 };
 

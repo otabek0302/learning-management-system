@@ -27,7 +27,13 @@ const UsersPage = () => {
   const pagination = usersData?.pagination;
 
   // Filter users by search term and role
-  const filteredUsers = users.filter((user: any) => {
+  interface User {
+    name: string;
+    email: string;
+    role: string;
+  }
+
+  const filteredUsers = users.filter((user: User) => {
     const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) || user.email.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesRole = roleFilter === "all" || user.role === roleFilter;
     return matchesSearch && matchesRole;
@@ -36,8 +42,8 @@ const UsersPage = () => {
   // Get counts for each role
   const userCounts = {
     all: users.length,
-    user: users.filter((user: any) => user.role === "user").length,
-    admin: users.filter((user: any) => user.role === "admin").length,
+    user: users.filter((user: User) => user.role === "user").length,
+    admin: users.filter((user: User) => user.role === "admin").length,
   };
 
   const handleView = (userId: string) => {
@@ -51,22 +57,20 @@ const UsersPage = () => {
   const handleDelete = async (userId: string) => {
     if (window.confirm("Are you sure you want to delete this user? This action cannot be undone.")) {
       try {
-        await deleteUser(userId);
+        await deleteUser(userId).unwrap();
         toast.success("User deleted successfully");
-        refetch();
-      } catch (error) {
-        toast.error("Failed to delete user");
+      } catch (error: any) {
+        toast.error(error?.data?.message || "Failed to delete user");
       }
     }
   };
 
   const handleRoleChange = async (userId: string, newRole: string) => {
     try {
-      await updateUserRole({ id: userId, role: newRole });
+      await updateUserRole({ id: userId, role: newRole }).unwrap();
       toast.success(`User role updated to ${newRole}`);
-      refetch();
-    } catch (error) {
-      toast.error("Failed to update user role");
+    } catch (error: any) {
+      toast.error(error?.data?.message || "Failed to update user role");
     }
   };
 

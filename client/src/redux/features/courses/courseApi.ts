@@ -9,6 +9,7 @@ export const courseApi = apiSlice.injectEndpoints({
                 body: data,
                 credentials: 'include' as const,
             }),
+            invalidatesTags: ['Course'],
         }),
         updateCourse: builder.mutation({
             query: ({ id, data }) => ({
@@ -17,6 +18,7 @@ export const courseApi = apiSlice.injectEndpoints({
                 body: data,
                 credentials: 'include' as const,
             }),
+            invalidatesTags: (_result, _error, { id }) => [{ type: 'Course' as const, id }, 'Course'],
         }),
         deleteCourse: builder.mutation({
             query: (id) => ({
@@ -25,6 +27,7 @@ export const courseApi = apiSlice.injectEndpoints({
                 body: { id },
                 credentials: 'include' as const,
             }),
+            invalidatesTags: ['Course'],
         }),
         getAllCourses: builder.query({
             query: (params) => ({
@@ -33,6 +36,7 @@ export const courseApi = apiSlice.injectEndpoints({
                 params,
                 credentials: 'include' as const,
             }),
+            providesTags: ['Course'],
         }),
         getSingleCourseAdmin: builder.query({
             query: (id) => ({
@@ -40,6 +44,7 @@ export const courseApi = apiSlice.injectEndpoints({
                 method: 'GET',
                 credentials: 'include' as const,
             }),
+            providesTags: (_result, _error, id) => [{ type: 'Course' as const, id }],
         }),
         getSingleCourse: builder.query({
             query: (id) => ({
@@ -47,8 +52,17 @@ export const courseApi = apiSlice.injectEndpoints({
                 method: 'GET',
                 credentials: 'include' as const,
             }),
+            providesTags: (_result, _error, id) => [{ type: 'Course' as const, id }],
+        }),
+        uploadVideo: builder.mutation<{ success: boolean; publicId: string; duration: number }, FormData>({
+            query: (formData) => ({
+                url: '/videos/upload',
+                method: 'POST',
+                body: formData,
+                credentials: 'include' as const,
+            }),
         }),
     }),
 });
 
-export const { useCreateCourseMutation, useGetAllCoursesQuery, useGetSingleCourseQuery, useGetSingleCourseAdminQuery, useUpdateCourseMutation, useDeleteCourseMutation } = courseApi;
+export const { useCreateCourseMutation, useGetAllCoursesQuery, useGetSingleCourseQuery, useGetSingleCourseAdminQuery, useUpdateCourseMutation, useDeleteCourseMutation, useUploadVideoMutation } = courseApi;

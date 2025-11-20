@@ -7,7 +7,10 @@ export interface User {
         url: string;
     };
     role: string;
-    courses: { _id: string }[];
+    isVerified?: boolean;
+    courses: { _id?: string; courseId?: { name: string; _id: string }; enrolledAt?: string }[];
+    createdAt?: string | Date;
+    updatedAt?: string | Date;
 }
 
 export interface RegisterData {

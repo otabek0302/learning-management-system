@@ -1,7 +1,6 @@
 import { Model, Schema, model } from "mongoose";
 import { IComment, IReview, ILink, ICourseData, ICourse } from "../interfaces/course.interface";
 
-// Course Schema  //
 const reviewSchema = new Schema<IReview>({
     user: Object,
     rating: {
@@ -24,73 +23,53 @@ const commentSchema = new Schema<IComment>({
 }, { timestamps: true });
 
 const courseDataSchema = new Schema<ICourseData>({
-    title: String,
-    description: String,
-    category: String,
-    videoUrl: String,
-    videoSection: String,
-    videoLength: Number,
-    videoPlayer: String,
+    title: { type: String, required: true },
+    description: { type: String },
+    videoUrl: { type: String, required: true },
+    videoSection: { type: String, required: true },
+    videoLength: { type: Number },
+    videoPlayer: { type: String },
     links: [linkSchema],
     suggestion: String,
     comments: [commentSchema],
+    order: { type: Number, default: 0 },
+    isPreview: { type: Boolean, default: false },
+    isLocked: { type: Boolean, default: true },
+    quiz: {
+        questions: [
+            {
+                question: { type: String, required: true },
+                options: [{ type: String, required: true }],
+                correctAnswer: { type: Number, required: true },
+            },
+        ],
+        passingScore: { type: Number, default: 70 },
+    },
 });
 
 const courseSchema = new Schema<ICourse>({
-    name: {
-        type: String,
-        required: true,
-    },
-    description: {
-        type: String,
-        required: true,
-    },
-    category: {
-        type: String,
-        required: true,
-    },
-    price: {
-        type: Number,
-        required: true,
-    },
-    estimatedPrice: {
-        type: Number,
-    },
+    name: { type: String, required: true },
+    description: { type: String, required: true },
+    category: { type: String, required: true },
+    price: { type: Number, required: true },
+    estimatedPrice: Number,
     thumbnail: {
-        public_id: {
-            type: String,
-        },
-        url: {
-            type: String,
-        },
+        public_id: { type: String },
+        url: { type: String },
     },
-    tags: {
-        type: String,
-        required: true,
-    },
-    level: {
-        type: String,
-        required: true,
-    },
-    demoUrl: {
-        type: String,
-        required: true,
-    },
-    benefits: [{ title: String }],
-    prerequisites: [{ title: String }],
+    tags: [{ type: String }],
+    benefits: [{ type: String }],
+    prerequisites: [{ type: String }],
+    level: { type: String, required: true },
+    demoUrl: { type: String, required: true },
     reviews: [reviewSchema],
     courseData: [courseDataSchema],
-    ratings: {
-        type: Number,
-        default: 0,
-    },
-    purchased: {
-        type: Number,
-        default: 0,
-    },
+    totalLessons: { type: Number, default: 0 },
+    totalDuration: { type: Number, default: 0 },
+    ratings: { type: Number, default: 0 },
+    purchased: { type: Number, default: 0 },
 }, { timestamps: true });
 
-// Create and export the Course model
 const CourseModel: Model<ICourse> = model("Course", courseSchema);
 
 export default CourseModel;

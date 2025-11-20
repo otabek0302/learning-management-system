@@ -28,10 +28,7 @@ const CreateUserPage = () => {
       toast.success("User created successfully!");
       router.push("/admin/users");
     }
-    if (isError) {
-      toast.error("Failed to create user. Please try again.");
-    }
-  }, [isSuccess, isError, router]);
+  }, [isSuccess, router]);
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -64,10 +61,9 @@ const CreateUserPage = () => {
     }
 
     try {
-      const res = await createUser(formData as any);
-      console.log(res);
-    } catch (error) {
-      console.error("Error creating user:", error);
+      await createUser(formData).unwrap();
+    } catch (error: any) {
+      toast.error(error?.data?.message || "Failed to create user. Please try again.");
     }
   };
 

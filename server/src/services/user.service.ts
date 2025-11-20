@@ -5,7 +5,7 @@ import { Secret } from "jsonwebtoken";
 
 import redis from "../utils/redis";
 import User from "../models/user.model";
-import ErrorHandler from "../utils/ErrorHandler";
+import ErrorHandler from "../utils/error-handler";
 import jwt from "jsonwebtoken";
 
 

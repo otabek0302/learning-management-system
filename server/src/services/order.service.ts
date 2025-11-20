@@ -1,5 +1,5 @@
-import sendMail from "../utils/sendMail";
-import ErrorHandler from "../utils/ErrorHandler";
+import sendMail from "../utils/send-mails";
+import ErrorHandler from "../utils/error-handler";
 
 // Send Order Success Email
 export const sendOrderSuccessEmail = async (data: any, email: string) => {

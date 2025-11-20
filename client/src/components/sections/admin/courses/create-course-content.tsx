@@ -1,20 +1,36 @@
-import React from "react";
+import React, { useState, useRef } from "react";
 
-import { Plus, Trash2, ArrowLeft, ArrowRight, Video, Link, FileText } from "lucide-react";
+import { Plus, Trash2, ArrowLeft, ArrowRight, Video, Link, FileText, Lock, Unlock, Eye, Upload, Loader2, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import { useUploadVideoMutation } from "@/redux/features/courses/courseApi";
+
+interface QuizQuestion {
+  question: string;
+  options: string[];
+  correctAnswer: number; // index of correct option
+}
+
+interface Quiz {
+  questions: QuizQuestion[];
+  passingScore: number; // %
+}
 
 interface CourseContent {
   videoUrl: string;
   title: string;
   description: string;
-  videoLength: number;
+  videoLength: number; // in seconds
   videoSection: string;
   links: { title: string; url: string }[];
   suggestion: string;
+  order: number; // lesson ordering
+  isPreview: boolean; // free preview
+  isLocked: boolean; // requires enrollment
+  quiz?: Quiz; // optional quiz
 }
 
 interface CreateCourseContentProps {
@@ -27,6 +43,11 @@ interface CreateCourseContentProps {
 }
 
 const CreateCourseContent = ({ courseContent = [], setCourseContent, errors, setErrors, setActive, active }: CreateCourseContentProps) => {
+  const [uploadVideo, { isLoading: isUploadingVideo }] = useUploadVideoMutation();
+  const [uploadingSectionIndex, setUploadingSectionIndex] = useState<number | null>(null);
+  const [uploadProgress, setUploadProgress] = useState<{ [key: number]: number }>({});
+  const fileInputRefs = useRef<{ [key: number]: HTMLInputElement | null }>({});
+
   const handleSubmitPrevious = () => {
     setActive(active - 1);
   };
@@ -78,6 +99,9 @@ const CreateCourseContent = ({ courseContent = [], setCourseContent, errors, set
           videoSection: `Section ${prev.length + 1}`,
           links: [{ title: "", url: "" }],
           suggestion: "",
+          order: prev.length,
+          isPreview: false,
+          isLocked: true,
         },
       ]);
     }
@@ -89,7 +113,7 @@ const CreateCourseContent = ({ courseContent = [], setCourseContent, errors, set
     }
   };
 
-  const updateVideoSection = (index: number, field: keyof CourseContent, value: any) => {
+  const updateVideoSection = (index: number, field: keyof CourseContent, value: string | number | boolean | Array<{ title: string; url: string }>) => {
     if (setCourseContent) {
       setCourseContent((prev) => prev.map((content, i) => (i === index ? { ...content, [field]: value } : content)));
     }
@@ -119,6 +143,82 @@ const CreateCourseContent = ({ courseContent = [], setCourseContent, errors, set
             : content
         )
       );
+    }
+  };
+
+  const handleVideoUpload = async (sectionIndex: number, file: File) => {
+    // Validate file type
+    const allowedTypes = ["video/mp4", "video/mkv", "video/mov"];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error("Invalid video format. Please upload MP4, MKV, or MOV files.");
+      return;
+    }
+
+    // Validate file size (1GB = 1024 * 1024 * 1024 bytes)
+    const maxSize = 1024 * 1024 * 1000; // 1GB
+    if (file.size > maxSize) {
+      toast.error("Video file size exceeds 1GB limit.");
+      return;
+    }
+
+    setUploadingSectionIndex(sectionIndex);
+    setUploadProgress((prev) => ({ ...prev, [sectionIndex]: 0 }));
+
+    try {
+      const formData = new FormData();
+      formData.append("video", file);
+
+      // Use axios directly for progress tracking
+      const axios = (await import("axios")).default;
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
+      
+      const response = await axios.post(`${apiUrl}/videos/upload`, formData, {
+        withCredentials: true,
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+        onUploadProgress: (progressEvent) => {
+          if (progressEvent.total) {
+            const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+            setUploadProgress((prev) => ({ ...prev, [sectionIndex]: percentCompleted }));
+          }
+        },
+      });
+
+      if (response.data.success && response.data.publicId && response.data.duration) {
+        // Update the video URL with publicId (Cloudinary public ID)
+        updateVideoSection(sectionIndex, "videoUrl", response.data.publicId);
+        // Update the video length with duration in seconds
+        updateVideoSection(sectionIndex, "videoLength", response.data.duration);
+        
+        setUploadProgress((prev) => ({ ...prev, [sectionIndex]: 100 }));
+        toast.success("Video uploaded successfully!");
+      }
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || "Failed to upload video. Please try again.");
+      console.error("Video upload error:", error);
+      setUploadProgress((prev) => ({ ...prev, [sectionIndex]: 0 }));
+    } finally {
+      // Small delay to show 100% before hiding progress
+      setTimeout(() => {
+        setUploadingSectionIndex(null);
+        setUploadProgress((prev) => {
+          const newProgress = { ...prev };
+          delete newProgress[sectionIndex];
+          return newProgress;
+        });
+        // Reset file input
+        if (fileInputRefs.current[sectionIndex]) {
+          fileInputRefs.current[sectionIndex]!.value = "";
+        }
+      }, 1000);
+    }
+  };
+
+  const handleFileChange = (sectionIndex: number, event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      handleVideoUpload(sectionIndex, file);
     }
   };
 
@@ -158,11 +258,74 @@ const CreateCourseContent = ({ courseContent = [], setCourseContent, errors, set
               {errors[`content_title_${sectionIndex}`] && <span className="text-xs text-red-500">{errors[`content_title_${sectionIndex}`]}</span>}
             </div>
 
-            {/* Video URL */}
+            {/* Video Upload */}
             <div className="flex flex-col gap-2">
-              <Label>Video URL</Label>
-              <Input type="text" value={content.videoUrl} onChange={(e) => updateVideoSection(sectionIndex, "videoUrl", e.target.value)} placeholder="https://example.com/video" className={errors[`content_videoUrl_${sectionIndex}`] ? "border-red-500" : ""} />
-              {errors[`content_videoUrl_${sectionIndex}`] && <span className="text-xs text-red-500">{errors[`content_videoUrl_${sectionIndex}`]}</span>}
+              <Label>Video</Label>
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center gap-2">
+                  <input
+                    ref={(el) => (fileInputRefs.current[sectionIndex] = el)}
+                    type="file"
+                    accept="video/mp4,video/mkv,video/mov"
+                    onChange={(e) => handleFileChange(sectionIndex, e)}
+                    className="hidden"
+                    id={`video-upload-${sectionIndex}`}
+                    disabled={uploadingSectionIndex === sectionIndex}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => fileInputRefs.current[sectionIndex]?.click()}
+                    disabled={uploadingSectionIndex === sectionIndex}
+                    className="w-full sm:w-auto"
+                  >
+                    {uploadingSectionIndex === sectionIndex ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Uploading...
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="mr-2 h-4 w-4" />
+                        Upload Video
+                      </>
+                    )}
+                  </Button>
+                  {content.videoUrl && uploadingSectionIndex !== sectionIndex && (
+                    <div className="flex items-center gap-2 text-sm text-green-600">
+                      <CheckCircle2 className="h-4 w-4" />
+                      <span>Video uploaded</span>
+                    </div>
+                  )}
+                </div>
+                {/* Upload Progress Bar */}
+                {uploadingSectionIndex === sectionIndex && uploadProgress[sectionIndex] !== undefined && (
+                  <div className="w-full">
+                    <div className="mb-1 flex items-center justify-between text-xs text-gray-600">
+                      <span>Uploading video...</span>
+                      <span className="font-semibold">{uploadProgress[sectionIndex]}%</span>
+                    </div>
+                    <div className="h-2 w-full overflow-hidden rounded-full bg-gray-200">
+                      <div
+                        className="h-full bg-blue-600 transition-all duration-300 ease-out"
+                        style={{ width: `${uploadProgress[sectionIndex]}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
+                <Input 
+                  type="text" 
+                  value={content.videoUrl} 
+                  onChange={(e) => updateVideoSection(sectionIndex, "videoUrl", e.target.value)} 
+                  placeholder="Video will be uploaded to Cloudinary (public ID)" 
+                  className={errors[`content_videoUrl_${sectionIndex}`] ? "border-red-500" : ""} 
+                  readOnly={!!content.videoUrl && uploadingSectionIndex !== sectionIndex}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Upload MP4, MKV, or MOV files (max 1GB). The video will be uploaded to Cloudinary and the public ID will be stored.
+                </p>
+                {errors[`content_videoUrl_${sectionIndex}`] && <span className="text-xs text-red-500">{errors[`content_videoUrl_${sectionIndex}`]}</span>}
+              </div>
             </div>
 
             {/* Description */}
@@ -174,9 +337,56 @@ const CreateCourseContent = ({ courseContent = [], setCourseContent, errors, set
 
             {/* Video Length */}
             <div className="flex flex-col gap-2">
-              <Label>Video Length (in minutes)</Label>
-              <Input type="number" value={content.videoLength} onChange={(e) => updateVideoSection(sectionIndex, "videoLength", e.target.value)} placeholder="Enter video length" className={errors[`content_videoLength_${sectionIndex}`] ? "border-red-500" : ""} min={0} />
+              <Label>Video Length (in seconds)</Label>
+              <Input type="number" value={content.videoLength} onChange={(e) => updateVideoSection(sectionIndex, "videoLength", parseInt(e.target.value) || 0)} placeholder="Enter video length in seconds" className={errors[`content_videoLength_${sectionIndex}`] ? "border-red-500" : ""} min={0} />
               {errors[`content_videoLength_${sectionIndex}`] && <span className="text-xs text-red-500">{errors[`content_videoLength_${sectionIndex}`]}</span>}
+              <p className="text-xs text-muted-foreground">Enter duration in seconds (e.g., 600 = 10 minutes)</p>
+            </div>
+
+            {/* Order */}
+            <div className="flex flex-col gap-2">
+              <Label>Lesson Order</Label>
+              <Input type="number" value={content.order !== undefined ? content.order : sectionIndex} onChange={(e) => updateVideoSection(sectionIndex, "order", parseInt(e.target.value) || sectionIndex)} placeholder="Enter lesson order" min={0} />
+              <p className="text-xs text-muted-foreground">Set the order/sequence of this lesson (0 = first)</p>
+            </div>
+
+            {/* Preview & Lock Options */}
+            <div className="flex flex-col gap-3 rounded-lg border p-4">
+              <Label className="text-sm font-semibold">Lesson Access Settings</Label>
+              
+              <div className="flex items-center space-x-3">
+                <input 
+                  type="checkbox" 
+                  id={`preview-${sectionIndex}`} 
+                  checked={content.isPreview !== undefined ? content.isPreview : false}
+                  onChange={(e) => updateVideoSection(sectionIndex, "isPreview", e.target.checked)}
+                  className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                />
+                <Label htmlFor={`preview-${sectionIndex}`} className="flex items-center gap-2 cursor-pointer font-normal">
+                  <Eye className="h-4 w-4" />
+                  Free Preview
+                </Label>
+                <p className="text-xs text-muted-foreground">Allow non-enrolled users to preview this lesson</p>
+              </div>
+
+              <div className="flex items-center space-x-3">
+                <input 
+                  type="checkbox" 
+                  id={`locked-${sectionIndex}`} 
+                  checked={content.isLocked !== undefined ? content.isLocked : true}
+                  onChange={(e) => updateVideoSection(sectionIndex, "isLocked", e.target.checked)}
+                  className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                />
+                <Label htmlFor={`locked-${sectionIndex}`} className="flex items-center gap-2 cursor-pointer font-normal">
+                  {content.isLocked ? <Lock className="h-4 w-4" /> : <Unlock className="h-4 w-4" />}
+                  Locked (Requires Enrollment)
+                </Label>
+                <p className="text-xs text-muted-foreground">Require enrollment to access this lesson</p>
+              </div>
+
+              <p className="text-xs text-muted-foreground mt-2">
+                Note: If "Free Preview" is enabled, the lesson will be accessible even if locked.
+              </p>
             </div>
 
             {/* Links */}

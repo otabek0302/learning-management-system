@@ -34,6 +34,7 @@ export const userApi = apiSlice.injectEndpoints({
                 params,
                 credentials: 'include' as const,
             }),
+            providesTags: ['User'],
         }),
         getSingleUser: builder.query({
             query: (id) => ({
@@ -41,6 +42,7 @@ export const userApi = apiSlice.injectEndpoints({
                 method: 'GET',
                 credentials: 'include' as const,
             }),
+            providesTags: (_result, _error, id) => [{ type: 'User' as const, id }],
         }),
         createUser: builder.mutation({
             query: (data) => ({
@@ -49,6 +51,7 @@ export const userApi = apiSlice.injectEndpoints({
                 body: data,
                 credentials: 'include' as const,
             }),
+            invalidatesTags: ['User'],
         }),
         updateUser: builder.mutation({
             query: ({ id, data }) => ({
@@ -57,6 +60,7 @@ export const userApi = apiSlice.injectEndpoints({
                 body: data,
                 credentials: 'include' as const,
             }),
+            invalidatesTags: (_result, _error, { id }) => [{ type: 'User' as const, id }, 'User'],
         }),
         deleteUser: builder.mutation({
             query: (id) => ({
@@ -65,14 +69,7 @@ export const userApi = apiSlice.injectEndpoints({
                 body: { id },
                 credentials: 'include' as const,
             }),
-        }),
-        searchUsers: builder.query({
-            query: (search) => ({
-                url: '/users/admin/search-users',
-                method: 'GET',
-                params: { search },
-                credentials: 'include' as const,
-            }),
+            invalidatesTags: ['User'],
         }),
         updateUserRole: builder.mutation({
             query: ({ id, role }) => ({
@@ -81,8 +78,9 @@ export const userApi = apiSlice.injectEndpoints({
                 body: { id, role },
                 credentials: 'include' as const,
             }),
+            invalidatesTags: (_result, _error, { id }) => [{ type: 'User' as const, id }, 'User'],
         }),
     })
 })
 
-export const { useUpdateAvatarMutation, useUpdateUserInfoMutation, useUpdatePasswordMutation, useGetAllUsersQuery, useGetSingleUserQuery, useCreateUserMutation, useUpdateUserMutation, useDeleteUserMutation, useSearchUsersQuery, useUpdateUserRoleMutation } = userApi;
+export const { useUpdateAvatarMutation, useUpdateUserInfoMutation, useUpdatePasswordMutation, useGetAllUsersQuery, useGetSingleUserQuery, useCreateUserMutation, useUpdateUserMutation, useDeleteUserMutation, useUpdateUserRoleMutation } = userApi;

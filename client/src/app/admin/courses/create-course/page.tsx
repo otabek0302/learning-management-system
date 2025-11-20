@@ -39,6 +39,9 @@ const CreateCoursePage = () => {
       videoLength: 0,
       links: [{ title: "", url: "" }],
       suggestion: "",
+      order: 0,
+      isPreview: false,
+      isLocked: true,
     },
   ]);
   const [benefits, setBenefits] = useState([{ title: "" }]);
@@ -52,32 +55,47 @@ const CreateCoursePage = () => {
     if (isError) {
       toast.error("Something went wrong!");
     }
-  }, [isSuccess, isError]);
+  }, [isSuccess, isError, router]);
 
   const handleSubmit = async () => {
-    // Format the benefits and prerequisites
-    const formattedBenefits = benefits.map((benefit) => ({ title: benefit.title }));
-    const formattedPrerequisites = prerequisites.map((prerequisite) => ({ title: prerequisite.title }));
+    try {
+      // Format the benefits and prerequisites - convert to string array
+      const formattedBenefits = benefits.map((benefit) => benefit.title).filter((title) => title.trim() !== "");
+      const formattedPrerequisites = prerequisites.map((prerequisite) => prerequisite.title).filter((title) => title.trim() !== "");
 
-    // Format the course content
-    const formattedCourseContent = courseContent.map((content) => ({
-      videoUrl: content.videoUrl,
-      title: content.title,
-      description: content.description,
-      videoLength: content.videoLength,
-      videoSection: content.videoSection,
-      links: content.links.map((link) => ({ title: link.title, url: link.url })),
-      suggestion: content.suggestion,
-    }));
+      // Format tags - convert string to array if needed
+      const formattedTags = typeof courseInfo.tags === 'string' 
+        ? courseInfo.tags.split(',').map((tag) => tag.trim()).filter((tag) => tag !== "")
+        : courseInfo.tags;
 
-    // If everything is valid, submit
-    const data = {
-      ...courseInfo,
-      benefits: formattedBenefits,
-      prerequisites: formattedPrerequisites,
-      courseData: formattedCourseContent,
-    };
-    await createCourse(data as any);
+      // Format the course content with new fields
+      const formattedCourseContent = courseContent.map((content, index) => ({
+        videoUrl: content.videoUrl,
+        title: content.title,
+        description: content.description,
+        videoLength: content.videoLength || 0,
+        videoSection: content.videoSection,
+        links: content.links.map((link) => ({ title: link.title, url: link.url })),
+        suggestion: content.suggestion,
+        order: content.order !== undefined ? content.order : index,
+        isPreview: content.isPreview !== undefined ? content.isPreview : false,
+        isLocked: content.isLocked !== undefined ? content.isLocked : true,
+        // Include quiz if it exists (will be added later in UI)
+        ...(content.quiz && { quiz: content.quiz }),
+      }));
+
+      // If everything is valid, submit
+      const data = {
+        ...courseInfo,
+        tags: formattedTags,
+        benefits: formattedBenefits,
+        prerequisites: formattedPrerequisites,
+        courseData: formattedCourseContent,
+      };
+      await createCourse(data).unwrap();
+    } catch (error: any) {
+      toast.error(error?.data?.message || "Failed to create course. Please try again.");
+    }
   };
 
   return (

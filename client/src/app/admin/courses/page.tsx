@@ -7,7 +7,7 @@ import { useState } from "react";
 import { Grid3X3, List, Plus, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useGetAllCoursesQuery } from "@/redux/features/courses/courseApi";
+import { useGetAllCoursesQuery, useDeleteCourseMutation } from "@/redux/features/courses/courseApi";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Pagination } from "@/components/ui/pagination";
@@ -21,11 +21,26 @@ const CoursesPage = () => {
   const [rowsPerPage, setRowsPerPage] = useState(12);
 
   const { data: coursesData, isLoading, error } = useGetAllCoursesQuery({ page: currentPage, limit: rowsPerPage });
+  const [deleteCourse, { isLoading: isDeleting }] = useDeleteCourseMutation();
 
   const courses = coursesData?.courses || [];
   const pagination = coursesData?.pagination;
 
-  const filteredCourses = courses.filter((course: any) => course.name.toLowerCase().includes(searchTerm.toLowerCase()) || course.description.toLowerCase().includes(searchTerm.toLowerCase()) || course.tags.toLowerCase().includes(searchTerm.toLowerCase()));
+  interface Course {
+    _id: string;
+    name: string;
+    description: string;
+    tags: string | string[];
+  }
+
+  const filteredCourses = courses.filter((course: Course) => {
+    const tagsString = Array.isArray(course.tags) ? course.tags.join(" ") : course.tags;
+    return (
+      course.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      course.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      tagsString.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  });
 
   const handleView = (courseId: string) => {
     router.push(`/admin/courses/${courseId}`);
@@ -35,16 +50,22 @@ const CoursesPage = () => {
     router.push(`/admin/courses/${courseId}/edit-course`);
   };
 
-  const handleDelete = (courseId: string) => {
-    // TODO: Implement delete functionality
-    toast.info("Delete functionality will be implemented soon");
+  const handleDelete = async (courseId: string) => {
+    if (window.confirm("Are you sure you want to delete this course? This action cannot be undone.")) {
+      try {
+        await deleteCourse(courseId).unwrap();
+        toast.success("Course deleted successfully");
+      } catch (error: any) {
+        toast.error(error?.data?.message || "Failed to delete course");
+      }
+    }
   };
 
   const handleCreateCourse = () => {
     router.push("/admin/courses/create-course");
   };
 
-  if (isLoading) {
+  if (isLoading || isDeleting) {
     return (
       <div className="flex h-64 items-center justify-center">
         <div className="text-center">
@@ -105,7 +126,7 @@ const CoursesPage = () => {
           </div>
         ) : (
           <div className={layout === "column" ? "grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" : "space-y-4"}>
-            {filteredCourses.map((course: any) => (
+            {filteredCourses.map((course: Course) => (
               <CourseCard key={course._id} course={course} layout={layout} onView={handleView} onEdit={handleEdit} onDelete={handleDelete} />
             ))}
           </div>

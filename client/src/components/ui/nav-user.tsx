@@ -1,6 +1,6 @@
 "use client";
 
-import { BadgeCheck, Bell, BookOpen, CreditCard, LogOut, Settings, Sparkles, User } from "lucide-react";
+import { Bell, BookOpen, LogOut, Settings, User } from "lucide-react";
 
 import { Button } from "./button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";

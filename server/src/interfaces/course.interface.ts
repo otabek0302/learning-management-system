@@ -11,13 +11,15 @@ export interface ICourse extends Document {
     price: number;
     estimatedPrice?: number;
     thumbnail: IThumbnail;
-    tags: string;
-    level: string;
+    tags: string[];
+    level: string; // beginner, intermediate, advanced
     demoUrl: string;
-    benefits: { title: string }[];
-    prerequisites: { title: string }[];
+    benefits: string[];
+    prerequisites: string[];
     reviews: IReview[];
     courseData: ICourseData[];
+    totalLessons: number;
+    totalDuration: number;
     ratings: number;
     purchased: number;
 }
@@ -49,18 +51,35 @@ export interface IThumbnail extends Document {
     url: string;
 }
 
+// Quiz Question
+export interface IQuizQuestion {
+    question: string;
+    options: string[];
+    correctAnswer: number; // index of correct option
+}
+
+// Quiz
+export interface IQuiz {
+    questions: IQuizQuestion[];
+    passingScore: number; // %
+}
+
 // Course Data
 export interface ICourseData extends Document {
     title: string;
-    description: string;
-    category: string;
+    description?: string;
     videoUrl: string;
     videoSection: string;
-    videoLength: number;
-    videoPlayer: string;
+    videoLength?: number;
+    videoPlayer?: string;
     links: ILink[];
-    suggestion: string;
+    suggestion?: string;
     comments: IComment[];
+    // NEW FIELDS
+    order: number;              // lesson ordering
+    isPreview: boolean;         // free preview
+    isLocked: boolean;          // requires enrollment
+    quiz?: IQuiz;               // quiz for this lesson
 }
 
 // Request Body
@@ -70,11 +89,11 @@ export interface ICreateCourseRequestBody {
     price: number;
     estimatedPrice?: number;
     thumbnail: string;
-    tags: string;
+    tags: string[];
     level: string;
     demoUrl: string;
-    benefits: { title: string }[];
-    prerequisites: { title: string }[];
+    benefits: string[];
+    prerequisites: string[];
     courseData: ICourseData[];
     ratings: number;
     purchased: number;

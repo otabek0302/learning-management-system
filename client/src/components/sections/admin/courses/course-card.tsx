@@ -2,7 +2,7 @@ import React from "react";
 import Image from "next/image";
 
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
-import { Edit, Eye, Trash2, Users, Star, Clock, DollarSign } from "lucide-react";
+import { Edit, Eye, Trash2, Users, Star, DollarSign } from "lucide-react";
 import { formatPrice } from "@/lib/helper";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -17,7 +17,7 @@ interface Course {
     public_id: string;
     url: string;
   };
-  tags: string;
+  tags: string | string[];
   level: string;
   ratings: number;
   purchased: number;
@@ -82,9 +82,9 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, layout, onEdit, onView,
 
               {/* Tags */}
               <div className="flex flex-wrap gap-2">
-                {course.tags.split(",").map((tag, index) => (
+                {(Array.isArray(course.tags) ? course.tags : course.tags.split(",")).map((tag, index) => (
                   <Badge key={index} variant="secondary" className="text-xs hover:bg-secondary/80">
-                    {tag.trim()}
+                    {typeof tag === 'string' ? tag.trim() : tag}
                   </Badge>
                 ))}
               </div>
@@ -139,17 +139,16 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, layout, onEdit, onView,
       <CardContent className="p-4 pt-0">
         {/* Tags */}
         <div className="flex h-14 flex-wrap gap-1">
-          {course.tags
-            .split(",")
+          {(Array.isArray(course.tags) ? course.tags : course.tags.split(","))
             .slice(0, 3)
             .map((tag, index) => (
               <Badge key={index} variant="secondary" className="h-6 text-xs hover:bg-secondary/80">
-                {tag.trim()}
+                {typeof tag === 'string' ? tag.trim() : tag}
               </Badge>
             ))}
-          {course.tags.split(",").length > 3 && (
+          {(Array.isArray(course.tags) ? course.tags : course.tags.split(",")).length > 3 && (
             <Badge variant="secondary" className="text-xs">
-              +{course.tags.split(",").length - 3} more
+              +{(Array.isArray(course.tags) ? course.tags : course.tags.split(",")).length - 3} more
             </Badge>
           )}
         </div>

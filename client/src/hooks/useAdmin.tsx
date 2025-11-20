@@ -2,11 +2,11 @@
 
 import { useSelector } from "react-redux";
 import { RootState } from "@/redux/store";
-import { userAuth } from "./userAuth";
+import { useUserAuth } from "./userAuth";
 import { redirect } from "next/navigation";
 
 export const ProtectedAdmin = ({ children }: { children: React.ReactNode }) => {
-  const isAuthenticated = userAuth();
+  const isAuthenticated = useUserAuth();
   const { user } = useSelector((state: RootState) => state.auth);
 
   // Wait until data are loaded

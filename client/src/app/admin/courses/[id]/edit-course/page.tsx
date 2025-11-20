@@ -55,17 +55,29 @@ const EditCoursePage = () => {
         description: course.description || "",
         price: course.price?.toString() || "",
         estimatedPrice: course.estimatedPrice?.toString() || "",
-        tags: course.tags || "",
+        tags: Array.isArray(course.tags) ? course.tags.join(", ") : course.tags || "",
         level: course.level || "",
         demoUrl: course.demoUrl || "",
         thumbnail: course.thumbnail?.url || "",
       });
 
-      setBenefits(course.benefits?.length > 0 ? course.benefits : [{ title: "" }]);
-      setPrerequisites(course.prerequisites?.length > 0 ? course.prerequisites : [{ title: "" }]);
+      // Convert string array to { title: string }[] format for the form
+      const benefitsArray = Array.isArray(course.benefits) 
+        ? course.benefits.map((b: string | { title: string }) => ({ 
+            title: typeof b === 'string' ? b : b.title || "" 
+          }))
+        : [{ title: "" }];
+      setBenefits(benefitsArray.length > 0 ? benefitsArray : [{ title: "" }]);
+
+      const prerequisitesArray = Array.isArray(course.prerequisites)
+        ? course.prerequisites.map((p: string | { title: string }) => ({ 
+            title: typeof p === 'string' ? p : p.title || "" 
+          }))
+        : [{ title: "" }];
+      setPrerequisites(prerequisitesArray.length > 0 ? prerequisitesArray : [{ title: "" }]);
       
       if (course.courseData?.length > 0) {
-        setCourseContent(course.courseData.map((content: any) => ({
+        setCourseContent(course.courseData.map((content: { videoUrl?: string; title?: string; description?: string; videoSection?: string; links?: Array<{ title: string; url: string }>; suggestion?: string }) => ({
           videoUrl: content.videoUrl || "",
           title: content.title || "",
           description: content.description || "",
@@ -82,35 +94,42 @@ const EditCoursePage = () => {
       toast.success("Course updated successfully!");
       router.push("/admin/courses");
     }
-    if (isError) {
-      toast.error("Something went wrong while updating the course!");
-    }
-  }, [isSuccess, isError, router]);
+  }, [isSuccess, router]);
 
   const handleSubmit = async () => {
-    // Format the benefits and prerequisites
-    const formattedBenefits = benefits.map((benefit) => ({ title: benefit.title }));
-    const formattedPrerequisites = prerequisites.map((prerequisite) => ({ title: prerequisite.title }));
+    try {
+      // Format the benefits and prerequisites - convert to string array
+      const formattedBenefits = benefits.map((benefit) => benefit.title).filter((title) => title.trim() !== "");
+      const formattedPrerequisites = prerequisites.map((prerequisite) => prerequisite.title).filter((title) => title.trim() !== "");
 
-    // Format the course content
-    const formattedCourseContent = courseContent.map((content) => ({
-      videoUrl: content.videoUrl,
-      title: content.title,
-      description: content.description,
-      videoSection: content.videoSection,
-      links: content.links.map((link) => ({ title: link.title, url: link.url })),
-      suggestion: content.suggestion,
-    }));
+      // Format tags - convert string to array if needed
+      const formattedTags = typeof courseInfo.tags === 'string' 
+        ? courseInfo.tags.split(',').map((tag) => tag.trim()).filter((tag) => tag !== "")
+        : courseInfo.tags;
 
-    // If everything is valid, submit
-    const data = {
-      ...courseInfo,
-      benefits: formattedBenefits,
-      prerequisites: formattedPrerequisites,
-      courseData: formattedCourseContent,
-    };
-    
-    await updateCourse({ id: courseId, data: data as any });
+      // Format the course content
+      const formattedCourseContent = courseContent.map((content) => ({
+        videoUrl: content.videoUrl,
+        title: content.title,
+        description: content.description,
+        videoSection: content.videoSection,
+        links: content.links.map((link) => ({ title: link.title, url: link.url })),
+        suggestion: content.suggestion,
+      }));
+
+      // If everything is valid, submit
+      const data = {
+        ...courseInfo,
+        tags: formattedTags,
+        benefits: formattedBenefits,
+        prerequisites: formattedPrerequisites,
+        courseData: formattedCourseContent,
+      };
+      
+      await updateCourse({ id: courseId, data }).unwrap();
+    } catch (error: any) {
+      toast.error(error?.data?.message || "Failed to update course. Please try again.");
+    }
   };
 
   if (isLoadingCourse) {

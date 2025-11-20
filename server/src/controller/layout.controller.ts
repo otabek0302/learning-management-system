@@ -2,8 +2,8 @@ import { Request, Response, NextFunction } from "express";
 import { Layout as LayoutType } from "../interfaces/layout.interface";
 import { BannerImage } from "../interfaces/layout.interface";
 
-import ErrorHandler from "../utils/ErrorHandler";
-import CatchAsyncErrors from "../middleware/catchAsyncErrors";
+import ErrorHandler from "../utils/error-handler";
+import CatchAsyncErrors from "../middleware/catch-async-errors";
 import cloudinary from "cloudinary";
 import Layout from "../models/layout.model";
 

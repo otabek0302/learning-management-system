@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Image from "next/image";
 import Link from "next/link";
 
 import { useState, useRef } from "react";
@@ -95,7 +96,7 @@ const CreateLayoutPage = () => {
 
             {banner.imagePreview && (
               <div className="relative h-80 w-full overflow-hidden rounded-lg border">
-                <img src={banner.imagePreview} alt="Banner preview" className="h-full w-full object-cover" />
+                <Image src={banner.imagePreview} alt="Banner preview" fill className="object-cover" />
                 <Button type="button" variant="destructive" size="sm" onClick={removeImage} className="absolute right-2 top-2 h-8 w-8 p-0">
                   <Trash className="h-4 w-4" />
                 </Button>

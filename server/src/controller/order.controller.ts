@@ -3,83 +3,131 @@ import { sendOrderSuccessEmail } from "../services/order.service";
 import { createNotification } from "../services/notification.service";
 import { IOrder } from "../interfaces/order.interface";
 
-import ErrorHandler from "../utils/ErrorHandler";
-import catchAsyncErrors from "../middleware/catchAsyncErrors";
+import ErrorHandler from "../utils/error-handler";
+import catchAsyncErrors from "../middleware/catch-async-errors";
 import Order from "../models/order.model";
 import Course from "../models/course.model";
 import User from "../models/user.model";
+import { Enrollment } from "../models/enrollment.model";
+import { Coupon } from "../models/coupon.model";
 
-// Create Order
 export const createOrder = catchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
     try {
-        // Get course id and payment info from request body 
-        const { courseId, paymentInfo } = req.body as IOrder;
-
-
-        const user = await User.findById(req.user?._id);
-
-        // Check course is exist in user course list
-        const courseExistInUserList = user?.courses.some((course: any) => course._id.toString() === courseId);
-
-        // If course is exist in user course list, return error
-        if (courseExistInUserList) {
-            return next(new ErrorHandler("Course already exist in user course list", 400));
+        const userId = req.user?._id;
+        if (!userId) {
+            return next(new ErrorHandler("User not authenticated", 401));
         }
 
-        // Find course by id
-        const course = await Course.findById(courseId);
+        const { courseId, paymentInfo, couponCode } = req.body;
+        if (!courseId) {
+            return next(new ErrorHandler("Course ID is required", 400));
+        }
 
-        // If course not found, return error
+        const user = await User.findById(userId);
+        if (!user) {
+            return next(new ErrorHandler("User not found", 404));
+        }
+
+        const course = await Course.findById(courseId);
         if (!course) {
             return next(new ErrorHandler("Course not found", 404));
         }
 
-        // Create order data
+        const existingEnrollment = await Enrollment.findOne({ userId, courseId, status: "active" });
+        if (existingEnrollment) {
+            return next(new ErrorHandler("You are already enrolled in this course", 400));
+        }
+
+        const courseExistInUserList = user?.courses.some((courseItem: any) => courseItem._id.toString() === courseId);
+        if (courseExistInUserList) {
+            return next(new ErrorHandler("Course already exist in user course list", 400));
+        }
+        let originalPrice = course.price;
+        let discountAmount = 0;
+        let totalPrice = originalPrice;
+        let finalCouponCode: string | null = null;
+
+        if (couponCode) {
+            const coupon = await Coupon.findOne({ code: couponCode.toUpperCase(), active: true });
+
+            if (!coupon) {
+                return next(new ErrorHandler("Invalid or inactive coupon code", 400));
+            }
+
+            if (coupon.expiresAt && coupon.expiresAt < new Date()) {
+                return next(new ErrorHandler("Coupon has expired", 400));
+            }
+
+            if (coupon.maxUses && coupon.usedCount >= coupon.maxUses) {
+                return next(new ErrorHandler("Coupon usage limit reached", 400));
+            }
+
+            discountAmount = (originalPrice * coupon.discountPercentage) / 100;
+            totalPrice = Math.max(0, originalPrice - discountAmount);
+            finalCouponCode = coupon.code;
+            coupon.usedCount += 1;
+            await coupon.save();
+        }
+
         const orderData = {
-            courseId: course._id,
-            userId: user?._id,
-            paymentInfo
-        } as IOrder;
+            courseId: course._id.toString(),
+            userId: userId?.toString(),
+            paymentInfo,
+            originalPrice,
+            discountAmount,
+            totalPrice,
+            status: "success" as const,
+            couponCode: finalCouponCode || undefined,
+        };
 
-        // Create order
         const order = await Order.create(orderData);
+        await Enrollment.create({
+            userId: userId?.toString() || "",
+            courseId: course._id.toString(),
+            status: "active",
+            purchasedAt: new Date()
+        });
 
-        // Send order success email
+        // 9. Add course to user course list
+        user?.courses.push({ _id: course?._id });
+        await user?.save();
+
+        // 10. Update course purchased count
+        course.purchased = (course.purchased || 0) + 1;
+        await course.save();
+
+        // 11. Send order success email
         const emailData = {
             _id: course?._id,
             name: course?.name,
-            price: course?.price,
+            price: totalPrice,
             date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
         }
 
-        // Send order success email
         if (user?.email) {
             sendOrderSuccessEmail(emailData, user.email);
         }
 
-        // Add course to user course list
-        user?.courses.push({ _id: course?._id });
-
-        // Save user
-        await user?.save();
-
-        // Create Notification
+        // 12. Create Notification
         await createNotification({
-            user: user?._id || "",
+            user: userId?.toString() || "",
             title: "New Order",
             message: `You have a new order for ${course?.name}`
         });
 
-        // Course Purchased Notification
-        course.purchased ? course.purchased += 1 : course.purchased;
-
-        // Save course
-        await course.save();
-
-        // Send response
+        // 13. Send response
         res.status(201).json({
             success: true,
-            message: "Order created successfully"
+            message: "Order created successfully",
+            order: {
+                _id: order._id,
+                courseId: order.courseId,
+                originalPrice: order.originalPrice,
+                discountAmount: order.discountAmount,
+                totalPrice: order.totalPrice,
+                status: order.status,
+                couponCode: order.couponCode
+            }
         })
 
     } catch (error: any) {
@@ -116,3 +164,4 @@ export const getAllOrders = catchAsyncErrors(async (req: Request, res: Response,
         return next(new ErrorHandler(error.message, 500));
     }
 })
+

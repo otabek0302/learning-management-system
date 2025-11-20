@@ -3,8 +3,15 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { MessageCircle, Video } from "lucide-react";
 
-// AccordionSections component for courseData
-export function AccordionSections({ sections }: { sections: any[] }) {
+interface CourseSection {
+  _id?: string;
+  title: string;
+  videoSection?: string;
+  description?: string;
+  comments?: Array<unknown>;
+}
+
+export function AccordionSections({ sections }: { sections: CourseSection[] }) {
   const [openSection, setOpenSection] = useState<number | null>(null);
   return (
     <div className="space-y-2">

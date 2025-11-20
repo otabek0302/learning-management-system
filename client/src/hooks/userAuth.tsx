@@ -5,7 +5,7 @@ import { useSelector } from 'react-redux';
 import { useSession } from 'next-auth/react';
 import { useAuthInitializer } from './useAuthInitializer';
 
-export function userAuth() {
+export function useUserAuth() {
   const { data: session, status } = useSession();
   const { user } = useSelector((state: RootState) => state.auth);
   const { isLoading } = useAuthInitializer(); 

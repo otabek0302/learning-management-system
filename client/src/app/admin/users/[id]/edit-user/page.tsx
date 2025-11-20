@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { ArrowLeft, Loader2, Save } from "lucide-react";
+import { Loader2, Save } from "lucide-react";
 
 const EditUserPage = () => {
   const router = useRouter();
@@ -44,14 +44,9 @@ const EditUserPage = () => {
   useEffect(() => {
     if (isSuccess) {
       toast.success("User updated successfully!");
-      // Refetch user data before redirecting
-      refetch();
       router.push(`/admin/users/${userId}`);
     }
-    if (isError) {
-      toast.error("Failed to update user. Please try again.");
-    }
-  }, [isSuccess, isError, router, userId, refetch]);
+  }, [isSuccess, router, userId]);
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -78,10 +73,9 @@ const EditUserPage = () => {
     }
 
     try {
-      const res = await updateUser({ id: userId, data: formData });
-      console.log(res);
-    } catch (error) {
-      console.error("Error updating user:", error);
+      await updateUser({ id: userId, data: formData }).unwrap();
+    } catch (error: any) {
+      toast.error(error?.data?.message || "Failed to update user. Please try again.");
     }
   };
 
@@ -155,7 +149,7 @@ const EditUserPage = () => {
         <div className="flex items-center justify-between rounded-lg border p-4">
           <div className="space-y-0.5">
             <Label className="text-base">Email Verification</Label>
-            <p className="text-sm text-muted-foreground">Mark this user's email as verified</p>
+            <p className="text-sm text-muted-foreground">Mark this user&apos;s email as verified</p>
           </div>
           <Switch checked={formData.isVerified} onCheckedChange={(checked: boolean) => handleInputChange("isVerified", checked)} />
         </div>
