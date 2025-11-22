@@ -54,12 +54,15 @@ export const courseApi = apiSlice.injectEndpoints({
             }),
             providesTags: (_result, _error, id) => [{ type: 'Course' as const, id }],
         }),
-        uploadVideo: builder.mutation<{ success: boolean; publicId: string; duration: number }, FormData>({
-            query: (formData) => ({
+        uploadVideo: builder.mutation<{ success: boolean; video: { public_id: string; url: string; secure_url: string; duration: number; format: string } }, { video: string }>({
+            query: (data) => ({
                 url: '/videos/upload',
                 method: 'POST',
-                body: formData,
+                body: data,
                 credentials: 'include' as const,
+                headers: {
+                    'Content-Type': 'application/json',
+                },
             }),
         }),
     }),

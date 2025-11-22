@@ -4,14 +4,14 @@ import { createNotification } from "../services/notification.service";
 import { IOrder } from "../interfaces/order.interface";
 
 import ErrorHandler from "../utils/error-handler";
-import catchAsyncErrors from "../middleware/catch-async-errors";
+import CatchAsyncErrors from "../middleware/catch-async-errors";
 import Order from "../models/order.model";
 import Course from "../models/course.model";
 import User from "../models/user.model";
 import { Enrollment } from "../models/enrollment.model";
 import { Coupon } from "../models/coupon.model";
 
-export const createOrder = catchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
+export const createOrder = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
     try {
         const userId = req.user?._id;
         if (!userId) {
@@ -137,7 +137,7 @@ export const createOrder = catchAsyncErrors(async (req: Request, res: Response, 
 
 // Admin Routes
 // Get All Orders
-export const getAllOrders = catchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
+export const getAllOrders = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
     try {
         const page = parseInt(req.query.page as string) || 1;
         const limit = 12;

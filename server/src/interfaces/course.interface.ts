@@ -7,13 +7,12 @@ export interface ICourse extends Document {
     _id: string;
     name: string;
     description: string;
-    category: string;
+    category: string; // Reference to Category model
     price: number;
     estimatedPrice?: number;
     thumbnail: IThumbnail;
     tags: string[];
     level: string; // beginner, intermediate, advanced
-    demoUrl: string;
     benefits: string[];
     prerequisites: string[];
     reviews: IReview[];
@@ -49,7 +48,9 @@ export interface ILink extends Document {
 export interface IThumbnail extends Document {
     public_id: string;
     url: string;
+    secure_url?: string;        // NEW: Secure URL
 }
+
 
 // Quiz Question
 export interface IQuizQuestion {
@@ -64,21 +65,27 @@ export interface IQuiz {
     passingScore: number; // %
 }
 
+// Video
+export interface IVideo extends Document {
+    public_id: string;
+    url: string;
+    secure_url: string;
+    duration: number;
+    format: string;
+}
+
 // Course Data
 export interface ICourseData extends Document {
     title: string;
     description?: string;
-    videoUrl: string;
+    video: IVideo;              // Cloudinary video structure
     videoSection: string;
-    videoLength?: number;
-    videoPlayer?: string;
     links: ILink[];
     suggestion?: string;
     comments: IComment[];
-    // NEW FIELDS
     order: number;              // lesson ordering
-    isPreview: boolean;         // free preview
-    isLocked: boolean;          // requires enrollment
+    isPreview: boolean;         // free preview (can be watched without enrollment)
+    isLocked: boolean;          // requires enrollment (locked by default)
     quiz?: IQuiz;               // quiz for this lesson
 }
 
@@ -86,17 +93,15 @@ export interface ICourseData extends Document {
 export interface ICreateCourseRequestBody {
     name: string;
     description: string;
+    category: string;
     price: number;
     estimatedPrice?: number;
     thumbnail: string;
     tags: string[];
     level: string;
-    demoUrl: string;
     benefits: string[];
     prerequisites: string[];
     courseData: ICourseData[];
-    ratings: number;
-    purchased: number;
 }   
 
 // Add Comment Request Body

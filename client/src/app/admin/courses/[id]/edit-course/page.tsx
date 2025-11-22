@@ -29,7 +29,7 @@ const EditCoursePage = () => {
     estimatedPrice: "",
     tags: "",
     level: "",
-    demoUrl: "",
+    category: "",
     thumbnail: "",
   });
   const [courseContent, setCourseContent] = useState([
@@ -57,8 +57,8 @@ const EditCoursePage = () => {
         estimatedPrice: course.estimatedPrice?.toString() || "",
         tags: Array.isArray(course.tags) ? course.tags.join(", ") : course.tags || "",
         level: course.level || "",
-        demoUrl: course.demoUrl || "",
-        thumbnail: course.thumbnail?.url || "",
+        category: course.category || "",
+        thumbnail: course.thumbnail?.secure_url || course.thumbnail?.url || "",
       });
 
       // Convert string array to { title: string }[] format for the form
@@ -77,13 +77,19 @@ const EditCoursePage = () => {
       setPrerequisites(prerequisitesArray.length > 0 ? prerequisitesArray : [{ title: "" }]);
       
       if (course.courseData?.length > 0) {
-        setCourseContent(course.courseData.map((content: { videoUrl?: string; title?: string; description?: string; videoSection?: string; links?: Array<{ title: string; url: string }>; suggestion?: string }) => ({
-          videoUrl: content.videoUrl || "",
+        setCourseContent(course.courseData.map((content: any, index: number) => ({
+          video: content.video || undefined, // Full video object from Cloudinary
+          videoUrl: content.video?.secure_url || content.videoUrl || "", // For display/fallback
           title: content.title || "",
           description: content.description || "",
-          videoSection: content.videoSection || "Untitled Section",
+          videoLength: content.video?.duration || content.videoLength || 0,
+          videoSection: content.videoSection || `Section ${index + 1}`,
           links: content.links?.length > 0 ? content.links : [{ title: "", url: "" }],
           suggestion: content.suggestion || "",
+          order: content.order !== undefined ? content.order : index,
+          isPreview: content.isPreview !== undefined ? content.isPreview : false,
+          isLocked: content.isLocked !== undefined ? content.isLocked : true,
+          quiz: content.quiz || undefined,
         })));
       }
     }
@@ -108,14 +114,38 @@ const EditCoursePage = () => {
         : courseInfo.tags;
 
       // Format the course content
-      const formattedCourseContent = courseContent.map((content) => ({
-        videoUrl: content.videoUrl,
-        title: content.title,
-        description: content.description,
-        videoSection: content.videoSection,
-        links: content.links.map((link) => ({ title: link.title, url: link.url })),
-        suggestion: content.suggestion,
-      }));
+      const formattedCourseContent = courseContent.map((content) => {
+        const formatted: any = {
+          title: content.title,
+          description: content.description,
+          videoSection: content.videoSection,
+          links: content.links.map((link) => ({ title: link.title, url: link.url })),
+          suggestion: content.suggestion || "",
+          order: content.order !== undefined ? content.order : 0,
+          isPreview: content.isPreview !== undefined ? content.isPreview : false,
+          isLocked: content.isLocked !== undefined ? content.isLocked : true,
+        };
+
+        // If video object exists (already uploaded), use it
+        if (content.video && content.video.public_id) {
+          formatted.video = content.video;
+        } 
+        // If videoUrl is base64 (new upload), send it for upload
+        else if (content.videoUrl && content.videoUrl.startsWith('data:')) {
+          formatted.videoUrl = content.videoUrl;
+        }
+        // If videoUrl is a URL string (external or existing), keep it
+        else if (content.videoUrl) {
+          formatted.videoUrl = content.videoUrl;
+        }
+
+        // Include quiz if exists
+        if (content.quiz) {
+          formatted.quiz = content.quiz;
+        }
+
+        return formatted;
+      });
 
       // If everything is valid, submit
       const data = {

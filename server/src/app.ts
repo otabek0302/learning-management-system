@@ -22,18 +22,23 @@ import QuizRouter from "./routes/quiz.route";
 import CertificateRouter from "./routes/certificate.route";
 import CouponRouter from "./routes/coupon.route";
 import VideoRouter from "./routes/video.route";
+import CategoryRouter from "./routes/category.route";
 
 // Initialize express
 const app = express();
 
 // Security and logging middleware
-app.use(helmet());
+app.use(helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+    crossOriginEmbedderPolicy: false,
+}));
 if (process.env.NODE_ENV === "development") {
     app.use(morgan("dev"));
 }
 
-// Body parsing and let only 50mb
+// Body parsing - JSON and URL encoded
 app.use(express.json({ limit: "50mb" }));
+app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 
 // Cookie parser for cookies
 app.use(cookieParser());
@@ -41,7 +46,10 @@ app.use(cookieParser());
 // Cors for other urls
 app.use(cors({
     origin: ORIGINS,
-    credentials: true
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    exposedHeaders: ['Set-Cookie'],
 }));
 
 // API Routers
@@ -57,24 +65,15 @@ app.use("/api/v1/quiz", QuizRouter)
 app.use("/api/v1/certificates", CertificateRouter)
 app.use("/api/v1/coupons", CouponRouter)
 app.use("/api/v1/videos", VideoRouter)
-// Unknown route
+app.use("/api/v1/categories", CategoryRouter)
+// Unknown route handler - must be last before error middleware
 app.all("*", (req: Request, res: Response, next: NextFunction) => {
     const err: any = new Error(`Cannot find ${req.originalUrl} on this server!`);
-    err.status = 404;
+    err.statusCode = 404;
     next(err);
 });
 
-// Global error handler
-app.use((err: any, req: Request, res: Response, next: NextFunction) => {
-    const statusCode = err.status || 500;
-    const message = err.message || "Internal Server Error";
-    res.status(statusCode).json({
-        success: false,
-        message,
-    });
-});
-
-// Error middleware
+// Error middleware - must be last
 app.use(ErrorMiddleware);
 
 export default app;

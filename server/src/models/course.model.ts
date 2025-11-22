@@ -22,19 +22,28 @@ const commentSchema = new Schema<IComment>({
     commentReplies: [Object],
 }, { timestamps: true });
 
+const videoSchema = new Schema({
+    public_id: { type: String, required: true },
+    url: { type: String, required: true },
+    secure_url: { type: String, required: true },
+    duration: { type: Number, required: true },
+    format: { type: String, default: "mp4" },
+}, { _id: false });
+
 const courseDataSchema = new Schema<ICourseData>({
     title: { type: String, required: true },
     description: { type: String },
-    videoUrl: { type: String, required: true },
+    video: {
+        type: videoSchema,
+        required: true,
+    },
     videoSection: { type: String, required: true },
-    videoLength: { type: Number },
-    videoPlayer: { type: String },
     links: [linkSchema],
     suggestion: String,
     comments: [commentSchema],
     order: { type: Number, default: 0 },
-    isPreview: { type: Boolean, default: false },
-    isLocked: { type: Boolean, default: true },
+    isPreview: { type: Boolean, default: false }, // Free preview lesson
+    isLocked: { type: Boolean, default: true },    // Requires enrollment
     quiz: {
         questions: [
             {
@@ -50,18 +59,18 @@ const courseDataSchema = new Schema<ICourseData>({
 const courseSchema = new Schema<ICourse>({
     name: { type: String, required: true },
     description: { type: String, required: true },
-    category: { type: String, required: true },
+    category: { type: String, required: true, ref: "Category" },
     price: { type: Number, required: true },
     estimatedPrice: Number,
     thumbnail: {
         public_id: { type: String },
         url: { type: String },
+        secure_url: { type: String },
     },
     tags: [{ type: String }],
     benefits: [{ type: String }],
     prerequisites: [{ type: String }],
     level: { type: String, required: true },
-    demoUrl: { type: String, required: true },
     reviews: [reviewSchema],
     courseData: [courseDataSchema],
     totalLessons: { type: Number, default: 0 },

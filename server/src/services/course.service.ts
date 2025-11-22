@@ -1,26 +1,49 @@
 import { Response, NextFunction } from "express";
 import { ICourse } from "../interfaces/course.interface";
 
-import cloudinary from "cloudinary";
 import ErrorHandler from "../utils/error-handler";
 import sendMail from "../utils/send-mails";
+import { uploadImage, deleteFile } from "./cloudinary.service";
 
 // Validate Course Data
-export const validateCourseData = async (data: ICourse, res: Response, next: NextFunction) => {
-    const { name, description, price, estimatedPrice, thumbnail, tags, level, demoUrl, benefits, prerequisites, courseData } = data;
+export const validateCourseData = async (data: any, res: Response, next: NextFunction) => {
+    const { name, description, price, estimatedPrice, thumbnail, tags, level, benefits, prerequisites, courseData, category } = data;
 
-    if (!name || !description || !price || !estimatedPrice || !thumbnail || !tags || !level || !demoUrl || !benefits || !prerequisites || !courseData) {
-        console.log("All fields are required");
-        next(new ErrorHandler("All fields are required", 400));
+    // Required fields validation
+    if (!name || !description || !price || !estimatedPrice || !thumbnail || !tags || !level || !benefits || !prerequisites || !courseData || !category) {
+        console.log("All required fields are missing");
+        next(new ErrorHandler("All required fields are required", 400));
         return false;
     }
+
+    // Validate courseData array
+    if (!Array.isArray(courseData) || courseData.length === 0) {
+        console.log("Course data must be a non-empty array");
+        next(new ErrorHandler("At least one lesson is required", 400));
+        return false;
+    }
+
+    // Validate each lesson has required fields
+    for (let i = 0; i < courseData.length; i++) {
+        const lesson = courseData[i];
+        if (!lesson.title || !lesson.videoSection) {
+            next(new ErrorHandler(`Lesson ${i + 1}: title and videoSection are required`, 400));
+            return false;
+        }
+        // Video validation: video object is required
+        if (!lesson.video || !lesson.video.public_id) {
+            next(new ErrorHandler(`Lesson ${i + 1}: video is required (must upload video)`, 400));
+            return false;
+        }
+    }
+
     return true;
 }
 
 // Upload Course Thumbnail
 export const uploadCourseThumbnail = async (courseThumbnail: string) => {
-    const uploadResponse = await cloudinary.v2.uploader.upload(courseThumbnail, {
-        folder: "courses",
+    const uploadResponse = await uploadImage(courseThumbnail, {
+        folder: "courses/thumbnails",
         crop: "fill"
     });
     return uploadResponse;
@@ -28,10 +51,14 @@ export const uploadCourseThumbnail = async (courseThumbnail: string) => {
 
 // Update Course Thumbnail
 export const updateCourseThumbnail = async (course: ICourse, thumbnail: string) => {
-    await cloudinary.v2.uploader.destroy(course.thumbnail.public_id);
+    // Delete old thumbnail if exists
+    if (course.thumbnail?.public_id) {
+        await deleteFile(course.thumbnail.public_id, "image");
+    }
 
-    const uploadResponse = await cloudinary.v2.uploader.upload(thumbnail, {
-        folder: "courses",
+    // Upload new thumbnail
+    const uploadResponse = await uploadImage(thumbnail, {
+        folder: "courses/thumbnails",
     });
 
     return uploadResponse;
@@ -60,9 +87,9 @@ export const calculateCourseTotals = async (course: ICourse) => {
     // Calculate total lessons
     course.totalLessons = course.courseData?.length || 0;
 
-    // Calculate total duration (sum of all lesson video lengths)
+    // Calculate total duration (sum of all lesson video durations)
     course.totalDuration = course.courseData?.reduce(
-        (sum, lesson) => sum + (lesson.videoLength || 0),
+        (sum, lesson) => sum + (lesson.video?.duration || 0),
         0
     ) || 0;
 

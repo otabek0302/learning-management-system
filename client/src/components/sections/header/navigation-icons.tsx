@@ -1,7 +1,7 @@
 "use client";
 import NextLink from "next/link";
 
-import { ThemeButton, LanguagesButton, NavUser } from "@/components/ui";
+import { ThemeButton, LanguagesButton, NavUser, NavAdmin } from "@/components/ui";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { useSelector } from "react-redux";
@@ -10,6 +10,7 @@ import { RootState } from "@/redux/store";
 const NavigationIcons = () => {
   const { t } = useTranslation();
   const { user } = useSelector((state: RootState) => state.auth);
+  const isAdmin = user?.role === "admin";
 
   return (
     <div className="flex items-center gap-2">
@@ -19,9 +20,12 @@ const NavigationIcons = () => {
       <div className="block">
         <ThemeButton />
       </div>
-      <div className="hidden md:block">
+      <div className="hidden md:flex items-center gap-2">
         {user ? (
-          <NavUser />
+          <>
+            {isAdmin && <NavAdmin />}
+            <NavUser />
+          </>
         ) : (
           <NextLink href="/login" className="cursor-pointer">
             <Button variant="outline" size="default" className="group h-8 cursor-pointer border-primary bg-primary px-6 shadow-none hover:bg-transparent lg:h-9 lg:px-8">

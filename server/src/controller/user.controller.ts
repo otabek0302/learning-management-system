@@ -14,7 +14,7 @@ import ErrorHandler from "../utils/error-handler";
 import User from "../models/user.model";
 import sendMail from "../utils/send-mails";
 import redis from "../utils/redis";
-import cloudinary from "cloudinary";
+import { uploadImage, deleteFile } from "../services/cloudinary.service";
 
 // Register User
 export const registerUser = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
@@ -275,11 +275,11 @@ export const updateUserInfo = CatchAsyncErrors(async (req: Request, res: Respons
         }
 
         if (user?.avatar?.public_id) {
-            await cloudinary.v2.uploader.destroy(user.avatar.public_id);
+            await deleteFile(user.avatar.public_id, "image");
         }
 
         if (user && typeof avatar === "string") {
-            const uploadResponse = await cloudinary.v2.uploader.upload(avatar, { folder: "avatars", width: 150, height: 150, crop: "fill" });
+            const uploadResponse = await uploadImage(avatar, { folder: "avatars", width: 150, height: 150, crop: "fill" });
             user.avatar = {
                 public_id: uploadResponse.public_id,
                 url: uploadResponse.secure_url
@@ -357,18 +357,17 @@ export const updateProfilePicture = CatchAsyncErrors(async (req: Request, res: R
             return next(new ErrorHandler("User not found", 400));
         }
 
-        // Always destroy previous avatar
+        // Delete old avatar if exists
         if (user.avatar?.public_id) {
-            await cloudinary.v2.uploader.destroy(user.avatar.public_id);
+            await deleteFile(user.avatar.public_id, "image");
         }
 
-        // Always upload new one
-        const uploadResponse = await cloudinary.v2.uploader.upload(avatar, {
+        // Upload new avatar using Cloudinary service
+        const uploadResponse = await uploadImage(avatar, {
             folder: "avatars",
             width: 150,
             height: 150,
             crop: "fill",
-            resource_type: "auto"
         });
 
         user.avatar = {

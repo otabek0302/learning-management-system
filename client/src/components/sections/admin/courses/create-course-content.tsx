@@ -1,6 +1,6 @@
 import React, { useState, useRef } from "react";
 
-import { Plus, Trash2, ArrowLeft, ArrowRight, Video, Link, FileText, Lock, Unlock, Eye, Upload, Loader2, CheckCircle2 } from "lucide-react";
+import { Plus, Trash2, ArrowLeft, ArrowRight, Video, Link, FileText, Lock, Unlock, Eye, Upload, Loader2, CheckCircle2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,8 +19,17 @@ interface Quiz {
   passingScore: number; // %
 }
 
+interface VideoObject {
+  public_id: string;
+  url: string;
+  secure_url: string;
+  duration: number;
+  format: string;
+}
+
 interface CourseContent {
-  videoUrl: string;
+  videoUrl: string; // Base64 string for upload OR existing URL
+  video?: VideoObject; // Full video object from Cloudinary (used when already uploaded)
   title: string;
   description: string;
   videoLength: number; // in seconds
@@ -63,8 +72,9 @@ const CreateCourseContent = ({ courseContent = [], setCourseContent, errors, set
       } else {
         delete newErrors[`content_title_${idx}`];
       }
-      if (!content.videoUrl.trim()) {
-        newErrors[`content_videoUrl_${idx}`] = "Content video URL cannot be empty";
+      // Video validation: either video object OR videoUrl (for base64 or external URL)
+      if (!content.video && !content.videoUrl.trim()) {
+        newErrors[`content_videoUrl_${idx}`] = "Content video is required (upload video or enter URL)";
         hasError = true;
       } else {
         delete newErrors[`content_videoUrl_${idx}`];
@@ -165,53 +175,103 @@ const CreateCourseContent = ({ courseContent = [], setCourseContent, errors, set
     setUploadProgress((prev) => ({ ...prev, [sectionIndex]: 0 }));
 
     try {
-      const formData = new FormData();
-      formData.append("video", file);
-
-      // Use axios directly for progress tracking
-      const axios = (await import("axios")).default;
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
+      // Convert file to base64
+      const reader = new FileReader();
       
-      const response = await axios.post(`${apiUrl}/videos/upload`, formData, {
-        withCredentials: true,
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-        onUploadProgress: (progressEvent) => {
-          if (progressEvent.total) {
-            const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-            setUploadProgress((prev) => ({ ...prev, [sectionIndex]: percentCompleted }));
-          }
-        },
-      });
+      reader.onload = async () => {
+        try {
+          const base64String = reader.result as string;
+          
+          // Use axios for progress tracking (simulated for base64)
+          const axios = (await import("axios")).default;
+          const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
+          
+          // Simulate progress for base64 upload
+          const progressInterval = setInterval(() => {
+            setUploadProgress((prev) => {
+              const current = prev[sectionIndex] || 0;
+              if (current < 90) {
+                return { ...prev, [sectionIndex]: current + 10 };
+              }
+              return prev;
+            });
+          }, 200);
 
-      if (response.data.success && response.data.publicId && response.data.duration) {
-        // Update the video URL with publicId (Cloudinary public ID)
-        updateVideoSection(sectionIndex, "videoUrl", response.data.publicId);
-        // Update the video length with duration in seconds
-        updateVideoSection(sectionIndex, "videoLength", response.data.duration);
-        
-        setUploadProgress((prev) => ({ ...prev, [sectionIndex]: 100 }));
-        toast.success("Video uploaded successfully!");
-      }
-    } catch (error: any) {
-      toast.error(error?.response?.data?.message || "Failed to upload video. Please try again.");
-      console.error("Video upload error:", error);
-      setUploadProgress((prev) => ({ ...prev, [sectionIndex]: 0 }));
-    } finally {
-      // Small delay to show 100% before hiding progress
-      setTimeout(() => {
-        setUploadingSectionIndex(null);
-        setUploadProgress((prev) => {
-          const newProgress = { ...prev };
-          delete newProgress[sectionIndex];
-          return newProgress;
-        });
-        // Reset file input
-        if (fileInputRefs.current[sectionIndex]) {
-          fileInputRefs.current[sectionIndex]!.value = "";
+          const response = await axios.post(
+            `${apiUrl}/videos/upload`,
+            { video: base64String },
+            {
+              withCredentials: true,
+              headers: {
+                "Content-Type": "application/json",
+              },
+              onUploadProgress: (progressEvent) => {
+                // For base64, we simulate progress
+                if (progressEvent.total) {
+                  const percentCompleted = Math.min(90, Math.round((progressEvent.loaded * 100) / progressEvent.total));
+                  clearInterval(progressInterval);
+                  setUploadProgress((prev) => ({ ...prev, [sectionIndex]: percentCompleted }));
+                }
+              },
+            }
+          );
+
+          clearInterval(progressInterval);
+          setUploadProgress((prev) => ({ ...prev, [sectionIndex]: 100 }));
+
+          if (response.data.success && response.data.video) {
+            const videoData = response.data.video;
+            // Store the full video object - backend will use this if provided
+            // Also keep base64 for re-upload if needed
+            if (setCourseContent) {
+              setCourseContent((prev) => prev.map((content, i) => 
+                i === sectionIndex 
+                  ? { 
+                      ...content, 
+                      video: videoData, // Store full video object
+                      videoUrl: base64String, // Keep base64 for backend processing
+                      videoLength: videoData.duration // Update duration
+                    } 
+                  : content
+              ));
+            }
+            
+            toast.success("Video uploaded successfully!");
+          }
+        } catch (error: any) {
+          toast.error(error?.response?.data?.message || "Failed to upload video. Please try again.");
+          console.error("Video upload error:", error);
+          setUploadProgress((prev) => ({ ...prev, [sectionIndex]: 0 }));
+        } finally {
+          // Small delay to show 100% before hiding progress
+          setTimeout(() => {
+            setUploadingSectionIndex(null);
+            setUploadProgress((prev) => {
+              const newProgress = { ...prev };
+              delete newProgress[sectionIndex];
+              return newProgress;
+            });
+            // Reset file input
+            if (fileInputRefs.current[sectionIndex]) {
+              fileInputRefs.current[sectionIndex]!.value = "";
+            }
+          }, 1000);
         }
-      }, 1000);
+      };
+
+      reader.onerror = () => {
+        toast.error("Failed to read video file. Please try again.");
+        setUploadingSectionIndex(null);
+        setUploadProgress((prev) => ({ ...prev, [sectionIndex]: 0 }));
+      };
+
+      // Read file as base64 data URL
+      reader.readAsDataURL(file);
+    } catch (error: any) {
+      toast.error("Failed to process video file. Please try again.");
+      console.error("Video processing error:", error);
+      setUploadingSectionIndex(null);
+      setUploadProgress((prev) => ({ ...prev, [sectionIndex]: 0 }));
     }
   };
 
@@ -261,17 +321,19 @@ const CreateCourseContent = ({ courseContent = [], setCourseContent, errors, set
             {/* Video Upload */}
             <div className="flex flex-col gap-2">
               <Label>Video</Label>
-              <div className="flex flex-col gap-2">
-                <div className="flex items-center gap-2">
-                  <input
-                    ref={(el) => (fileInputRefs.current[sectionIndex] = el)}
-                    type="file"
-                    accept="video/mp4,video/mkv,video/mov"
-                    onChange={(e) => handleFileChange(sectionIndex, e)}
-                    className="hidden"
-                    id={`video-upload-${sectionIndex}`}
-                    disabled={uploadingSectionIndex === sectionIndex}
-                  />
+              <input
+                ref={(el) => (fileInputRefs.current[sectionIndex] = el)}
+                type="file"
+                accept="video/mp4,video/mkv,video/mov"
+                onChange={(e) => handleFileChange(sectionIndex, e)}
+                className="hidden"
+                id={`video-upload-${sectionIndex}`}
+                disabled={uploadingSectionIndex === sectionIndex}
+              />
+              
+              {/* Show Upload Button when no video */}
+              {!(content.video?.secure_url || content.videoUrl) && (
+                <div className="flex flex-col gap-2">
                   <Button
                     type="button"
                     variant="outline"
@@ -291,41 +353,71 @@ const CreateCourseContent = ({ courseContent = [], setCourseContent, errors, set
                       </>
                     )}
                   </Button>
-                  {content.videoUrl && uploadingSectionIndex !== sectionIndex && (
-                    <div className="flex items-center gap-2 text-sm text-green-600">
-                      <CheckCircle2 className="h-4 w-4" />
-                      <span>Video uploaded</span>
+                  {/* Upload Progress Bar */}
+                  {uploadingSectionIndex === sectionIndex && uploadProgress[sectionIndex] !== undefined && (
+                    <div className="w-full">
+                      <div className="mb-1 flex items-center justify-between text-xs text-gray-600">
+                        <span>Uploading video...</span>
+                        <span className="font-semibold">{uploadProgress[sectionIndex]}%</span>
+                      </div>
+                      <div className="h-2 w-full overflow-hidden rounded-full bg-gray-200">
+                        <div
+                          className="h-full bg-blue-600 transition-all duration-300 ease-out"
+                          style={{ width: `${uploadProgress[sectionIndex]}%` }}
+                        />
+                      </div>
                     </div>
                   )}
+                  <p className="text-xs text-muted-foreground">
+                    Upload MP4, MKV, or MOV files (max 1GB). The video will be uploaded to Cloudinary and the public ID will be stored.
+                  </p>
                 </div>
-                {/* Upload Progress Bar */}
-                {uploadingSectionIndex === sectionIndex && uploadProgress[sectionIndex] !== undefined && (
-                  <div className="w-full">
-                    <div className="mb-1 flex items-center justify-between text-xs text-gray-600">
-                      <span>Uploading video...</span>
-                      <span className="font-semibold">{uploadProgress[sectionIndex]}%</span>
-                    </div>
-                    <div className="h-2 w-full overflow-hidden rounded-full bg-gray-200">
-                      <div
-                        className="h-full bg-blue-600 transition-all duration-300 ease-out"
-                        style={{ width: `${uploadProgress[sectionIndex]}%` }}
-                      />
-                    </div>
-                  </div>
-                )}
-                <Input 
-                  type="text" 
-                  value={content.videoUrl} 
-                  onChange={(e) => updateVideoSection(sectionIndex, "videoUrl", e.target.value)} 
-                  placeholder="Video will be uploaded to Cloudinary (public ID)" 
-                  className={errors[`content_videoUrl_${sectionIndex}`] ? "border-red-500" : ""} 
-                  readOnly={!!content.videoUrl && uploadingSectionIndex !== sectionIndex}
-                />
-                <p className="text-xs text-muted-foreground">
-                  Upload MP4, MKV, or MOV files (max 1GB). The video will be uploaded to Cloudinary and the public ID will be stored.
-                </p>
-                {errors[`content_videoUrl_${sectionIndex}`] && <span className="text-xs text-red-500">{errors[`content_videoUrl_${sectionIndex}`]}</span>}
-              </div>
+              )}
+
+              {/* Show Video Preview when video exists */}
+              {(content.video?.secure_url || (content.videoUrl && content.videoUrl.startsWith('data:'))) && (
+                <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-black group">
+                  {content.video?.secure_url ? (
+                    <video
+                      src={content.video.secure_url}
+                      controls
+                      className="w-full h-full"
+                      style={{ maxHeight: "400px" }}
+                    >
+                      Your browser does not support the video tag.
+                    </video>
+                  ) : content.videoUrl && content.videoUrl.startsWith('data:') ? (
+                    <video
+                      src={content.videoUrl}
+                      controls
+                      className="w-full h-full"
+                      style={{ maxHeight: "400px" }}
+                    >
+                      Your browser does not support the video tag.
+                    </video>
+                  ) : null}
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="icon"
+                    className="absolute top-2 right-2 h-8 w-8 rounded-full opacity-0 transition-opacity group-hover:opacity-100"
+                    onClick={() => {
+                      if (setCourseContent) {
+                        setCourseContent((prev) => prev.map((c, i) => 
+                          i === sectionIndex 
+                            ? { ...c, video: undefined, videoUrl: "", videoLength: 0 }
+                            : c
+                        ));
+                        toast.success("Video removed. You can upload a new one.");
+                      }
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
+
+              {errors[`content_videoUrl_${sectionIndex}`] && <span className="text-xs text-red-500">{errors[`content_videoUrl_${sectionIndex}`]}</span>}
             </div>
 
             {/* Description */}

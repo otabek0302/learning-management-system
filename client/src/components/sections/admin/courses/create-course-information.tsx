@@ -1,15 +1,15 @@
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
-import { Upload, ArrowRight, Video, Loader2, CheckCircle2 } from "lucide-react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Upload, ArrowRight, Plus, Loader2, X } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectSeparator } from "@/components/ui/select";
 import { TagInput } from "@/components/ui/tags-input";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { useGetAllLayoutsQuery } from "@/redux/features/layout-page/layoutApi";
-import { useUploadVideoMutation } from "@/redux/features/courses/courseApi";
+import { useGetAllCategoriesQuery, useCreateCategoryMutation } from "@/redux/features/categories/categoryApi";
 
 interface CourseInfo {
   name: string;
@@ -19,7 +19,6 @@ interface CourseInfo {
   tags: string;
   level: string;
   category: string;
-  demoUrl: string;
   thumbnail: string;
 }
 
@@ -35,19 +34,13 @@ interface CreateCourseInformationProps {
 const CreateCourseInformation = ({ courseInfo, setCourseInfo, errors, setErrors, setActive, active }: CreateCourseInformationProps) => {
   const [dragging, setDragging] = useState(false);
   const [tags, setTags] = useState<string[]>([]);
-  const [categories, setCategories] = useState<string[]>([]);
-  const [isUploadingDemo, setIsUploadingDemo] = useState(false);
-  const [demoUploadProgress, setDemoUploadProgress] = useState(0);
-  const demoVideoInputRef = useRef<HTMLInputElement>(null);
-  const [uploadVideo] = useUploadVideoMutation();
+  const [isCreateCategoryOpen, setIsCreateCategoryOpen] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState("");
+  const [newCategoryDescription, setNewCategoryDescription] = useState("");
+  const [isProcessingThumbnail, setIsProcessingThumbnail] = useState(false);
 
-  const { data: categoriesResponse } = useGetAllLayoutsQuery("category", {});
-
-  useEffect(() => {
-    if (categoriesResponse) {
-      setCategories(categoriesResponse.layouts);
-    }
-  }, [categoriesResponse]);
+  const { data: categoriesResponse } = useGetAllCategoriesQuery({});
+  const [createCategory, { isLoading: isCreatingCategory }] = useCreateCategoryMutation();
 
   useEffect(() => {
     if (courseInfo.tags && tags.length === 0) {
@@ -69,9 +62,46 @@ const CreateCourseInformation = ({ courseInfo, setCourseInfo, errors, setErrors,
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    if (courseInfo.name === "" || courseInfo.description === "" || courseInfo.price === "" || courseInfo.estimatedPrice === "" || courseInfo.tags === "" || courseInfo.level === "" || courseInfo.demoUrl === "" || courseInfo.thumbnail === "") {
-      toast.error("Please fill all the fields");
-      setErrors({ ...errors, name: "Name is required", description: "Description is required", price: "Price is required", estimatedPrice: "Estimated price is required", tags: "Tags are required", level: "Level is required", demoUrl: "Demo URL is required", thumbnail: "Thumbnail is required" });
+    // Validate required fields
+    const newErrors: Record<string, string> = {};
+    let hasError = false;
+
+    if (!courseInfo.name.trim()) {
+      newErrors.name = "Name is required";
+      hasError = true;
+    }
+    if (!courseInfo.description.trim()) {
+      newErrors.description = "Description is required";
+      hasError = true;
+    }
+    if (!courseInfo.price.trim()) {
+      newErrors.price = "Price is required";
+      hasError = true;
+    }
+    if (!courseInfo.estimatedPrice.trim()) {
+      newErrors.estimatedPrice = "Estimated price is required";
+      hasError = true;
+    }
+    if (!courseInfo.tags.trim()) {
+      newErrors.tags = "Tags are required";
+      hasError = true;
+    }
+    if (!courseInfo.level.trim()) {
+      newErrors.level = "Level is required";
+      hasError = true;
+    }
+    if (!courseInfo.category.trim()) {
+      newErrors.category = "Category is required";
+      hasError = true;
+    }
+    if (!courseInfo.thumbnail.trim()) {
+      newErrors.thumbnail = "Thumbnail is required";
+      hasError = true;
+    }
+
+    if (hasError) {
+      toast.error("Please fill all the required fields");
+      setErrors({ ...errors, ...newErrors });
       return;
     }
 
@@ -95,45 +125,42 @@ const CreateCourseInformation = ({ courseInfo, setCourseInfo, errors, setErrors,
     const file = e.dataTransfer.files?.[0];
 
     if (file) {
-      if (!file.type.startsWith("image/")) {
-        toast.error("Please upload an image file");
-        return;
-      }
-
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error("File size should be less than 5MB");
-        return;
-      }
-      const reader = new FileReader();
-      reader.onload = () => {
-        if (reader.readyState === 2) {
-          setCourseInfo((prev: CourseInfo) => ({ ...prev, thumbnail: reader.result as string }));
-        }
-      };
-      reader.readAsDataURL(file);
+      handleThumbnailFile(file);
     }
+  };
+
+  const handleThumbnailFile = (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please upload an image file");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("File size should be less than 5MB");
+      return;
+    }
+
+    setIsProcessingThumbnail(true);
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (reader.readyState === 2) {
+        setCourseInfo((prev: CourseInfo) => ({ ...prev, thumbnail: reader.result as string }));
+        setIsProcessingThumbnail(false);
+        toast.success("Thumbnail processed successfully!");
+      }
+    };
+    reader.onerror = () => {
+      setIsProcessingThumbnail(false);
+      toast.error("Failed to process thumbnail image");
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
 
     if (file) {
-      if (!file.type.startsWith("image/")) {
-        toast.error("Please upload an image file");
-        return;
-      }
-
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error("File size should be less than 5MB");
-        return;
-      }
-      const reader = new FileReader();
-      reader.onload = () => {
-        if (reader.readyState === 2) {
-          setCourseInfo((prev: CourseInfo) => ({ ...prev, thumbnail: reader.result as string }));
-        }
-      };
-      reader.readAsDataURL(file);
+      handleThumbnailFile(file);
     }
   };
 
@@ -141,72 +168,27 @@ const CreateCourseInformation = ({ courseInfo, setCourseInfo, errors, setErrors,
     setCourseInfo((prev: CourseInfo) => ({ ...prev, thumbnail: "" }));
   };
 
-  const handleDemoVideoUpload = async (file: File) => {
-    // Validate file type
-    const allowedTypes = ["video/mp4", "video/mkv", "video/mov"];
-    if (!allowedTypes.includes(file.type)) {
-      toast.error("Invalid video format. Please upload MP4, MKV, or MOV files.");
+  const handleCreateCategory = async () => {
+    if (!newCategoryName.trim()) {
+      toast.error("Category name is required");
       return;
     }
-
-    // Validate file size (1GB = 1024 * 1024 * 1024 bytes)
-    const maxSize = 1024 * 1024 * 1000; // 1GB
-    if (file.size > maxSize) {
-      toast.error("Video file size exceeds 1GB limit.");
-      return;
-    }
-
-    setIsUploadingDemo(true);
-    setDemoUploadProgress(0);
 
     try {
-      const formData = new FormData();
-      formData.append("video", file);
+      const result = await createCategory({
+        name: newCategoryName.trim(),
+        description: newCategoryDescription.trim() || undefined,
+      }).unwrap();
 
-      // Use axios directly for progress tracking
-      const axios = (await import("axios")).default;
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
-      
-      const response = await axios.post(`${apiUrl}/videos/upload`, formData, {
-        withCredentials: true,
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-        onUploadProgress: (progressEvent) => {
-          if (progressEvent.total) {
-            const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-            setDemoUploadProgress(percentCompleted);
-          }
-        },
-      });
-
-      if (response.data.success && response.data.publicId) {
-        // Store Cloudinary publicId in demoUrl
-        setCourseInfo((prev: CourseInfo) => ({ ...prev, demoUrl: response.data.publicId }));
-        setDemoUploadProgress(100);
-        toast.success("Demo video uploaded successfully!");
+      if (result.success && result.category) {
+        toast.success("Category created successfully!");
+        setCourseInfo((prev: CourseInfo) => ({ ...prev, category: result.category.name }));
+        setIsCreateCategoryOpen(false);
+        setNewCategoryName("");
+        setNewCategoryDescription("");
       }
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || "Failed to upload demo video. Please try again.");
-      console.error("Demo video upload error:", error);
-      setDemoUploadProgress(0);
-    } finally {
-      // Small delay to show 100% before hiding progress
-      setTimeout(() => {
-        setIsUploadingDemo(false);
-        setDemoUploadProgress(0);
-        // Reset file input
-        if (demoVideoInputRef.current) {
-          demoVideoInputRef.current.value = "";
-        }
-      }, 1000);
-    }
-  };
-
-  const handleDemoVideoFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      handleDemoVideoUpload(file);
+      toast.error(error?.data?.message || "Failed to create category. Please try again.");
     }
   };
 
@@ -277,94 +259,102 @@ const CreateCourseInformation = ({ courseInfo, setCourseInfo, errors, setErrors,
 
       {/* Categories */}
       <div className="flex flex-col gap-2">
-        <Label className="text-sm text-gray-500">Course Categories</Label>
-        <Select key={courseInfo.category} value={courseInfo.category} onValueChange={(value) => setCourseInfo((prev: CourseInfo) => ({ ...prev, category: value }))}>
+        <Label className="text-sm text-gray-500">Course Category</Label>
+        <Select 
+          key={courseInfo.category} 
+          value={courseInfo.category || undefined} 
+          onValueChange={(value) => {
+            if (value === "__create__") {
+              setIsCreateCategoryOpen(true);
+              // Don't set the value, just open the dialog
+              return;
+            }
+            setCourseInfo((prev: CourseInfo) => ({ ...prev, category: value }));
+          }}
+        >
           <SelectTrigger className={errors.category ? "border-red-500" : ""}>
             <SelectValue placeholder="Select a category" />
           </SelectTrigger>
           <SelectContent>
-            {categories.map((category: { _id: string; type: string }) => (
-              <SelectItem key={category._id} value={category.type}>
-                {category.type.charAt(0).toUpperCase() + category.type.slice(1)}
-              </SelectItem>
-            ))}
+            {categoriesResponse?.categories && categoriesResponse.categories.length > 0 ? (
+              <>
+                {categoriesResponse.categories.map((category: { _id: string; name: string }) => (
+                  <SelectItem key={category._id} value={category.name}>
+                    {category.name}
+                  </SelectItem>
+                ))}
+                <SelectSeparator />
+              </>
+            ) : null}
+            <SelectItem 
+              value="__create__" 
+              className="text-primary font-medium cursor-pointer"
+              onSelect={(e) => {
+                e.preventDefault();
+                setIsCreateCategoryOpen(true);
+              }}
+            >
+              <div className="flex items-center gap-2">
+                <Plus className="h-4 w-4" />
+                <span>Create New Category</span>
+              </div>
+            </SelectItem>
           </SelectContent>
         </Select>
         {errors.category && <span className="text-xs text-red-500">{errors.category}</span>}
       </div>
 
-      {/* Demo Video Upload */}
-      <div className="flex flex-col gap-2">
-        <Label htmlFor="demoUrl" className="text-sm text-gray-500">
-          Demo Video
-        </Label>
-        <div className="flex flex-col gap-2">
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center gap-2">
-              <input
-                ref={demoVideoInputRef}
-                type="file"
-                accept="video/mp4,video/mkv,video/mov"
-                onChange={handleDemoVideoFileChange}
-                className="hidden"
-                id="demo-video-upload"
-                disabled={isUploadingDemo}
+      {/* Create Category Dialog */}
+      <Dialog open={isCreateCategoryOpen} onOpenChange={setIsCreateCategoryOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create New Category</DialogTitle>
+            <DialogDescription>
+              Add a new category for your courses. Category name must be unique.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-4 py-4">
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="category-name">Category Name *</Label>
+              <Input
+                id="category-name"
+                value={newCategoryName}
+                onChange={(e) => setNewCategoryName(e.target.value)}
+                placeholder="e.g., Web Development, Data Science"
+                disabled={isCreatingCategory}
               />
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => demoVideoInputRef.current?.click()}
-                disabled={isUploadingDemo}
-                className="w-full sm:w-auto"
-              >
-                {isUploadingDemo ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Uploading...
-                  </>
-                ) : (
-                  <>
-                    <Video className="mr-2 h-4 w-4" />
-                    Upload Demo Video
-                  </>
-                )}
-              </Button>
-              {courseInfo.demoUrl && !isUploadingDemo && !courseInfo.demoUrl.startsWith("http") && (
-                <div className="flex items-center gap-2 text-sm text-green-600">
-                  <CheckCircle2 className="h-4 w-4" />
-                  <span>Demo video uploaded</span>
-                </div>
-              )}
             </div>
-            {/* Upload Progress Bar */}
-            {isUploadingDemo && (
-              <div className="w-full">
-                <div className="mb-1 flex items-center justify-between text-xs text-gray-600">
-                  <span>Uploading video...</span>
-                  <span className="font-semibold">{demoUploadProgress}%</span>
-                </div>
-                <div className="h-2 w-full overflow-hidden rounded-full bg-gray-200">
-                  <div
-                    className="h-full bg-blue-600 transition-all duration-300 ease-out"
-                    style={{ width: `${demoUploadProgress}%` }}
-                  />
-                </div>
-              </div>
-            )}
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="category-description">Description (Optional)</Label>
+              <Textarea
+                id="category-description"
+                value={newCategoryDescription}
+                onChange={(e) => setNewCategoryDescription(e.target.value)}
+                placeholder="Brief description of this category"
+                rows={3}
+                disabled={isCreatingCategory}
+              />
+            </div>
           </div>
-          <Input 
-            type="text" 
-            value={courseInfo.demoUrl} 
-            onChange={(e) => setCourseInfo((prev: CourseInfo) => ({ ...prev, demoUrl: e.target.value }))} 
-            placeholder="Upload video OR enter external URL (e.g., https://example.com/demo)" 
-            className={errors.demoUrl ? "border-red-500" : ""}
-          />
-          <p className="text-xs text-muted-foreground">
-            Upload MP4, MKV, or MOV files (max 1GB) to Cloudinary, or enter an external video URL manually. If uploaded, the Cloudinary public ID will be stored.
-          </p>
-          {errors.demoUrl && <span className="text-xs text-red-500">{errors.demoUrl}</span>}
-        </div>
-      </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsCreateCategoryOpen(false);
+                setNewCategoryName("");
+                setNewCategoryDescription("");
+              }}
+              disabled={isCreatingCategory}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleCreateCategory} disabled={isCreatingCategory || !newCategoryName.trim()}>
+              {isCreatingCategory ? "Creating..." : "Create Category"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
 
       {/* Thumbnail Upload */}
       <div className="flex flex-col gap-2">
@@ -372,19 +362,39 @@ const CreateCourseInformation = ({ courseInfo, setCourseInfo, errors, setErrors,
           Thumbnail
         </Label>
         <div className="relative">
-          <input type="file" id="thumbnail" accept="image/*" onChange={handleFileChange} className="absolute inset-0 h-full w-full cursor-pointer opacity-0" />
-          <div className={`flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-6 transition ${dragging ? "border-blue-500 bg-blue-50" : "border-gray-300"} ${errors.thumbnail ? "border-red-500" : ""}`} onDragOver={handleDragOver} onDragLeave={handleDropLeave} onDrop={handleDrop}>
-            {courseInfo.thumbnail ? (
-              <div className="relative">
-                <Image src={courseInfo.thumbnail} alt="Thumbnail Preview" width={512} height={256} className="max-h-64 rounded-lg object-contain" onError={handleImageError} />
-                <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-black bg-opacity-0 transition-all hover:bg-opacity-10">
-                  <p className="text-sm text-white opacity-0 hover:opacity-100">Click to change image</p>
+          <input type="file" id="thumbnail" accept="image/*" onChange={handleFileChange} disabled={isProcessingThumbnail} className="absolute inset-0 h-full w-full cursor-pointer opacity-0 disabled:cursor-not-allowed z-10" />
+          <div className={`flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-6 transition ${dragging ? "border-blue-500 bg-blue-50" : "border-gray-300"} ${errors.thumbnail ? "border-red-500" : ""} ${isProcessingThumbnail ? "opacity-50 pointer-events-none" : ""} ${courseInfo.thumbnail ? "border-solid p-0" : ""}`} onDragOver={handleDragOver} onDragLeave={handleDropLeave} onDrop={handleDrop}>
+            {isProcessingThumbnail ? (
+              <div className="flex flex-col items-center gap-2 text-gray-500 py-8">
+                <Loader2 className="h-8 w-8 animate-spin" />
+                <p>Processing thumbnail...</p>
+              </div>
+            ) : courseInfo.thumbnail ? (
+              <div className="relative w-full group">
+                <Image src={courseInfo.thumbnail} alt="Thumbnail Preview" width={512} height={256} className="w-full max-h-64 rounded-lg object-contain" onError={handleImageError} />
+                <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-black bg-opacity-0 transition-all group-hover:bg-opacity-10">
+                  <p className="text-sm text-white opacity-0 group-hover:opacity-100">Click to change image</p>
                 </div>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="icon"
+                  className="absolute top-2 right-2 h-8 w-8 rounded-full opacity-0 transition-opacity group-hover:opacity-100 z-20"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    setCourseInfo((prev: CourseInfo) => ({ ...prev, thumbnail: "" }));
+                    toast.success("Thumbnail removed. You can upload a new one.");
+                  }}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
               </div>
             ) : (
-              <div className="flex flex-col items-center gap-2 text-gray-500">
+              <div className="flex flex-col items-center gap-2 text-gray-500 py-8">
                 <Upload className="h-8 w-8" />
                 <p>Drag & drop thumbnail image here, or click to browse</p>
+                <p className="text-xs text-gray-400">Max size: 5MB</p>
               </div>
             )}
           </div>

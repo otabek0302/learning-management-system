@@ -8,7 +8,7 @@ export const apiSlice = createApi({
     baseUrl: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1",
     credentials: "include",
   }),
-  tagTypes: ['Layout', 'User', 'Course'],
+  tagTypes: ['Layout', 'User', 'Course', 'Category'],
   endpoints: (builder) => ({
     refreshToken: builder.query<RefreshTokenResponse, void>({
       query: () => ({

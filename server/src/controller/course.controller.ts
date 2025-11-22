@@ -2,8 +2,9 @@ import { Request, Response, NextFunction } from "express";
 
 import { sendNotificationMail, updateCourseThumbnail, uploadCourseThumbnail, validateCourseData, calculateCourseTotals } from "../services/course.service";
 import { IAddCommentRequestBody, IAddReplyToCommentRequestBody, IAddReviewRequestBody, IComment, ICourse, ICreateCourseRequestBody, IDeleteCourseRequestBody, IGenerateVideoUrlRequestBody, IReply, IReplyToReviewRequestBody, IReview, IThumbnail } from "../interfaces/course.interface";
-import { VDOCIPHER_API_SECRET } from "../config/config";
+// Removed VDOCIPHER_API_SECRET - using Cloudinary secure URLs instead
 import { createNotification } from "../services/notification.service";
+import { uploadVideo, uploadImage, deleteFile, deleteFiles, generateSecureVideoUrl } from "../services/cloudinary.service";
 
 import CatchAsyncErrors from "../middleware/catch-async-errors"
 import ErrorHandler from "../utils/error-handler";
@@ -28,7 +29,7 @@ export const getSingleCourse = CatchAsyncErrors(async (req: Request, res: Respon
         } else {
 
             // Get course id from params
-            const course = await Course.findById(req.params.id).select("-courseData.videoUrl -courseData.suggestion -courseData.questions -courseData.links");
+            const course = await Course.findById(req.params.id).select("-courseData.suggestion -courseData.questions -courseData.links");
 
             if (!course) {
                 return next(new ErrorHandler("Course not found", 404));
@@ -71,7 +72,7 @@ export const getAllCourses = CatchAsyncErrors(async (req: Request, res: Response
             const skip = (page - 1) * limit;
 
             // Get all courses
-            const courses = await Course.find().select("-courseData.videoUrl -courseData.suggestion -courseData.questions -courseData.links").skip(skip).limit(limit);
+            const courses = await Course.find().select("-courseData.suggestion -courseData.questions -courseData.links").skip(skip).limit(limit);
 
             // Get total count for pagination
             const totalCourses = await Course.countDocuments();
@@ -401,22 +402,52 @@ export const createCourse = CatchAsyncErrors(async (req: Request, res: Response,
         // Upload course thumbnail
         const thumbnailResponse = await uploadCourseThumbnail(courseData.thumbnail as string);
 
-        // Convert string prices to numbers
-        const processedCourseData = {
-            ...courseData,
-            courseData: courseData.courseData,
-            price: Number(courseData.price),
-            estimatedPrice: Number(courseData.estimatedPrice),
-        };
+        // Process course data videos
+        let processedCourseData = [];
+        if (courseData.courseData && Array.isArray(courseData.courseData)) {
+            processedCourseData = await Promise.all(
+                courseData.courseData.map(async (lesson: any) => {
+                    // If video is provided as base64/data URI, upload it
+                    if (lesson.videoUrl && typeof lesson.videoUrl === 'string' && lesson.videoUrl.startsWith('data:')) {
+                        const videoResult = await uploadVideo(lesson.videoUrl, {
+                            folder: "courses/videos",
+                        });
+                        return {
+                            ...lesson,
+                            video: {
+                                public_id: videoResult.public_id,
+                                url: videoResult.url,
+                                secure_url: videoResult.secure_url,
+                                duration: videoResult.duration,
+                                format: videoResult.format,
+                            },
+                        };
+                    } else if (lesson.video && lesson.video.public_id) {
+                        // If video object is already provided, use it
+                        return lesson;
+                    } else {
+                        // No video provided - throw error
+                        throw new Error(`Video is required for lesson: ${lesson.title || 'Untitled'}`);
+                    }
+                })
+            );
+        }
 
-        // Create course
-        const course = await Course.create({
-            ...processedCourseData,
+        // Convert string prices to numbers
+        const processedCourse = {
+            ...courseData,
+            courseData: processedCourseData,
+            price: Number(courseData.price),
+            estimatedPrice: courseData.estimatedPrice ? Number(courseData.estimatedPrice) : undefined,
             thumbnail: {
                 public_id: thumbnailResponse.public_id,
                 url: thumbnailResponse.secure_url,
-            }
-        });
+                secure_url: thumbnailResponse.secure_url,
+            },
+        };
+
+        // Create course
+        const course = await Course.create(processedCourse);
 
         // If course is not created
         if (!course) {
@@ -512,6 +543,37 @@ export const deleteCourse = CatchAsyncErrors(async (req: Request, res: Response,
             return next(new ErrorHandler("Course not found", 400));
         }
 
+        // Collect all public_ids to delete from Cloudinary
+        const publicIds: string[] = [];
+
+        // Delete thumbnail if exists
+        if (course.thumbnail?.public_id) {
+            publicIds.push(course.thumbnail.public_id);
+        }
+
+
+        // Delete all lesson videos if exist
+        if (course.courseData && Array.isArray(course.courseData)) {
+            course.courseData.forEach((lesson: any) => {
+                if (lesson.video?.public_id) {
+                    publicIds.push(lesson.video.public_id);
+                }
+            });
+        }
+
+        // Delete all files from Cloudinary
+        if (publicIds.length > 0) {
+            try {
+                const deleteResult = await deleteFiles(publicIds, "auto");
+                console.log(`Deleted ${deleteResult.deleted.length} files, ${deleteResult.not_found.length} not found`);
+            } catch (error: any) {
+                // Log error but continue with course deletion
+                // Some files might not exist or already be deleted
+                console.error("Error deleting files from Cloudinary:", error.message);
+                // Continue with course deletion even if file deletion fails
+            }
+        }
+
         // Delete course
         await course.deleteOne();
 
@@ -580,31 +642,25 @@ export const getSingleCourseAdmin = CatchAsyncErrors(async (req: Request, res: R
     }
 })
 
-// Generate Video Url
+// Generate Secure Video Url -- Uses Cloudinary signed URLs
 export const generateVideoUrlController = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { videoId } = req.body as IGenerateVideoUrlRequestBody;
-        console.log("videoId", videoId);
-        console.log(VDOCIPHER_API_SECRET);
 
+        if (!videoId) {
+            return next(new ErrorHandler("Video ID (public_id) is required", 400));
+        }
 
-        const response = await axios.get(`https://dev.vdocipher.com/api/videos/${videoId}/otp`, {
-            params: {
-                ttl: 3600
-            },
-            headers: {
-                Accept: "application/json",
-                "Content-Type": "application/json",
-                Authorization: `Apisecret ${VDOCIPHER_API_SECRET}`
-            }
+        // Generate secure signed URL from Cloudinary
+        // Expires in 1 hour (3600 seconds)
+        const secureUrl = generateSecureVideoUrl(videoId, 3600);
+
+        res.status(200).json({
+            success: true,
+            secureUrl,
+            expiresIn: 3600, // seconds
         });
-
-        console.log(response.data);
-
-
-        // Return the raw VdoCipher response (otp, playbackInfo)
-        res.status(200).json(response.data);
     } catch (error: any) {
-        return next(new ErrorHandler(error.message, 500));
+        return next(new ErrorHandler(error.message || "Failed to generate secure video URL", 500));
     }
 })

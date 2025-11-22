@@ -1,21 +1,33 @@
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, CheckCircle2, Loader2 } from "lucide-react";
-import { CoursePlayer } from "./course-player";
-
+import { ArrowLeft, CheckCircle2, Loader2, Lock, Unlock, Eye } from "lucide-react";
 
 interface Link {
   title: string;
   url: string;
 }
+
+interface VideoObject {
+  public_id: string;
+  url: string;
+  secure_url: string;
+  duration: number;
+  format: string;
+}
+
 interface CourseContentSection {
+  video?: VideoObject;
+  videoUrl?: string; // For backward compatibility (base64 during upload)
   videoLength: number;
-  videoUrl: string;
   title: string;
   description: string;
   videoSection: string;
   links: Link[];
   suggestion: string;
+  order: number;
+  isPreview: boolean;
+  isLocked: boolean;
 }
+
 interface CourseData {
   name: string;
   description: string;
@@ -23,7 +35,7 @@ interface CourseData {
   estimatedPrice: string;
   tags: string;
   level: string;
-  demoUrl: string;
+  category: string;
   thumbnail: string;
   benefits: { title: string }[];
   prerequisites: { title: string }[];
@@ -70,8 +82,8 @@ const CreateCoursePreview: React.FC<CreateCoursePreviewProps> = ({ courseData, a
             <div className="font-medium">{courseData.tags}</div>
           </div>
           <div>
-            <span className="text-sm text-gray-500">Demo URL</span>
-            <CoursePlayer videoUrl={courseData.demoUrl} />
+            <span className="text-sm text-gray-500">Category</span>
+            <div className="font-medium">{courseData.category || "Not set"}</div>
           </div>
         </div>
         <div>
@@ -123,11 +135,51 @@ const CreateCoursePreview: React.FC<CreateCoursePreviewProps> = ({ courseData, a
                 </div>
                 <div>
                   <span className="text-sm text-gray-500">Video Length</span>
-                  <div className="font-medium">{section.videoLength}</div>
+                  <div className="font-medium">{section.videoLength || section.video?.duration || 0} seconds</div>
                 </div>
-                <div>
-                  <span className="text-sm text-gray-500">Video URL</span>
-                  <CoursePlayer videoUrl={section.videoUrl} />
+                {(section.video?.secure_url || section.videoUrl) && (
+                  <div>
+                    <span className="text-sm text-gray-500">Video Preview</span>
+                    <div className="mt-2 relative aspect-video w-full overflow-hidden rounded-lg bg-black">
+                      {section.video?.secure_url ? (
+                        <video
+                          src={section.video.secure_url}
+                          controls
+                          className="w-full h-full"
+                          style={{ maxHeight: "400px" }}
+                        >
+                          Your browser does not support the video tag.
+                        </video>
+                      ) : section.videoUrl && section.videoUrl.startsWith("data:") ? (
+                        <video
+                          src={section.videoUrl}
+                          controls
+                          className="w-full h-full"
+                          style={{ maxHeight: "400px" }}
+                        >
+                          Your browser does not support the video tag.
+                        </video>
+                      ) : null}
+                    </div>
+                  </div>
+                )}
+                <div className="flex items-center gap-4 mt-2">
+                  <div className="flex items-center gap-2">
+                    {section.isPreview ? (
+                      <>
+                        <Eye className="h-4 w-4 text-green-600" />
+                        <span className="text-sm text-green-600">Free Preview</span>
+                      </>
+                    ) : (
+                      <>
+                        <Lock className="h-4 w-4 text-gray-400" />
+                        <span className="text-sm text-gray-500">Locked</span>
+                      </>
+                    )}
+                  </div>
+                  <div className="text-sm text-gray-500">
+                    Order: {section.order !== undefined ? section.order : "N/A"}
+                  </div>
                 </div>
               </div>
               <div className="mt-2">

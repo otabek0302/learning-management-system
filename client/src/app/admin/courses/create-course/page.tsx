@@ -26,7 +26,6 @@ const CreateCoursePage = () => {
     tags: "",
     level: "",
     category: "",
-    demoUrl: "",
     thumbnail: "",
   });
   
@@ -69,29 +68,45 @@ const CreateCoursePage = () => {
         : courseInfo.tags;
 
       // Format the course content with new fields
-      const formattedCourseContent = courseContent.map((content, index) => ({
-        videoUrl: content.videoUrl,
-        title: content.title,
-        description: content.description,
-        videoLength: content.videoLength || 0,
-        videoSection: content.videoSection,
-        links: content.links.map((link) => ({ title: link.title, url: link.url })),
-        suggestion: content.suggestion,
-        order: content.order !== undefined ? content.order : index,
-        isPreview: content.isPreview !== undefined ? content.isPreview : false,
-        isLocked: content.isLocked !== undefined ? content.isLocked : true,
-        // Include quiz if it exists (will be added later in UI)
-        ...(content.quiz && { quiz: content.quiz }),
-      }));
+      // If video object exists (already uploaded), send it; otherwise send base64 string in videoUrl
+      const formattedCourseContent = courseContent.map((content, index) => {
+        const lessonData: any = {
+          title: content.title,
+          description: content.description,
+          videoLength: content.videoLength || (content.video?.duration || 0),
+          videoSection: content.videoSection,
+          links: content.links.map((link) => ({ title: link.title, url: link.url })),
+          suggestion: content.suggestion,
+          order: content.order !== undefined ? content.order : index,
+          isPreview: content.isPreview !== undefined ? content.isPreview : false,
+          isLocked: content.isLocked !== undefined ? content.isLocked : true,
+        };
+
+        // If video object exists (already uploaded to Cloudinary), use it
+        if (content.video) {
+          lessonData.video = content.video;
+        } else if (content.videoUrl) {
+          // Otherwise, send base64 string - backend will upload it
+          lessonData.videoUrl = content.videoUrl;
+        }
+
+        // Include quiz if it exists
+        if (content.quiz) {
+          lessonData.quiz = content.quiz;
+        }
+
+        return lessonData;
+      });
 
       // If everything is valid, submit
-      const data = {
+      const data: any = {
         ...courseInfo,
         tags: formattedTags,
         benefits: formattedBenefits,
         prerequisites: formattedPrerequisites,
         courseData: formattedCourseContent,
       };
+
       await createCourse(data).unwrap();
     } catch (error: any) {
       toast.error(error?.data?.message || "Failed to create course. Please try again.");

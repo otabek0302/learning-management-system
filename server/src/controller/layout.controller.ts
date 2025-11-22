@@ -4,7 +4,7 @@ import { BannerImage } from "../interfaces/layout.interface";
 
 import ErrorHandler from "../utils/error-handler";
 import CatchAsyncErrors from "../middleware/catch-async-errors";
-import cloudinary from "cloudinary";
+import { uploadImage, deleteFile } from "../services/cloudinary.service";
 import Layout from "../models/layout.model";
 
 
@@ -27,12 +27,12 @@ export const createLayout = CatchAsyncErrors(async (req: Request, res: Response,
         // If type is banner
         if (type.toLowerCase() === "banner") {
             const { title, subTitle, image } = req.body;
-            const cloudImage = await cloudinary.v2.uploader.upload(image, {
+            const cloudImage = await uploadImage(image, {
                 folder: "layout",
             }); 
             await Layout.create({ 
                 type: "banner",
-                banner: { title, subTitle, image: { public_id: cloudImage.public_id, url: cloudImage.url } } 
+                banner: { title, subTitle, image: { public_id: cloudImage.public_id, url: cloudImage.secure_url } } 
             });
         }
 
@@ -95,13 +95,13 @@ export const editLayout = CatchAsyncErrors(async (req: Request, res: Response, n
             if (image) {
                 // Only delete old image if it exists and we're uploading a new one
                 if (existingLayout.banner?.image?.public_id) {
-                    await cloudinary.v2.uploader.destroy(existingLayout.banner.image.public_id);
+                    await deleteFile(existingLayout.banner.image.public_id, "image");
                 }
                 
-                // Upload new image
-                const cloudImage = await cloudinary.v2.uploader.upload(image, { folder: "layout" });
+                // Upload new image using Cloudinary service
+                const cloudImage = await uploadImage(image, { folder: "layout" });
                 
-                existingLayout.banner = { title, subTitle, image: { public_id: cloudImage.public_id, url: cloudImage.url } as BannerImage };
+                existingLayout.banner = { title, subTitle, image: { public_id: cloudImage.public_id, url: cloudImage.secure_url } as BannerImage };
             } else {
                 existingLayout.banner = { ...existingLayout.banner, title, subTitle };
             }
@@ -147,8 +147,8 @@ export const deleteLayout = CatchAsyncErrors(async (req: Request, res: Response,
         }
 
         if (layout.type === "banner" && layout.banner?.image?.public_id) {
-            // Delete image from cloudinary
-            await cloudinary.v2.uploader.destroy(layout.banner.image.public_id);
+            // Delete image from Cloudinary using service
+            await deleteFile(layout.banner.image.public_id, "image");
         }
 
         // Delete layout

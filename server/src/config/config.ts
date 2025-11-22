@@ -4,20 +4,39 @@ dotenv.config();
 
 // Safely parse the ORIGINS environment variable, handling it as a JSON array or comma-separated string.
 function parseOrigins(originsStr?: string): string[] {
+  // Default origins for development
+  const defaultOrigins = ["http://localhost:3000", "http://localhost:3001", "http://127.0.0.1:3000"];
+  
   if (!originsStr) {
-    return ["http://localhost:3000", "http://localhost:3001"];
+    return defaultOrigins;
   }
 
   // Try to parse as JSON array
   try {
     const parsed = JSON.parse(originsStr);
     if (Array.isArray(parsed)) {
-      return parsed;
+      // Filter out invalid origins (must be valid URLs)
+      const validOrigins = parsed.filter((origin: string) => {
+        if (typeof origin !== 'string') return false;
+        // Must be a valid URL starting with http:// or https://
+        return origin.startsWith('http://') || origin.startsWith('https://');
+      });
+      // If we have valid origins, return them; otherwise use defaults
+      return validOrigins.length > 0 ? validOrigins : defaultOrigins;
     }
-    return [parsed];
+    // Single value - check if valid
+    if (typeof parsed === 'string' && (parsed.startsWith('http://') || parsed.startsWith('https://'))) {
+      return [parsed];
+    }
+    return defaultOrigins;
   } catch (error) {
     // If JSON parse fails, try to split by commas.
-    return originsStr.split(",").map(o => o.trim()).filter(Boolean);
+    const origins = originsStr.split(",").map(o => o.trim()).filter(Boolean);
+    // Filter valid origins
+    const validOrigins = origins.filter(origin => 
+      origin.startsWith('http://') || origin.startsWith('https://')
+    );
+    return validOrigins.length > 0 ? validOrigins : defaultOrigins;
   }
 }
 

@@ -1,12 +1,12 @@
 import { Request, Response, NextFunction } from "express";
 
 import ErrorHandler from "../utils/error-handler";
-import catchAsyncErrors from "../middleware/catch-async-errors";
+import CatchAsyncErrors from "../middleware/catch-async-errors";
 import Notification from "../models/notification.model";
 import cron from "node-cron";
 
 // Get All Notifications -- Only for Admin
-export const getAllNotifications = catchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
+export const getAllNotifications = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
     try {
         const page = parseInt(req.query.page as string) || 1;
         const limit = 12;
@@ -35,7 +35,7 @@ export const getAllNotifications = catchAsyncErrors(async (req: Request, res: Re
 })
 
 // Update Notification Status -- Only for Admin
-export const updateNotificationStatus = catchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
+export const updateNotificationStatus = CatchAsyncErrors(async (req: Request, res: Response, next: NextFunction) => {
     try {
         // Get notification id from request params
         const { id } = req.params;
