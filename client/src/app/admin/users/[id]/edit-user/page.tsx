@@ -9,7 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Loader2, Save } from "lucide-react";
+import { ArrowLeft, Loader2, Save } from "lucide-react";
+import Link from "next/link";
 
 const EditUserPage = () => {
   const router = useRouter();
@@ -115,56 +116,89 @@ const EditUserPage = () => {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-start p-4">
-      <form onSubmit={handleSubmit} className="mt-4 flex w-full max-w-4xl flex-col gap-4">
-        {/* Name Field */}
-        <div className="space-y-2">
-          <Label htmlFor="name">Full Name</Label>
-          <Input id="name" type="text" placeholder="Enter full name" value={formData.name} onChange={(e) => handleInputChange("name", e.target.value)} className={errors.name ? "border-red-500" : ""} />
-          {errors.name && <p className="text-sm text-red-500">{errors.name}</p>}
-        </div>
-
-        {/* Email Field */}
-        <div className="space-y-2">
-          <Label htmlFor="email">Email Address</Label>
-          <Input id="email" type="email" placeholder="Enter email address" value={formData.email} onChange={(e) => handleInputChange("email", e.target.value)} className={errors.email ? "border-red-500" : ""} />
-          {errors.email && <p className="text-sm text-red-500">{errors.email}</p>}
-        </div>
-
-        {/* Role Field */}
-        <div className="space-y-2">
-          <Label htmlFor="role">Role</Label>
-          <Select value={formData.role} onValueChange={(value) => handleInputChange("role", value)}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select role" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="user">User</SelectItem>
-              <SelectItem value="admin">Admin</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Verification Status */}
-        <div className="flex items-center justify-between rounded-lg border p-4">
-          <div className="space-y-0.5">
-            <Label className="text-base">Email Verification</Label>
-            <p className="text-sm text-muted-foreground">Mark this user&apos;s email as verified</p>
+    <div className="min-h-screen">
+      <div className="mx-auto max-w-4xl px-4 py-8">
+        <div className="mb-6 flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold">Edit User</h1>
+            <p className="mt-1 text-sm text-muted-foreground">Update user information</p>
           </div>
-          <Switch checked={formData.isVerified} onCheckedChange={(checked: boolean) => handleInputChange("isVerified", checked)} />
+          <Link href={`/admin/users/${userId}`}>
+            <Button variant="outline">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back
+            </Button>
+          </Link>
         </div>
 
-        {/* Submit Button */}
-        <div className="flex items-center justify-end gap-4 pt-4">
-          <Button type="button" variant="outline" onClick={handleBack} disabled={isUpdating} className="cursor-pointer rounded-lg">
-            <span className="hidden sm:block">Cancel</span>
-          </Button>
-          <Button type="submit" disabled={isUpdating} className="cursor-pointer rounded-lg">
-            {isUpdating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-            {isUpdating ? "Updating..." : "Update User"}
-          </Button>
-        </div>
-      </form>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="rounded-lg border bg-white p-6">
+            {/* Name Field */}
+            <div className="space-y-2">
+              <Label htmlFor="name">Full Name *</Label>
+              <Input
+                id="name"
+                type="text"
+                placeholder="Enter full name"
+                value={formData.name}
+                onChange={(e) => handleInputChange("name", e.target.value)}
+                className={errors.name ? "border-red-500" : ""}
+              />
+              {errors.name && <p className="text-sm text-red-500">{errors.name}</p>}
+            </div>
+
+            {/* Email Field */}
+            <div className="space-y-2">
+              <Label htmlFor="email">Email Address *</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="Enter email address"
+                value={formData.email}
+                onChange={(e) => handleInputChange("email", e.target.value)}
+                className={errors.email ? "border-red-500" : ""}
+              />
+              {errors.email && <p className="text-sm text-red-500">{errors.email}</p>}
+            </div>
+
+            {/* Role Field */}
+            <div className="space-y-2">
+              <Label htmlFor="role">Role *</Label>
+              <Select value={formData.role} onValueChange={(value) => handleInputChange("role", value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="user">User</SelectItem>
+                  <SelectItem value="admin">Admin</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Verification Status */}
+            <div className="flex items-center justify-between rounded-lg border p-4">
+              <div className="space-y-0.5">
+                <Label className="text-base">Email Verification</Label>
+                <p className="text-sm text-muted-foreground">Mark this user&apos;s email as verified</p>
+              </div>
+              <Switch checked={formData.isVerified} onCheckedChange={(checked: boolean) => handleInputChange("isVerified", checked)} />
+            </div>
+          </div>
+
+          {/* Submit Button */}
+          <div className="flex items-center justify-end gap-4 border-t pt-4">
+            <Link href={`/admin/users/${userId}`}>
+              <Button type="button" variant="outline" disabled={isUpdating} className="cursor-pointer rounded-lg">
+                Cancel
+              </Button>
+            </Link>
+            <Button type="submit" disabled={isUpdating} className="cursor-pointer rounded-lg">
+              {isUpdating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+              {isUpdating ? "Updating..." : "Update User"}
+            </Button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 };

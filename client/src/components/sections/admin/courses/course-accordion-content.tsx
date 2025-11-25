@@ -92,8 +92,8 @@ export function AccordionSections({ sections }: { sections: CourseSection[] }) {
                   </span>
                 </div>
 
-                {/* Video Preview (if preview lesson) */}
-                {section.isPreview && section.video?.secure_url && (
+                {/* Video Player - Admin can see all videos (both locked and preview) */}
+                {section.video?.secure_url && (
                   <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-black">
                     <video
                       src={section.video.secure_url}
@@ -103,6 +103,14 @@ export function AccordionSections({ sections }: { sections: CourseSection[] }) {
                     >
                       Your browser does not support the video tag.
                     </video>
+                    {!section.isPreview && section.isLocked && (
+                      <div className="absolute top-2 right-2">
+                        <Badge variant="destructive" className="flex items-center gap-1">
+                          <Lock className="h-3 w-3" />
+                          Locked
+                        </Badge>
+                      </div>
+                    )}
                   </div>
                 )}
 

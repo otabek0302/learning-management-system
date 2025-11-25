@@ -60,10 +60,14 @@ const UpdatedPassword = () => {
       return;
     }
     
-    await updatePassword({
-      oldPassword: passwordData.currentPassword,
-      newPassword: passwordData.newPassword,
-    });
+    try {
+      await updatePassword({
+        oldPassword: passwordData.currentPassword,
+        newPassword: passwordData.newPassword,
+      }).unwrap();
+    } catch (error) {
+      console.error("Password update failed:", error);
+    }
   };
 
   return (

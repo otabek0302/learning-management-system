@@ -3,23 +3,32 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { signOut } from "next-auth/react";
-import { useAppDispatch } from "@/redux/hooks";
-import { userLoggedOut } from "@/redux/features/auth/authSlice";
+import { useLogoutMutation } from "@/redux/features/auth/authApi";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { User, Settings, BookOpen, Bell, LogOut } from "lucide-react";
 
 import Link from "next/link";
 
 const ProfileSidebar = () => {
   const [active, setActive] = useState<string>("profile");
-  const dispatch = useAppDispatch();
+  const [logout] = useLogoutMutation();
+  const router = useRouter();
 
   const handleActive = (path: string) => {
     setActive(path);
   };
 
-  const logout = () => {
-    signOut();
-    dispatch(userLoggedOut());
+  const handleLogout = async () => {
+    try {
+      await logout().unwrap();
+      await signOut({ redirect: false });
+      router.push("/login");
+      toast.success("Logged out successfully");
+    } catch (error) {
+      await signOut({ redirect: false });
+      router.push("/login");
+    }
   };
 
   return (
@@ -44,7 +53,7 @@ const ProfileSidebar = () => {
           </Link>
         </nav>
 
-        <Button variant="outline" size="lg" className="mt-auto flex items-center gap-3 rounded-lg px-3 py-3 text-red-600 transition-colors hover:bg-red-50 hover:text-red-600" onClick={logout}>
+        <Button variant="outline" size="lg" className="mt-auto flex items-center gap-3 rounded-lg px-3 py-3 text-red-600 transition-colors hover:bg-red-50 hover:text-red-600" onClick={handleLogout}>
           <LogOut className="h-5 w-5 text-red-600" />
           <span>Sign Out</span>
         </Button>

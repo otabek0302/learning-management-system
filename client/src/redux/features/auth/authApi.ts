@@ -1,12 +1,12 @@
-import { RegistrationResponse, RegistrationData, ActivationData, ActivationResponse, LoginResponse, LoginData } from "@/types/auth";
+import { RegistrationResponse, RegistrationData, ActivationData, ActivationResponse, LoginResponse, LoginData } from "@/shared/types";
 import { apiSlice } from "../api/apiSlice";
-import { userRegistration, userLoggedIn } from "./authSlice";
+import { userRegistration, userLoggedIn, userLoggedOut } from "./authSlice";
 
 export const authApi = apiSlice.injectEndpoints({
     endpoints: (builder) => ({
         register: builder.mutation<RegistrationResponse, RegistrationData>({
             query: ({ name, email, password }) => ({
-                url: "/users/registration",
+                url: "/user/registration",
                 method: "POST",
                 body: { name, email, password },
                 credentials: "include" as const,
@@ -24,7 +24,7 @@ export const authApi = apiSlice.injectEndpoints({
         }),
         activation: builder.mutation<ActivationResponse, ActivationData>({
             query: ({ activation_token, activation_code }) => ({
-                url: "/users/activate",
+                url: "/user/activate",
                 method: "POST",
                 body: { activation_token, activation_code },
                 credentials: "include" as const,
@@ -32,7 +32,7 @@ export const authApi = apiSlice.injectEndpoints({
         }),
         login: builder.mutation<LoginResponse, LoginData>({
             query: ({ email, password }) => ({
-                url: "/users/login",
+                url: "/user/login",
                 method: "POST",
                 body: { email, password },
                 credentials: "include" as const,
@@ -51,7 +51,7 @@ export const authApi = apiSlice.injectEndpoints({
         }),
         signInWithSocial: builder.mutation<LoginResponse, { email: string, name: string, avatar: string }>({
             query: (data) => ({
-                url: "/users/social-auth",
+                url: "/user/social-auth",
                 method: "POST",
                 body: {
                     email: data.email,
@@ -72,7 +72,23 @@ export const authApi = apiSlice.injectEndpoints({
                 }
             }
         }),
+        logout: builder.mutation<{ success: boolean; message: string }, void>({
+            query: () => ({
+                url: "/user/logout",
+                method: "GET",
+                credentials: "include" as const,
+            }),
+            async onQueryStarted(arg, { queryFulfilled, dispatch }) {
+                try {
+                    await queryFulfilled;
+                    dispatch(userLoggedOut());
+                } catch (error) {
+                    dispatch(userLoggedOut());
+                    console.log(error);
+                }
+            }
+        }),
     })
 })
 
-export const { useLoginMutation, useRegisterMutation, useActivationMutation, useSignInWithSocialMutation } = authApi;
+export const { useLoginMutation, useRegisterMutation, useActivationMutation, useSignInWithSocialMutation, useLogoutMutation } = authApi;

@@ -29,7 +29,7 @@ const EditCoursePage = () => {
     estimatedPrice: "",
     tags: "",
     level: "",
-    category: "",
+    categoryId: "",
     thumbnail: "",
   });
   const [courseContent, setCourseContent] = useState([
@@ -57,7 +57,7 @@ const EditCoursePage = () => {
         estimatedPrice: course.estimatedPrice?.toString() || "",
         tags: Array.isArray(course.tags) ? course.tags.join(", ") : course.tags || "",
         level: course.level || "",
-        category: course.category || "",
+        categoryId: course.categoryId?._id || course.categoryId || "",
         thumbnail: course.thumbnail?.secure_url || course.thumbnail?.url || "",
       });
 
@@ -82,7 +82,6 @@ const EditCoursePage = () => {
           videoUrl: content.video?.secure_url || content.videoUrl || "", // For display/fallback
           title: content.title || "",
           description: content.description || "",
-          videoLength: content.video?.duration || content.videoLength || 0,
           videoSection: content.videoSection || `Section ${index + 1}`,
           links: content.links?.length > 0 ? content.links : [{ title: "", url: "" }],
           suggestion: content.suggestion || "",
@@ -126,18 +125,16 @@ const EditCoursePage = () => {
           isLocked: content.isLocked !== undefined ? content.isLocked : true,
         };
 
-        // If video object exists (already uploaded), use it
+        // Priority: 1. Use video object if it exists (existing or already uploaded)
+        //           2. Use videoUrl if it's base64 (new upload)
         if (content.video && content.video.public_id) {
           formatted.video = content.video;
-        } 
-        // If videoUrl is base64 (new upload), send it for upload
-        else if (content.videoUrl && content.videoUrl.startsWith('data:')) {
+        } else if (content.videoUrl && content.videoUrl.startsWith('data:')) {
+          // New video upload (base64)
           formatted.videoUrl = content.videoUrl;
         }
-        // If videoUrl is a URL string (external or existing), keep it
-        else if (content.videoUrl) {
-          formatted.videoUrl = content.videoUrl;
-        }
+        // Note: If videoUrl is a regular URL (not base64), we don't send it
+        // Backend will use existing video from database
 
         // Include quiz if exists
         if (content.quiz) {
@@ -150,6 +147,8 @@ const EditCoursePage = () => {
       // If everything is valid, submit
       const data = {
         ...courseInfo,
+        price: courseInfo.price ? parseFloat(courseInfo.price) : undefined,
+        estimatedPrice: courseInfo.estimatedPrice ? parseFloat(courseInfo.estimatedPrice) : undefined,
         tags: formattedTags,
         benefits: formattedBenefits,
         prerequisites: formattedPrerequisites,
@@ -158,7 +157,14 @@ const EditCoursePage = () => {
       
       await updateCourse({ id: courseId, data }).unwrap();
     } catch (error: any) {
-      toast.error(error?.data?.message || "Failed to update course. Please try again.");
+      // Show detailed validation errors if available
+      if (error?.data?.fields) {
+        const errorMessages = Object.values(error.data.fields).flat().join(", ");
+        toast.error(`Validation failed: ${errorMessages}`);
+      } else {
+        toast.error(error?.data?.message || "Failed to update course. Please try again.");
+      }
+      console.error("Course update error:", error);
     }
   };
 

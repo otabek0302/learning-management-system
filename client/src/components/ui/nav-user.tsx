@@ -6,21 +6,31 @@ import { Button } from "./button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Logo } from "@/assets";
-import { useDispatch, useSelector } from "react-redux";
+import { useSelector } from "react-redux";
 import { RootState } from "@/redux/store";
-import { User as UserType } from "@/types/user";
+import { User as UserType } from "@/shared/types";
 import { signOut } from "next-auth/react";
-import { userLoggedOut } from "@/redux/features/auth/authSlice";
+import { useLogoutMutation } from "@/redux/features/auth/authApi";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 import Link from "next/link";
 
 export function NavUser() {
   const { user } = useSelector((state: RootState) => state.auth) as { user: UserType | null };
-  const dispatch = useDispatch();
+  const [logout] = useLogoutMutation();
+  const router = useRouter();
 
-  const handleLogout = () => {
-    signOut();
-    dispatch(userLoggedOut());
+  const handleLogout = async () => {
+    try {
+      await logout().unwrap();
+      await signOut({ redirect: false });
+      router.push("/login");
+      toast.success("Logged out successfully");
+    } catch (error) {
+      await signOut({ redirect: false });
+      router.push("/login");
+    }
   };
 
   return (

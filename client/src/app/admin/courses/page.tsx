@@ -7,7 +7,9 @@ import { useState } from "react";
 import { Grid3X3, List, Plus, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useGetAllCoursesQuery, useDeleteCourseMutation } from "@/redux/features/courses/courseApi";
+import { useGetAllCategoriesQuery } from "@/redux/features/categories/categoryApi";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Pagination } from "@/components/ui/pagination";
@@ -17,10 +19,16 @@ const CoursesPage = () => {
 
   const [layout, setLayout] = useState<"column" | "row">("column");
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<string | undefined>(undefined);
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(12);
 
-  const { data: coursesData, isLoading, error } = useGetAllCoursesQuery({ page: currentPage, limit: rowsPerPage });
+  const { data: coursesData, isLoading, error, refetch } = useGetAllCoursesQuery({ 
+    page: currentPage, 
+    limit: rowsPerPage,
+    category: selectedCategory,
+  });
+  const { data: categoriesData } = useGetAllCategoriesQuery({});
   const [deleteCourse, { isLoading: isDeleting }] = useDeleteCourseMutation();
 
   const courses = coursesData?.courses || [];
@@ -55,6 +63,7 @@ const CoursesPage = () => {
       try {
         await deleteCourse(courseId).unwrap();
         toast.success("Course deleted successfully");
+        refetch();
       } catch (error: any) {
         toast.error(error?.data?.message || "Failed to delete course");
       }
@@ -90,9 +99,30 @@ const CoursesPage = () => {
     <div className="space-y-6 p-4 pr-0">
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="relative max-w-sm flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input placeholder="Search courses..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full pl-9 pr-10 shadow-none focus-visible:ring-1" />
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4 flex-1">
+          <div className="relative max-w-sm flex-1">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input placeholder="Search courses..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full pl-9 pr-10 shadow-none focus-visible:ring-1" />
+          </div>
+          <Select 
+            value={selectedCategory || "all"} 
+            onValueChange={(value) => {
+              setSelectedCategory(value === "all" ? undefined : value);
+              setCurrentPage(1);
+            }}
+          >
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Filter by category" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Categories</SelectItem>
+              {categoriesData?.categories?.map((category: { _id: string; name: string }) => (
+                <SelectItem key={category._id} value={category._id}>
+                  {category.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="flex items-center gap-2">

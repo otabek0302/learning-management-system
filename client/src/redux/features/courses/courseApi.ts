@@ -54,18 +54,16 @@ export const courseApi = apiSlice.injectEndpoints({
             }),
             providesTags: (_result, _error, id) => [{ type: 'Course' as const, id }],
         }),
-        uploadVideo: builder.mutation<{ success: boolean; video: { public_id: string; url: string; secure_url: string; duration: number; format: string } }, { video: string }>({
-            query: (data) => ({
-                url: '/videos/upload',
-                method: 'POST',
-                body: data,
+        getAllCoursesPublic: builder.query({
+            query: (params) => ({
+                url: '/courses/get-all-courses',
+                method: 'GET',
+                params,
                 credentials: 'include' as const,
-                headers: {
-                    'Content-Type': 'application/json',
-                },
             }),
+            providesTags: ['Course'],
         }),
     }),
 });
 
-export const { useCreateCourseMutation, useGetAllCoursesQuery, useGetSingleCourseQuery, useGetSingleCourseAdminQuery, useUpdateCourseMutation, useDeleteCourseMutation, useUploadVideoMutation } = courseApi;
+export const { useCreateCourseMutation, useGetAllCoursesQuery, useGetAllCoursesPublicQuery, useGetSingleCourseQuery, useGetSingleCourseAdminQuery, useUpdateCourseMutation, useDeleteCourseMutation } = courseApi;

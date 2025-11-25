@@ -1,16 +1,13 @@
 "use client";
 
-import { useTranslation } from "react-i18next";
-import { useSession } from "next-auth/react";
 import { useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
-
-import Loading from "@/app/loading";
+import HeroSection from "@/components/sections/home/hero-section";
+import CoursesSection from "@/components/sections/home/courses-section";
+import FAQSection from "@/components/sections/home/faq-section";
 
 const Home = () => {
-  const { t } = useTranslation();
-  const { status } = useSession();
   const searchParams = useSearchParams();
 
   useEffect(() => {
@@ -21,14 +18,16 @@ const Home = () => {
     }
   }, [searchParams]);
 
-  // Show loading state while checking authentication
-  if (status === "loading") {
-    return <Loading />;
-  }
-
   return (
-    <main className="flex h-full w-full flex-col items-center justify-center p-8">
-      <h1>{t("pages.home.meta.title")}</h1>
+    <main className="min-h-screen">
+      {/* Hero Section */}
+      {/* <HeroSection /> */}
+
+      {/* Courses Section */}
+      {/* <CoursesSection /> */}
+
+      {/* FAQ Section */}
+      {/* <FAQSection /> */}
     </main>
   );
 };

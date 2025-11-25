@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, CheckCircle2, Loader2, Lock, Unlock, Eye } from "lucide-react";
+import { useGetAllCategoriesQuery } from "@/redux/features/categories/categoryApi";
 
 interface Link {
   title: string;
@@ -15,9 +16,8 @@ interface VideoObject {
 }
 
 interface CourseContentSection {
-  video?: VideoObject;
+  video?: VideoObject; // Contains duration from Cloudinary
   videoUrl?: string; // For backward compatibility (base64 during upload)
-  videoLength: number;
   title: string;
   description: string;
   videoSection: string;
@@ -35,7 +35,7 @@ interface CourseData {
   estimatedPrice: string;
   tags: string;
   level: string;
-  category: string;
+  categoryId: string;
   thumbnail: string;
   benefits: { title: string }[];
   prerequisites: { title: string }[];
@@ -50,6 +50,9 @@ interface CreateCoursePreviewProps {
 }
 
 const CreateCoursePreview: React.FC<CreateCoursePreviewProps> = ({ courseData, active, setActive, handleSubmit, isLoading }) => {
+  const { data: categoriesResponse } = useGetAllCategoriesQuery({});
+  const categoryName = categoriesResponse?.categories?.find((cat: { _id: string }) => cat._id === courseData.categoryId)?.name || "Not set";
+  
   return (
     <div className="w-full max-w-4xl mx-auto p-6 flex flex-col gap-8">
       <div>
@@ -83,7 +86,7 @@ const CreateCoursePreview: React.FC<CreateCoursePreviewProps> = ({ courseData, a
           </div>
           <div>
             <span className="text-sm text-gray-500">Category</span>
-            <div className="font-medium">{courseData.category || "Not set"}</div>
+            <div className="font-medium">{categoryName}</div>
           </div>
         </div>
         <div>
@@ -135,7 +138,7 @@ const CreateCoursePreview: React.FC<CreateCoursePreviewProps> = ({ courseData, a
                 </div>
                 <div>
                   <span className="text-sm text-gray-500">Video Length</span>
-                  <div className="font-medium">{section.videoLength || section.video?.duration || 0} seconds</div>
+                  <div className="font-medium">{section.video?.duration || 0} seconds</div>
                 </div>
                 {(section.video?.secure_url || section.videoUrl) && (
                   <div>

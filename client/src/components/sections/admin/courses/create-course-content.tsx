@@ -1,12 +1,11 @@
 import React, { useState, useRef } from "react";
 
-import { Plus, Trash2, ArrowLeft, ArrowRight, Video, Link, FileText, Lock, Unlock, Eye, Upload, Loader2, CheckCircle2, X } from "lucide-react";
+import { Plus, Trash2, ArrowLeft, ArrowRight, Video, Link, FileText, Lock, Unlock, Eye, Upload, Loader2, CheckCircle2, X, HelpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { useUploadVideoMutation } from "@/redux/features/courses/courseApi";
 
 interface QuizQuestion {
   question: string;
@@ -16,7 +15,7 @@ interface QuizQuestion {
 
 interface Quiz {
   questions: QuizQuestion[];
-  passingScore: number; // %
+  passingScore: number; // 
 }
 
 interface VideoObject {
@@ -29,10 +28,9 @@ interface VideoObject {
 
 interface CourseContent {
   videoUrl: string; // Base64 string for upload OR existing URL
-  video?: VideoObject; // Full video object from Cloudinary (used when already uploaded)
+  video?: VideoObject; // Full video object from Cloudinary (used when already uploaded) - contains duration
   title: string;
   description: string;
-  videoLength: number; // in seconds
   videoSection: string;
   links: { title: string; url: string }[];
   suggestion: string;
@@ -52,7 +50,6 @@ interface CreateCourseContentProps {
 }
 
 const CreateCourseContent = ({ courseContent = [], setCourseContent, errors, setErrors, setActive, active }: CreateCourseContentProps) => {
-  const [uploadVideo, { isLoading: isUploadingVideo }] = useUploadVideoMutation();
   const [uploadingSectionIndex, setUploadingSectionIndex] = useState<number | null>(null);
   const [uploadProgress, setUploadProgress] = useState<{ [key: number]: number }>({});
   const fileInputRefs = useRef<{ [key: number]: HTMLInputElement | null }>({});
@@ -73,7 +70,10 @@ const CreateCourseContent = ({ courseContent = [], setCourseContent, errors, set
         delete newErrors[`content_title_${idx}`];
       }
       // Video validation: either video object OR videoUrl (for base64 or external URL)
-      if (!content.video && !content.videoUrl.trim()) {
+      const hasVideo = content.video && content.video.public_id;
+      const hasVideoUrl = content.videoUrl && typeof content.videoUrl === "string" && content.videoUrl.trim().length > 0;
+      
+      if (!hasVideo && !hasVideoUrl) {
         newErrors[`content_videoUrl_${idx}`] = "Content video is required (upload video or enter URL)";
         hasError = true;
       } else {
@@ -105,7 +105,6 @@ const CreateCourseContent = ({ courseContent = [], setCourseContent, errors, set
           videoUrl: "",
           title: "",
           description: "",
-          videoLength: 0,
           videoSection: `Section ${prev.length + 1}`,
           links: [{ title: "", url: "" }],
           suggestion: "",
@@ -156,6 +155,211 @@ const CreateCourseContent = ({ courseContent = [], setCourseContent, errors, set
     }
   };
 
+  // Quiz Management Functions
+  const addQuiz = (sectionIndex: number) => {
+    if (setCourseContent) {
+      setCourseContent((prev) =>
+        prev.map((content, i) =>
+          i === sectionIndex
+            ? {
+                ...content,
+                quiz: {
+                  questions: [
+                    {
+                      question: "",
+                      options: ["", ""],
+                      correctAnswer: 0,
+                    },
+                  ],
+                  passingScore: 70,
+                },
+              }
+            : content
+        )
+      );
+    }
+  };
+
+  const removeQuiz = (sectionIndex: number) => {
+    if (setCourseContent) {
+      setCourseContent((prev) =>
+        prev.map((content, i) => (i === sectionIndex ? { ...content, quiz: undefined } : content))
+      );
+    }
+  };
+
+  const addQuestion = (sectionIndex: number) => {
+    if (setCourseContent && courseContent[sectionIndex]?.quiz) {
+      setCourseContent((prev) =>
+        prev.map((content, i) =>
+          i === sectionIndex && content.quiz
+            ? {
+                ...content,
+                quiz: {
+                  ...content.quiz,
+                  questions: [
+                    ...content.quiz.questions,
+                    {
+                      question: "",
+                      options: ["", ""],
+                      correctAnswer: 0,
+                    },
+                  ],
+                },
+              }
+            : content
+        )
+      );
+    }
+  };
+
+  const removeQuestion = (sectionIndex: number, questionIndex: number) => {
+    if (setCourseContent && courseContent[sectionIndex]?.quiz) {
+      setCourseContent((prev) =>
+        prev.map((content, i) =>
+          i === sectionIndex && content.quiz
+            ? {
+                ...content,
+                quiz: {
+                  ...content.quiz,
+                  questions: content.quiz.questions.filter((_, j) => j !== questionIndex),
+                },
+              }
+            : content
+        )
+      );
+    }
+  };
+
+  const updateQuestion = (sectionIndex: number, questionIndex: number, field: "question", value: string) => {
+    if (setCourseContent && courseContent[sectionIndex]?.quiz) {
+      setCourseContent((prev) =>
+        prev.map((content, i) =>
+          i === sectionIndex && content.quiz
+            ? {
+                ...content,
+                quiz: {
+                  ...content.quiz,
+                  questions: content.quiz.questions.map((q, j) =>
+                    j === questionIndex ? { ...q, [field]: value } : q
+                  ),
+                },
+              }
+            : content
+        )
+      );
+    }
+  };
+
+  const addOption = (sectionIndex: number, questionIndex: number) => {
+    if (setCourseContent && courseContent[sectionIndex]?.quiz) {
+      setCourseContent((prev) =>
+        prev.map((content, i) =>
+          i === sectionIndex && content.quiz
+            ? {
+                ...content,
+                quiz: {
+                  ...content.quiz,
+                  questions: content.quiz.questions.map((q, j) =>
+                    j === questionIndex ? { ...q, options: [...q.options, ""] } : q
+                  ),
+                },
+              }
+            : content
+        )
+      );
+    }
+  };
+
+  const removeOption = (sectionIndex: number, questionIndex: number, optionIndex: number) => {
+    if (setCourseContent && courseContent[sectionIndex]?.quiz) {
+      setCourseContent((prev) =>
+        prev.map((content, i) =>
+          i === sectionIndex && content.quiz
+            ? {
+                ...content,
+                quiz: {
+                  ...content.quiz,
+                  questions: content.quiz.questions.map((q, j) =>
+                    j === questionIndex
+                      ? {
+                          ...q,
+                          options: q.options.filter((_, k) => k !== optionIndex),
+                          correctAnswer: q.correctAnswer >= optionIndex ? Math.max(0, q.correctAnswer - 1) : q.correctAnswer,
+                        }
+                      : q
+                  ),
+                },
+              }
+            : content
+        )
+      );
+    }
+  };
+
+  const updateOption = (sectionIndex: number, questionIndex: number, optionIndex: number, value: string) => {
+    if (setCourseContent && courseContent[sectionIndex]?.quiz) {
+      setCourseContent((prev) =>
+        prev.map((content, i) =>
+          i === sectionIndex && content.quiz
+            ? {
+                ...content,
+                quiz: {
+                  ...content.quiz,
+                  questions: content.quiz.questions.map((q, j) =>
+                    j === questionIndex
+                      ? {
+                          ...q,
+                          options: q.options.map((opt, k) => (k === optionIndex ? value : opt)),
+                        }
+                      : q
+                  ),
+                },
+              }
+            : content
+        )
+      );
+    }
+  };
+
+  const setCorrectAnswer = (sectionIndex: number, questionIndex: number, answerIndex: number) => {
+    if (setCourseContent && courseContent[sectionIndex]?.quiz) {
+      setCourseContent((prev) =>
+        prev.map((content, i) =>
+          i === sectionIndex && content.quiz
+            ? {
+                ...content,
+                quiz: {
+                  ...content.quiz,
+                  questions: content.quiz.questions.map((q, j) =>
+                    j === questionIndex ? { ...q, correctAnswer: answerIndex } : q
+                  ),
+                },
+              }
+            : content
+        )
+      );
+    }
+  };
+
+  const updatePassingScore = (sectionIndex: number, score: number) => {
+    if (setCourseContent && courseContent[sectionIndex]?.quiz) {
+      setCourseContent((prev) =>
+        prev.map((content, i) =>
+          i === sectionIndex && content.quiz
+            ? {
+                ...content,
+                quiz: {
+                  ...content.quiz,
+                  passingScore: score,
+                },
+              }
+            : content
+        )
+      );
+    }
+  };
+
   const handleVideoUpload = async (sectionIndex: number, file: File) => {
     // Validate file type
     const allowedTypes = ["video/mp4", "video/mkv", "video/mov"];
@@ -175,18 +379,14 @@ const CreateCourseContent = ({ courseContent = [], setCourseContent, errors, set
     setUploadProgress((prev) => ({ ...prev, [sectionIndex]: 0 }));
 
     try {
-      // Convert file to base64
+      // Convert file to base64 - backend will upload it when creating the course
       const reader = new FileReader();
       
-      reader.onload = async () => {
+      reader.onload = () => {
         try {
           const base64String = reader.result as string;
           
-          // Use axios for progress tracking (simulated for base64)
-          const axios = (await import("axios")).default;
-          const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
-          
-          // Simulate progress for base64 upload
+          // Simulate progress for base64 conversion
           const progressInterval = setInterval(() => {
             setUploadProgress((prev) => {
               const current = prev[sectionIndex] || 0;
@@ -195,54 +395,25 @@ const CreateCourseContent = ({ courseContent = [], setCourseContent, errors, set
               }
               return prev;
             });
-          }, 200);
+          }, 100);
 
-          const response = await axios.post(
-            `${apiUrl}/videos/upload`,
-            { video: base64String },
-            {
-              withCredentials: true,
-              headers: {
-                "Content-Type": "application/json",
-              },
-              onUploadProgress: (progressEvent) => {
-                // For base64, we simulate progress
-                if (progressEvent.total) {
-                  const percentCompleted = Math.min(90, Math.round((progressEvent.loaded * 100) / progressEvent.total));
-                  clearInterval(progressInterval);
-                  setUploadProgress((prev) => ({ ...prev, [sectionIndex]: percentCompleted }));
-                }
-              },
-            }
-          );
+          // Store base64 string - backend will upload it to Cloudinary when creating course
+          if (setCourseContent) {
+            setCourseContent((prev) => prev.map((content, i) => 
+              i === sectionIndex 
+                ? { 
+                    ...content, 
+                    videoUrl: base64String // Store base64 - backend will upload and get duration
+                  } 
+                : content
+            ));
+          }
 
           clearInterval(progressInterval);
           setUploadProgress((prev) => ({ ...prev, [sectionIndex]: 100 }));
-
-          if (response.data.success && response.data.video) {
-            const videoData = response.data.video;
-            // Store the full video object - backend will use this if provided
-            // Also keep base64 for re-upload if needed
-            if (setCourseContent) {
-              setCourseContent((prev) => prev.map((content, i) => 
-                i === sectionIndex 
-                  ? { 
-                      ...content, 
-                      video: videoData, // Store full video object
-                      videoUrl: base64String, // Keep base64 for backend processing
-                      videoLength: videoData.duration // Update duration
-                    } 
-                  : content
-              ));
-            }
-            
-            toast.success("Video uploaded successfully!");
-          }
-        } catch (error: any) {
-          toast.error(error?.response?.data?.message || "Failed to upload video. Please try again.");
-          console.error("Video upload error:", error);
-          setUploadProgress((prev) => ({ ...prev, [sectionIndex]: 0 }));
-        } finally {
+          
+          toast.success("Video processed successfully! It will be uploaded when you create the course.");
+          
           // Small delay to show 100% before hiding progress
           setTimeout(() => {
             setUploadingSectionIndex(null);
@@ -256,6 +427,11 @@ const CreateCourseContent = ({ courseContent = [], setCourseContent, errors, set
               fileInputRefs.current[sectionIndex]!.value = "";
             }
           }, 1000);
+        } catch (error: any) {
+          toast.error("Failed to process video file. Please try again.");
+          console.error("Video processing error:", error);
+          setUploadingSectionIndex(null);
+          setUploadProgress((prev) => ({ ...prev, [sectionIndex]: 0 }));
         }
       };
 
@@ -322,7 +498,9 @@ const CreateCourseContent = ({ courseContent = [], setCourseContent, errors, set
             <div className="flex flex-col gap-2">
               <Label>Video</Label>
               <input
-                ref={(el) => (fileInputRefs.current[sectionIndex] = el)}
+                ref={(el) => {
+                  fileInputRefs.current[sectionIndex] = el;
+                }}
                 type="file"
                 accept="video/mp4,video/mkv,video/mov"
                 onChange={(e) => handleFileChange(sectionIndex, e)}
@@ -369,7 +547,7 @@ const CreateCourseContent = ({ courseContent = [], setCourseContent, errors, set
                     </div>
                   )}
                   <p className="text-xs text-muted-foreground">
-                    Upload MP4, MKV, or MOV files (max 1GB). The video will be uploaded to Cloudinary and the public ID will be stored.
+                    Upload MP4, MKV, or MOV files (max 1GB). The video will be uploaded to Cloudinary when you create the course.
                   </p>
                 </div>
               )}
@@ -405,7 +583,7 @@ const CreateCourseContent = ({ courseContent = [], setCourseContent, errors, set
                       if (setCourseContent) {
                         setCourseContent((prev) => prev.map((c, i) => 
                           i === sectionIndex 
-                            ? { ...c, video: undefined, videoUrl: "", videoLength: 0 }
+                            ? { ...c, video: undefined, videoUrl: "" }
                             : c
                         ));
                         toast.success("Video removed. You can upload a new one.");
@@ -427,13 +605,6 @@ const CreateCourseContent = ({ courseContent = [], setCourseContent, errors, set
               {errors[`content_description_${sectionIndex}`] && <span className="text-xs text-red-500">{errors[`content_description_${sectionIndex}`]}</span>}
             </div>
 
-            {/* Video Length */}
-            <div className="flex flex-col gap-2">
-              <Label>Video Length (in seconds)</Label>
-              <Input type="number" value={content.videoLength} onChange={(e) => updateVideoSection(sectionIndex, "videoLength", parseInt(e.target.value) || 0)} placeholder="Enter video length in seconds" className={errors[`content_videoLength_${sectionIndex}`] ? "border-red-500" : ""} min={0} />
-              {errors[`content_videoLength_${sectionIndex}`] && <span className="text-xs text-red-500">{errors[`content_videoLength_${sectionIndex}`]}</span>}
-              <p className="text-xs text-muted-foreground">Enter duration in seconds (e.g., 600 = 10 minutes)</p>
-            </div>
 
             {/* Order */}
             <div className="flex flex-col gap-2">
@@ -514,6 +685,133 @@ const CreateCourseContent = ({ courseContent = [], setCourseContent, errors, set
                 <span className="hidden md:block">Suggestions</span>
               </Label>
               <Textarea value={content.suggestion} onChange={(e) => updateVideoSection(sectionIndex, "suggestion", e.target.value)} placeholder="Any suggestions or notes for this section" rows={2} />
+            </div>
+
+            {/* Quiz Section */}
+            <div className="space-y-3 rounded-lg border p-4">
+              <div className="flex items-center justify-between">
+                <Label className="flex items-center gap-2 text-sm font-semibold">
+                  <HelpCircle className="h-4 w-4" />
+                  <span>Quiz (Optional)</span>
+                </Label>
+                {content.quiz ? (
+                  <Button type="button" variant="destructive" size="sm" onClick={() => removeQuiz(sectionIndex)}>
+                    <Trash2 className="h-4 w-4 mr-1" />
+                    Remove Quiz
+                  </Button>
+                ) : (
+                  <Button type="button" variant="outline" size="sm" onClick={() => addQuiz(sectionIndex)}>
+                    <Plus className="h-4 w-4 mr-1" />
+                    Add Quiz
+                  </Button>
+                )}
+              </div>
+
+              {content.quiz && (
+                <div className="space-y-4">
+                  {/* Passing Score */}
+                  <div className="flex flex-col gap-2">
+                    <Label>Passing Score (%)</Label>
+                    <Input
+                      type="number"
+                      min={0}
+                      max={100}
+                      value={content.quiz.passingScore}
+                      onChange={(e) => updatePassingScore(sectionIndex, parseInt(e.target.value) || 70)}
+                      placeholder="70"
+                    />
+                    <p className="text-xs text-muted-foreground">Minimum score required to pass (0-100%)</p>
+                  </div>
+
+                  {/* Questions */}
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-sm font-semibold">Questions</Label>
+                      <Button type="button" variant="outline" size="sm" onClick={() => addQuestion(sectionIndex)}>
+                        <Plus className="h-4 w-4 mr-1" />
+                        Add Question
+                      </Button>
+                    </div>
+
+                    {content.quiz.questions.map((question, questionIndex) => (
+                      <div key={questionIndex} className="rounded-lg border p-4 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <Label className="text-sm font-medium">Question {questionIndex + 1}</Label>
+                          {content.quiz!.questions.length > 1 && (
+                            <Button
+                              type="button"
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => removeQuestion(sectionIndex, questionIndex)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+
+                        {/* Question Text */}
+                        <div className="flex flex-col gap-2">
+                          <Label>Question Text</Label>
+                          <Textarea
+                            value={question.question}
+                            onChange={(e) => updateQuestion(sectionIndex, questionIndex, "question", e.target.value)}
+                            placeholder="Enter your question here"
+                            rows={2}
+                          />
+                        </div>
+
+                        {/* Options */}
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <Label className="text-sm">Options</Label>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => addOption(sectionIndex, questionIndex)}
+                            >
+                              <Plus className="h-3 w-3 mr-1" />
+                              Add Option
+                            </Button>
+                          </div>
+
+                          {question.options.map((option, optionIndex) => (
+                            <div key={optionIndex} className="flex items-center gap-2">
+                              <input
+                                type="radio"
+                                name={`correct-${sectionIndex}-${questionIndex}`}
+                                checked={question.correctAnswer === optionIndex}
+                                onChange={() => setCorrectAnswer(sectionIndex, questionIndex, optionIndex)}
+                                className="h-4 w-4"
+                              />
+                              <Input
+                                type="text"
+                                value={option}
+                                onChange={(e) => updateOption(sectionIndex, questionIndex, optionIndex, e.target.value)}
+                                placeholder={`Option ${optionIndex + 1}`}
+                                className="flex-1"
+                              />
+                              {question.options.length > 2 && (
+                                <Button
+                                  type="button"
+                                  variant="destructive"
+                                  size="sm"
+                                  onClick={() => removeOption(sectionIndex, questionIndex, optionIndex)}
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              )}
+                            </div>
+                          ))}
+                          {question.options.length < 2 && (
+                            <p className="text-xs text-red-500">At least 2 options are required</p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

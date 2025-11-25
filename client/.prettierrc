@@ -1,5 +1,5 @@
 {
-  "printWidth": 1200,
+  "printWidth": 1000,
   "tabWidth": 2,
   "useTabs": false,
   "semi": true,
@@ -11,8 +11,6 @@
   "endOfLine": "lf",
   "singleAttributePerLine": false,
   "htmlWhitespaceSensitivity": "css",
-  "tailwindFunctions": ["clsx", "twMerge"],
   "jsxSingleQuote": false,
-  "quoteProps": "as-needed",
-  "plugins": ["prettier-plugin-tailwindcss"]
-}
+  "quoteProps": "as-needed"
+} 

@@ -1,15 +1,16 @@
-import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
+
+import { useState, useEffect } from "react";
 import { Upload, ArrowRight, Plus, Loader2, X } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectSeparator } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useGetAllCategoriesQuery, useCreateCategoryMutation } from "@/redux/features/categories/categoryApi";
 import { TagInput } from "@/components/ui/tags-input";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { useGetAllCategoriesQuery, useCreateCategoryMutation } from "@/redux/features/categories/categoryApi";
 
 interface CourseInfo {
   name: string;
@@ -18,7 +19,7 @@ interface CourseInfo {
   estimatedPrice: string;
   tags: string;
   level: string;
-  category: string;
+  categoryId: string;
   thumbnail: string;
 }
 
@@ -90,8 +91,8 @@ const CreateCourseInformation = ({ courseInfo, setCourseInfo, errors, setErrors,
       newErrors.level = "Level is required";
       hasError = true;
     }
-    if (!courseInfo.category.trim()) {
-      newErrors.category = "Category is required";
+    if (!courseInfo.categoryId.trim()) {
+      newErrors.categoryId = "Category is required";
       hasError = true;
     }
     if (!courseInfo.thumbnail.trim()) {
@@ -182,7 +183,7 @@ const CreateCourseInformation = ({ courseInfo, setCourseInfo, errors, setErrors,
 
       if (result.success && result.category) {
         toast.success("Category created successfully!");
-        setCourseInfo((prev: CourseInfo) => ({ ...prev, category: result.category.name }));
+        setCourseInfo((prev: CourseInfo) => ({ ...prev, categoryId: result.category._id }));
         setIsCreateCategoryOpen(false);
         setNewCategoryName("");
         setNewCategoryDescription("");
@@ -261,25 +262,24 @@ const CreateCourseInformation = ({ courseInfo, setCourseInfo, errors, setErrors,
       <div className="flex flex-col gap-2">
         <Label className="text-sm text-gray-500">Course Category</Label>
         <Select 
-          key={courseInfo.category} 
-          value={courseInfo.category || undefined} 
+          key={courseInfo.categoryId} 
+          value={courseInfo.categoryId || undefined} 
           onValueChange={(value) => {
             if (value === "__create__") {
               setIsCreateCategoryOpen(true);
-              // Don't set the value, just open the dialog
               return;
             }
-            setCourseInfo((prev: CourseInfo) => ({ ...prev, category: value }));
+            setCourseInfo((prev: CourseInfo) => ({ ...prev, categoryId: value }));
           }}
         >
-          <SelectTrigger className={errors.category ? "border-red-500" : ""}>
+          <SelectTrigger className={errors.categoryId ? "border-red-500" : ""}>
             <SelectValue placeholder="Select a category" />
           </SelectTrigger>
           <SelectContent>
             {categoriesResponse?.categories && categoriesResponse.categories.length > 0 ? (
               <>
                 {categoriesResponse.categories.map((category: { _id: string; name: string }) => (
-                  <SelectItem key={category._id} value={category.name}>
+                  <SelectItem key={category._id} value={category._id}>
                     {category.name}
                   </SelectItem>
                 ))}
@@ -301,7 +301,7 @@ const CreateCourseInformation = ({ courseInfo, setCourseInfo, errors, setErrors,
             </SelectItem>
           </SelectContent>
         </Select>
-        {errors.category && <span className="text-xs text-red-500">{errors.category}</span>}
+        {errors.categoryId && <span className="text-xs text-red-500">{errors.categoryId}</span>}
       </div>
 
       {/* Create Category Dialog */}

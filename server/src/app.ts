@@ -1,79 +1,111 @@
-import { Request, Response, NextFunction } from "express";
-import { ORIGINS } from "./config/config";
-
+import type { Application, NextFunction, Request, Response } from "express";
+import type { Server } from "http";
 import express from "express";
-import cors from "cors";
-import helmet from "helmet";
-import morgan from "morgan";
 
-import cookieParser from "cookie-parser";
-import ErrorMiddleware from "./middleware/error";
+import { env } from "./config/env";
+import { corsPlugin, helmetPlugin, morganPlugin, compressionPlugin, cookiePlugin, rateLimitPlugin, securityPlugin } from "./plugins";
+import { NotFoundError } from "./shared/errors";
+import { ErrorHandler } from "./middleware/error.middleware";
+import userRoutes from "./modules/user/user.route";
+import categoryRoutes from "./modules/category/category.route";
+import layoutRoutes from "./modules/layout/layout.route";
+import courseRoutes from "./modules/course/course.route";
 
-// Routes
-import UserRouter from "./routes/user.route";
-import CourseRouter from "./routes/course.route";
-import OrderRouter from "./routes/order.route";
-import NotificationRouter from "./routes/notification.route";
-import AnalyticRouter from "./routes/analytic.route";
-import LayoutRouter from "./routes/layout.route";
-import EnrollmentRouter from "./routes/enrollment.route";
-import ProgressRouter from "./routes/progress.route";
-import QuizRouter from "./routes/quiz.route";
-import CertificateRouter from "./routes/certificate.route";
-import CouponRouter from "./routes/coupon.route";
-import VideoRouter from "./routes/video.route";
-import CategoryRouter from "./routes/category.route";
+export class App {
+  private static instance: App;
+  private app: Application;
+  private server: Server | null = null;
 
-// Initialize express
-const app = express();
+  private constructor() {
+    this.app = express();
+  }
 
-// Security and logging middleware
-app.use(helmet({
-    crossOriginResourcePolicy: { policy: "cross-origin" },
-    crossOriginEmbedderPolicy: false,
-}));
-if (process.env.NODE_ENV === "development") {
-    app.use(morgan("dev"));
+  public static getInstance(): App {
+    if (!App.instance) {
+      App.instance = new App();
+    }
+    return App.instance;
+  }
+
+  public registerMiddlewares(): void {
+    this.app.use(express.json({ limit: "50mb" }));
+    this.app.use(express.urlencoded({ extended: true }));
+  }
+
+  public registerPlugins(): void {
+    corsPlugin(this.app);
+    securityPlugin(this.app);
+    helmetPlugin(this.app);
+    cookiePlugin(this.app);
+    compressionPlugin(this.app);
+    rateLimitPlugin(this.app);
+    morganPlugin(this.app);
+  }
+
+  public registerRoutes(): void {
+    this.app.get("/health", (req: Request, res: Response) => {
+      res.status(200).json({ message: "Server is running" });
+    });
+
+    this.app.use("/api/v1/user", userRoutes);
+    this.app.use("/api/v1/categories", categoryRoutes);
+    this.app.use("/api/v1/layout", layoutRoutes);
+    this.app.use("/api/v1/courses", courseRoutes);
+
+    this.app.all("*", (req: Request, _res: Response, next: NextFunction) => {
+      const err = new NotFoundError("Route", undefined, { url: req.url });
+      next(err);
+    });
+  }
+
+  public registerErrorHandler(): void {
+    this.app.use(ErrorHandler);
+  }
+
+  public async connect(): Promise<void> {
+    this.registerMiddlewares();
+    this.registerPlugins();
+    this.registerRoutes();
+    this.registerErrorHandler();
+
+    return new Promise((resolve, reject) => {
+      try {
+        this.server = this.app.listen(env.PORT, () => {
+          console.log(`[Server] Server running → http://localhost:${env.PORT}`);
+          resolve();
+        });
+
+        this.server.on("error", (error) => {
+          reject(error);
+        });
+      } catch (error) {
+        reject(error);
+      }
+    });
+  }
+
+  public disconnect(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      if (!this.server) {
+        resolve();
+        return;
+      }
+
+      this.server.close((err) => {
+        if (err) {
+          console.error("[Server] Error closing server:", err);
+          reject(err);
+        } else {
+          console.log("[Server] Server closed");
+          resolve();
+        }
+      });
+    });
+  }
+
+  public getApp(): Application {
+    return this.app;
+  }
 }
 
-// Body parsing - JSON and URL encoded
-app.use(express.json({ limit: "50mb" }));
-app.use(express.urlencoded({ extended: true, limit: "50mb" }));
-
-// Cookie parser for cookies
-app.use(cookieParser());
-
-// Cors for other urls
-app.use(cors({
-    origin: ORIGINS,
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-    exposedHeaders: ['Set-Cookie'],
-}));
-
-// API Routers
-app.use("/api/v1/users", UserRouter)
-app.use("/api/v1/courses", CourseRouter)
-app.use("/api/v1/orders", OrderRouter)
-app.use("/api/v1/notifications", NotificationRouter)
-app.use("/api/v1/analytics", AnalyticRouter)
-app.use("/api/v1/layout", LayoutRouter)
-app.use("/api/v1/enrollments", EnrollmentRouter)
-app.use("/api/v1/progress", ProgressRouter)
-app.use("/api/v1/quiz", QuizRouter)
-app.use("/api/v1/certificates", CertificateRouter)
-app.use("/api/v1/coupons", CouponRouter)
-app.use("/api/v1/videos", VideoRouter)
-app.use("/api/v1/categories", CategoryRouter)
-// Unknown route handler - must be last before error middleware
-app.all("*", (req: Request, res: Response, next: NextFunction) => {
-    const err: any = new Error(`Cannot find ${req.originalUrl} on this server!`);
-    err.statusCode = 404;
-    next(err);
-});
-
-// Error middleware - must be last
-app.use(ErrorMiddleware);
-
-export default app;
+export const app = App.getInstance();

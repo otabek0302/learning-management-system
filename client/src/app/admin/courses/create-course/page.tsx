@@ -25,17 +25,41 @@ const CreateCoursePage = () => {
     estimatedPrice: "",
     tags: "",
     level: "",
-    category: "",
+    categoryId: "",
     thumbnail: "",
   });
   
-  const [courseContent, setCourseContent] = useState([
+  const [courseContent, setCourseContent] = useState<Array<{
+    videoUrl: string;
+    video?: {
+      public_id: string;
+      url: string;
+      secure_url: string;
+      duration: number;
+      format: string;
+    };
+    title: string;
+    description: string;
+    videoSection: string;
+    links: Array<{ title: string; url: string }>;
+    suggestion: string;
+    order: number;
+    isPreview: boolean;
+    isLocked: boolean;
+    quiz?: {
+      questions: Array<{
+        question: string;
+        options: string[];
+        correctAnswer: number;
+      }>;
+      passingScore: number;
+    };
+  }>>([
     {
       videoUrl: "",
       title: "",
       description: "",
       videoSection: "Untitled Section",
-      videoLength: 0,
       links: [{ title: "", url: "" }],
       suggestion: "",
       order: 0,
@@ -73,7 +97,6 @@ const CreateCoursePage = () => {
         const lessonData: any = {
           title: content.title,
           description: content.description,
-          videoLength: content.videoLength || (content.video?.duration || 0),
           videoSection: content.videoSection,
           links: content.links.map((link) => ({ title: link.title, url: link.url })),
           suggestion: content.suggestion,
@@ -101,15 +124,36 @@ const CreateCoursePage = () => {
       // If everything is valid, submit
       const data: any = {
         ...courseInfo,
+        price: parseFloat(courseInfo.price) || 0,
+        estimatedPrice: parseFloat(courseInfo.estimatedPrice) || 0,
         tags: formattedTags,
         benefits: formattedBenefits,
         prerequisites: formattedPrerequisites,
         courseData: formattedCourseContent,
       };
 
+      // Debug: Log video data to check if videoUrl is being sent
+      console.log("Course data being sent:", {
+        courseDataLength: formattedCourseContent.length,
+        firstLesson: formattedCourseContent[0] ? {
+          title: formattedCourseContent[0].title,
+          hasVideo: !!formattedCourseContent[0].video,
+          hasVideoUrl: !!formattedCourseContent[0].videoUrl,
+          videoUrlLength: formattedCourseContent[0].videoUrl?.length || 0,
+          videoUrlPreview: formattedCourseContent[0].videoUrl?.substring(0, 50) || "none"
+        } : null
+      });
+
       await createCourse(data).unwrap();
     } catch (error: any) {
-      toast.error(error?.data?.message || "Failed to create course. Please try again.");
+      // Show detailed validation errors if available
+      if (error?.data?.fields) {
+        const errorMessages = Object.values(error.data.fields).flat().join(", ");
+        toast.error(`Validation failed: ${errorMessages}`);
+      } else {
+        toast.error(error?.data?.message || "Failed to create course. Please try again.");
+      }
+      console.error("Course creation error:", error);
     }
   };
 

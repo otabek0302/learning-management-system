@@ -7,19 +7,30 @@ import { Button } from "@/components/ui/button";
 import { Menu, MoreVerticalIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Logo } from "@/assets";
-import { user } from "@/data/data";
+import { useSelector } from "react-redux";
+import { RootState } from "@/redux/store";
+import { User as UserType } from "@/shared/types";
+import { useLogoutMutation } from "@/redux/features/auth/authApi";
+import { signOut } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { useUserAuth } from "@/hooks/userAuth";
 
 import NextLink from "next/link";
 import Image from "next/image";
 
 const NavigationMobileMenu = () => {
   const { t } = useTranslation();
+  const { user } = useSelector((state: RootState) => state.auth) as { user: UserType | null };
+  const isAuthenticated = useUserAuth();
+  const [logout] = useLogoutMutation();
+  const router = useRouter();
 
   return (
     <div className="md:hidden">
       <Sheet>
         <SheetTrigger asChild>
-          <Button variant="outline" size="icon" iconSize="md" className="h-8 w-8 cursor-pointer shadow-none md:h-8 md:h-9 md:w-8 md:w-9">
+          <Button variant="outline" size="icon" iconSize="md" className="h-8 w-8 cursor-pointer shadow-none md:h-9 md:w-9">
             <Menu className="text-primary" />
           </Button>
         </SheetTrigger>
@@ -65,35 +76,61 @@ const NavigationMobileMenu = () => {
             </li>
           </ul>
           <SheetFooter className="mt-auto">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground">
-                <div className="flex items-center gap-2">
-                  <Avatar className="h-8 w-8 rounded-lg grayscale">
-                    <AvatarImage src={user.avatar.src} alt={user.name} />
-                    <AvatarFallback className="rounded-lg">CN</AvatarFallback>
-                  </Avatar>
-                  <div className="grid flex-1 text-left text-sm leading-tight">
-                    <span className="truncate font-medium">{user.name}</span>
-                    <span className="truncate text-xs text-muted-foreground">{user.email}</span>
+            {isAuthenticated && user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground">
+                  <div className="flex items-center gap-2 cursor-pointer w-full">
+                    <Avatar className="h-8 w-8 rounded-lg">
+                      <AvatarImage src={user.avatar?.url || ""} alt={user.name || "User"} />
+                      <AvatarFallback className="rounded-lg">
+                        {user.name?.charAt(0).toUpperCase() || "U"}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="grid flex-1 text-left text-sm leading-tight">
+                      <span className="truncate font-medium">{user.name || "User"}</span>
+                      <span className="truncate text-xs text-muted-foreground">{user.email || ""}</span>
+                    </div>
+                    <MoreVerticalIcon className="ml-auto size-4" />
                   </div>
-                  <MoreVerticalIcon className="ml-auto size-4" />
-                </div>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="mb-2 w-72 max-w-full space-y-1 border-none shadow-none">
-                <DropdownMenuItem asChild className="cursor-pointer border-[0.1px] shadow-none">
-                  <NextLink href="/profile">Profile</NextLink>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild className="cursor-pointer border-[0.1px] shadow-none">
-                  <NextLink href="/courses">Courses</NextLink>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild className="cursor-pointer border-[0.1px] shadow-none">
-                  <NextLink href="/settings">Settings</NextLink>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild className="cursor-pointer border-[0.1px] shadow-none">
-                  <NextLink href="/logout">Logout</NextLink>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="mb-2 w-72 max-w-full space-y-1 border-none shadow-none">
+                  <DropdownMenuItem asChild className="cursor-pointer border-[0.1px] shadow-none">
+                    <NextLink href="/profile">Profile</NextLink>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild className="cursor-pointer border-[0.1px] shadow-none">
+                    <NextLink href="/profile/courses">My Courses</NextLink>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild className="cursor-pointer border-[0.1px] shadow-none">
+                    <NextLink href="/profile/settings">Settings</NextLink>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className="cursor-pointer border-[0.1px] shadow-none text-red-600"
+                    onClick={async () => {
+                      try {
+                        await logout().unwrap();
+                        await signOut({ redirect: false });
+                        router.push("/login");
+                        toast.success("Logged out successfully");
+                      } catch (error) {
+                        await signOut({ redirect: false });
+                        router.push("/login");
+                      }
+                    }}
+                  >
+                    Logout
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <div className="flex flex-col gap-2 w-full">
+                <Button asChild className="w-full" variant="default">
+                  <NextLink href="/login">Sign In</NextLink>
+                </Button>
+                <Button asChild className="w-full" variant="outline">
+                  <NextLink href="/login">Sign Up</NextLink>
+                </Button>
+              </div>
+            )}
           </SheetFooter>
         </SheetContent>
       </Sheet>

@@ -8,11 +8,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2, Save } from "lucide-react";
+import Link from "next/link";
 
 const CreateUserPage = () => {
   const router = useRouter();
-  const [createUser, { isLoading, isSuccess, isError }] = useCreateUserMutation();
+  const [createUser, { isLoading, isSuccess }] = useCreateUserMutation();
 
   const [formData, setFormData] = useState({
     name: "",
@@ -74,60 +75,96 @@ const CreateUserPage = () => {
     }
   };
 
-  const handleBack = () => {
-    router.push("/admin/users");
-  };
-
   return (
-    <div className="flex min-h-screen flex-col items-center justify-start p-4">
-      {/* Form */}
-      <form onSubmit={handleSubmit} className="mt-4 flex w-full max-w-4xl flex-col gap-4">
-        {/* Name Field */}
-        <div className="space-y-2">
-          <Label htmlFor="name">Full Name</Label>
-          <Input id="name" type="text" placeholder="Enter full name" value={formData.name} onChange={(e) => handleInputChange("name", e.target.value)} className={errors.name ? "border-red-500" : ""} />
-          {errors.name && <p className="text-sm text-red-500">{errors.name}</p>}
+    <div className="min-h-screen">
+      <div className="mx-auto max-w-4xl px-4 py-8">
+        <div className="mb-6 flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold">Create User</h1>
+            <p className="mt-1 text-sm text-muted-foreground">Add a new user to the system</p>
+          </div>
+          <Link href="/admin/users">
+            <Button variant="outline">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back
+            </Button>
+          </Link>
         </div>
 
-        {/* Email Field */}
-        <div className="space-y-2">
-          <Label htmlFor="email">Email Address</Label>
-          <Input id="email" type="email" placeholder="Enter email address" value={formData.email} onChange={(e) => handleInputChange("email", e.target.value)} className={errors.email ? "border-red-500" : ""} />
-          {errors.email && <p className="text-sm text-red-500">{errors.email}</p>}
-        </div>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="rounded-lg border bg-white p-6">
+            {/* Name Field */}
+            <div className="space-y-2">
+              <Label htmlFor="name">Full Name *</Label>
+              <Input
+                id="name"
+                type="text"
+                placeholder="Enter full name"
+                value={formData.name}
+                onChange={(e) => handleInputChange("name", e.target.value)}
+                className={errors.name ? "border-red-500" : ""}
+              />
+              {errors.name && <p className="text-sm text-red-500">{errors.name}</p>}
+            </div>
 
-        {/* Password Field */}
-        <div className="space-y-2">
-          <Label htmlFor="password">Password</Label>
-          <Input id="password" type="password" placeholder="Enter password" value={formData.password} onChange={(e) => handleInputChange("password", e.target.value)} className={errors.password ? "border-red-500" : ""} />
-          {errors.password && <p className="text-sm text-red-500">{errors.password}</p>}
-        </div>
+            {/* Email Field */}
+            <div className="space-y-2">
+              <Label htmlFor="email">Email Address *</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="Enter email address"
+                value={formData.email}
+                onChange={(e) => handleInputChange("email", e.target.value)}
+                className={errors.email ? "border-red-500" : ""}
+              />
+              {errors.email && <p className="text-sm text-red-500">{errors.email}</p>}
+            </div>
 
-        {/* Role Field */}
-        <div className="space-y-2">
-          <Label htmlFor="role">Role</Label>
-          <Select value={formData.role} onValueChange={(value) => handleInputChange("role", value)}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select role" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="user">User</SelectItem>
-              <SelectItem value="admin">Admin</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+            {/* Password Field */}
+            <div className="space-y-2">
+              <Label htmlFor="password">Password *</Label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="Enter password"
+                value={formData.password}
+                onChange={(e) => handleInputChange("password", e.target.value)}
+                className={errors.password ? "border-red-500" : ""}
+              />
+              {errors.password && <p className="text-sm text-red-500">{errors.password}</p>}
+              <p className="text-xs text-muted-foreground">Password must be at least 6 characters long</p>
+            </div>
 
-        {/* Submit Button */}
-        <div className="flex items-center justify-end gap-4 pt-4">
-          <Button type="button" variant="outline" onClick={handleBack} disabled={isLoading} className="cursor-pointer rounded-lg">
-            <span className="hidden sm:block">Cancel</span>
-          </Button>
-          <Button type="submit" disabled={isLoading} className="cursor-pointer rounded-lg">
-            {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
-            {isLoading ? "Creating..." : "Create User"}
-          </Button>
-        </div>
-      </form>
+            {/* Role Field */}
+            <div className="space-y-2">
+              <Label htmlFor="role">Role *</Label>
+              <Select value={formData.role} onValueChange={(value) => handleInputChange("role", value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="user">User</SelectItem>
+                  <SelectItem value="admin">Admin</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* Submit Button */}
+          <div className="flex items-center justify-end gap-4 border-t pt-4">
+            <Link href="/admin/users">
+              <Button type="button" variant="outline" disabled={isLoading} className="cursor-pointer rounded-lg">
+                Cancel
+              </Button>
+            </Link>
+            <Button type="submit" disabled={isLoading} className="cursor-pointer rounded-lg">
+              {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+              {isLoading ? "Creating..." : "Create User"}
+            </Button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 };

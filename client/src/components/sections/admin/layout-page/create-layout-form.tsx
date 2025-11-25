@@ -1,17 +1,17 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import Link from "next/link";
+import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCreateLayoutMutation, useEditLayoutMutation, useGetLayoutQuery } from "@/redux/features/layout-page/layoutApi";
-import { Layout, IFaqItem, Category } from "@/interfaces/layout.interface";
+import { IFaqItem } from "@/shared/interfaces";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, X, Save, ArrowLeft, Upload } from "lucide-react";
-import Link from "next/link";
+import { Plus, X, Save, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 
 interface CreateLayoutFormProps {
@@ -40,7 +40,6 @@ const CreateLayoutForm: React.FC<CreateLayoutFormProps> = ({ isEdit = false, lay
     image: null as File | null,
     imagePreview: "",
     faq: [] as IFaqItem[],
-    categories: [] as Category[],
   });
 
   // Initialize form data when editing
@@ -65,7 +64,6 @@ const CreateLayoutForm: React.FC<CreateLayoutFormProps> = ({ isEdit = false, lay
         image: null,
         imagePreview: layout.banner?.image?.url || "",
         faq: layout.faq || [],
-        categories: layout.categories || [],
       });
     }
   }, [existingLayout, isEdit]);
@@ -106,26 +104,6 @@ const CreateLayoutForm: React.FC<CreateLayoutFormProps> = ({ isEdit = false, lay
     }));
   };
 
-  const addCategory = () => {
-    setFormData((prev) => ({
-      ...prev,
-      categories: [...prev.categories, { title: "" }],
-    }));
-  };
-
-  const updateCategory = (index: number, value: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      categories: prev.categories.map((item, i) => (i === index ? { ...item, title: value } : item)),
-    }));
-  };
-
-  const removeCategory = (index: number) => {
-    setFormData((prev) => ({
-      ...prev,
-      categories: prev.categories.filter((_, i) => i !== index),
-    }));
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -160,12 +138,6 @@ const CreateLayoutForm: React.FC<CreateLayoutFormProps> = ({ isEdit = false, lay
         payload.faq = formData.faq.filter((item) => item.question && item.answer);
         if (payload.faq.length === 0) {
           toast.error("Please add at least one FAQ item");
-          return;
-        }
-      } else if (formData.type === "categories") {
-        payload.categories = formData.categories.filter((item) => item.title);
-        if (payload.categories.length === 0) {
-          toast.error("Please add at least one category");
           return;
         }
       }
@@ -256,39 +228,12 @@ const CreateLayoutForm: React.FC<CreateLayoutFormProps> = ({ isEdit = false, lay
     </div>
   );
 
-  const renderCategoriesForm = () => (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <Label>Categories</Label>
-        <Button type="button" variant="outline" size="sm" onClick={addCategory}>
-          <Plus className="mr-2 h-4 w-4" />
-          Add Category
-        </Button>
-      </div>
-      {formData.categories.length === 0 && (
-        <div className="py-8 text-center text-gray-500">
-          <p>No categories added yet. Click "Add Category" to get started.</p>
-        </div>
-      )}
-      {formData.categories.map((item, index) => (
-        <div key={index} className="flex gap-2">
-          <Input value={item.title} onChange={(e) => updateCategory(index, e.target.value)} placeholder="Enter category title" />
-          <Button type="button" variant="ghost" size="sm" onClick={() => removeCategory(index)}>
-            <X className="h-4 w-4" />
-          </Button>
-        </div>
-      ))}
-    </div>
-  );
-
   const renderFormByType = () => {
     switch (formData.type) {
       case "banner":
         return renderBannerForm();
       case "faq":
         return renderFaqForm();
-      case "categories":
-        return renderCategoriesForm();
       default:
         return null;
     }
@@ -332,7 +277,6 @@ const CreateLayoutForm: React.FC<CreateLayoutFormProps> = ({ isEdit = false, lay
                 <SelectContent>
                   <SelectItem value="banner">Banner</SelectItem>
                   <SelectItem value="faq">FAQ</SelectItem>
-                  <SelectItem value="categories">Categories</SelectItem>
                 </SelectContent>
               </Select>
               {isEdit && (

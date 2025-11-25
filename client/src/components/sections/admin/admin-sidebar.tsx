@@ -3,23 +3,32 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { signOut } from "next-auth/react";
-import { useAppDispatch } from "@/redux/hooks";
-import { userLoggedOut } from "@/redux/features/auth/authSlice";
-import { User, BookOpen, LogOut, Users, ShoppingCart, Settings } from "lucide-react";
+import { useLogoutMutation } from "@/redux/features/auth/authApi";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { User, BookOpen, LogOut, Users, ShoppingCart, Settings, FolderOpen } from "lucide-react";
 
 import Link from "next/link";
 
 const AdminSidebar = () => {
   const [active, setActive] = useState<string>("dashboard");
-  const dispatch = useAppDispatch();
+  const [logout] = useLogoutMutation();
+  const router = useRouter();
 
   const handleActive = (path: string) => {
     setActive(path);
   };
 
-  const logout = () => {
-    signOut();
-    dispatch(userLoggedOut());
+  const handleLogout = async () => {
+    try {
+      await logout().unwrap();
+      await signOut({ redirect: false });
+      router.push("/login");
+      toast.success("Logged out successfully");
+    } catch (error) {
+      await signOut({ redirect: false });
+      router.push("/login");
+    }
   };
 
   return (
@@ -38,6 +47,10 @@ const AdminSidebar = () => {
             <BookOpen className="h-5 w-5 text-primary" />
             <span>Courses</span>
           </Link>
+          <Link href={"/admin/categories"} className={`flex items-center gap-3 rounded-lg px-3 py-2 text-gray-700 transition-colors hover:bg-gray-100 ${active === "categories" ? "bg-gray-100" : ""}`} onClick={() => handleActive("categories")}>
+            <FolderOpen className="h-5 w-5 text-primary" />
+            <span>Categories</span>
+          </Link>
           <Link href={"/admin/orders"} className={`flex items-center gap-3 rounded-lg px-3 py-2 text-gray-700 transition-colors hover:bg-gray-100 ${active === "orders" ? "bg-gray-100" : ""}`} onClick={() => handleActive("orders")}>
             <ShoppingCart className="h-5 w-5 text-primary" />
             <span>Orders</span>
@@ -48,7 +61,7 @@ const AdminSidebar = () => {
           </Link>
         </nav>
 
-        <Button variant="outline" size="lg" className="mt-auto flex items-center gap-3 rounded-lg px-3 py-3 text-red-600 transition-colors hover:bg-red-50 hover:text-red-600" onClick={logout}>
+        <Button variant="outline" size="lg" className="mt-auto flex items-center gap-3 rounded-lg px-3 py-3 text-red-600 transition-colors hover:bg-red-50 hover:text-red-600" onClick={handleLogout}>
           <LogOut className="h-5 w-5 text-red-600" />
           <span>Sign Out</span>
         </Button>

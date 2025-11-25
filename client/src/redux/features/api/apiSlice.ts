@@ -1,4 +1,4 @@
-import { LoginResponse, RefreshTokenResponse } from "@/types/auth";
+import { LoginResponse, RefreshTokenResponse } from "@/shared/types";
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { userLoggedIn } from "../auth/authSlice";
 
@@ -12,22 +12,26 @@ export const apiSlice = createApi({
   endpoints: (builder) => ({
     refreshToken: builder.query<RefreshTokenResponse, void>({
       query: () => ({
-        url: "/users/refreshtoken",
+        url: "/user/refreshtoken",
         method: "GET",
       }),
     }),
-    loadUser: builder.query<LoginResponse, void>({
+    loadUser: builder.query<{ success: boolean; user: any }, void>({
       query: () => ({
-        url: "/users/me",
+        url: "/user/me",
         method: "GET",
+        credentials: "include",
       }),
       async onQueryStarted(arg, { queryFulfilled, dispatch }) {
         try {
           const result = await queryFulfilled;
-          dispatch(userLoggedIn({
-            token: result.data?.accessToken,
-            user: result.data?.user,
-          }));
+          if (result.data?.user) {
+            const user = result.data.user;
+            dispatch(userLoggedIn({
+              token: "",
+              user: user,
+            }));
+          }
         } catch (error) {
           console.error("Load user error:", error);
         }

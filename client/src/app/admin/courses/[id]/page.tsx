@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 
-import { useGetSingleCourseQuery, useDeleteCourseMutation } from "@/redux/features/courses/courseApi";
+import { useGetSingleCourseAdminQuery, useDeleteCourseMutation } from "@/redux/features/courses/courseApi";
 import { Users, Star, Edit, Trash2, ArrowLeft, Video, MessageCircle } from "lucide-react";
 import { useRouter, useParams } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
@@ -16,7 +16,7 @@ const CourseDetailsPage = () => {
   const params = useParams();
   const courseId = Array.isArray(params?.id) ? params.id[0] : params?.id;
 
-  const { data, isLoading, error } = useGetSingleCourseQuery(courseId);
+  const { data, isLoading, error } = useGetSingleCourseAdminQuery(courseId);
   const [deleteCourse, { isLoading: isDeleting }] = useDeleteCourseMutation();
 
   const course = data?.course;
@@ -131,8 +131,12 @@ const CourseDetailsPage = () => {
           </div>
           <div className="flex items-center gap-2">
             <Badge variant="primary" className="rounded-lg">{course.level}</Badge>
-            {course.category && (
-              <Badge variant="secondary" className="rounded-lg">{course.category}</Badge>
+            {course.categoryId && (
+              <Badge variant="secondary" className="rounded-lg">
+                {typeof course.categoryId === 'object' && course.categoryId?.name 
+                  ? course.categoryId.name 
+                  : course.categoryId || 'Uncategorized'}
+              </Badge>
             )}
             <div className="flex items-center gap-1">
               <span className="mr-2 text-xs text-muted-foreground line-through">{formatPrice(course.price)}</span>
@@ -142,38 +146,6 @@ const CourseDetailsPage = () => {
         </div>
       </div>
 
-      {/* Preview Lessons */}
-      {course.courseData && course.courseData.some((lesson: any) => lesson.isPreview) && (
-        <div className="mb-8">
-          <h2 className="mb-2 flex items-center gap-2 text-lg font-semibold">
-            <Video className="h-5 w-5" /> Preview Lessons
-          </h2>
-          <div className="space-y-4">
-            {course.courseData
-              .filter((lesson: any) => lesson.isPreview)
-              .map((lesson: any, index: number) => (
-                <div key={index} className="rounded-lg border bg-background p-4">
-                  <h3 className="mb-2 font-semibold">{lesson.title}</h3>
-                  {lesson.video?.secure_url && (
-                    <div className="mt-2 relative aspect-video w-full overflow-hidden rounded-lg bg-black">
-                      <video
-                        src={lesson.video.secure_url}
-                        controls
-                        className="w-full h-full"
-                        style={{ maxHeight: "500px" }}
-                      >
-                        Your browser does not support the video tag.
-                      </video>
-                    </div>
-                  )}
-                  {lesson.description && (
-                    <p className="mt-2 text-sm text-muted-foreground">{lesson.description}</p>
-                  )}
-                </div>
-              ))}
-          </div>
-        </div>
-      )}
 
       {/* Course Statistics */}
       <div className="mb-8 grid grid-cols-1 md:grid-cols-3 gap-4">

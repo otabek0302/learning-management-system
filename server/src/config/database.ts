@@ -1,48 +1,77 @@
 import mongoose from "mongoose";
+import { env } from "./env";
+import { DatabaseError } from "../shared/errors/database.error";
 
-import { DATABASE_URL } from "./config";
+export class Database {
+  private static instance: Database;
+  private connection: mongoose.Connection | null = null;
 
-if (!DATABASE_URL) {
-    throw new Error("Environment variable DB_URL is not defined. Please provide a valid MongoDB connection string.");
+  private constructor() {
+  }
+
+  public static getInstance(): Database {
+    if (!Database.instance) {
+      Database.instance = new Database();
+    }
+    return Database.instance;
+  }
+
+  /** Connect to MongoDB */
+  public async connect(): Promise<void> {
+    const mongoUrl = env.DB_URL;
+
+    if (!mongoUrl) {
+      throw new DatabaseError("MongoDB URL is missing");
+    }
+
+    try {
+      await mongoose.connect(mongoUrl, {
+        user: env.DB_USER || undefined,
+        pass: env.DB_PASS || undefined,
+        serverSelectionTimeoutMS: 5000,
+        maxPoolSize: 20,
+      });
+
+      this.connection = mongoose.connection;
+
+      this.setupConnectionEvents();
+
+      console.log(`[DB] Connected → MongoDB @ ${mongoUrl}`);
+    } catch (error: any) {
+      console.error("[DB] MongoDB connection error:", error);
+      throw new DatabaseError("Failed to connect to MongoDB", { error });
+    }
+  }
+
+  /** Disconnect from MongoDB */
+  public async disconnect(): Promise<void> {
+    if (!this.connection) return;
+    await this.connection.close();
+    console.log("[DB] MongoDB disconnected");
+  }
+
+  /** MongoDB event listeners */
+  private setupConnectionEvents() {
+    if (!this.connection) return;
+
+    this.connection.on("connected", () => {
+      console.log("[DB] Mongoose connected");
+    });
+
+    this.connection.on("error", (err) => {
+      console.error("[DB] Mongoose error:", err);
+    });
+
+    this.connection.on("disconnected", () => {
+      console.warn("[DB] Mongoose disconnected");
+    });
+  }
+
+  /** Get raw mongoose connection */
+  public getConnection(): mongoose.Connection | null {
+    return this.connection;
+  }
 }
 
-// Connection to the MongoDB database.
-const connectToDatabase = async (): Promise<void> => {
-    try {
-        const connection = await mongoose.connect(DATABASE_URL, {
-            dbName: "myDatabase",
-            user: process.env.DB_USER,
-            pass: process.env.DB_PASS,
-            autoIndex: true,
-        });
-
-        // Success message with database host information
-        console.log(`✅ Connected to MongoDB at host: ${connection.connection.host}`);
-    } catch (error) {
-        // Gracefully handle connection errors
-        console.error("❌ Error connecting to MongoDB:", error);
-
-        // Optionally, you might want to exit the process if the database connection fails
-        process.exit(1);
-    }
-};
-
-// Handle shutdown of the application
-const handleExit = (signal: NodeJS.Signals): void => {
-  console.log(`⚠️ Received ${signal}. Closing MongoDB connection...`);
-
-  mongoose.connection.close().then(() => {
-    console.log("🔌 MongoDB connection closed. Exiting process.");
-    process.exit(0);
-  }).catch(err => {
-    console.error("Error closing MongoDB connection:", err);
-    process.exit(1);
-  });
-};
-
-
-// Handle shutdown on process termination signals
-process.on("SIGINT", () => handleExit("SIGINT"));
-process.on("SIGTERM", () => handleExit("SIGTERM"));
-
-export default connectToDatabase;
+// Singleton instance
+export const database = Database.getInstance();
