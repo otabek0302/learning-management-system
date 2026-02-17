@@ -6,6 +6,8 @@ yarn-error.log
 package-lock.json
 yarn.lock
 
+.pnpm-store/
+
 # Environment variables
 .env
 .env.local
@@ -22,6 +24,7 @@ out/
 .vscode/
 *.swp
 *.swo
+.DS_Store
 .DS_Store
 Thumbs.db
 
