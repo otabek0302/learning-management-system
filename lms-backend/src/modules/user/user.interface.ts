@@ -1,4 +1,4 @@
-import type { Document, Schema, Types } from "mongoose";
+import type { Schema } from "mongoose";
 
 export interface IUserAvatar {
   asset_id?: string;
@@ -52,8 +52,8 @@ export interface IUserActivity {
   last_login_ip?: string;
 }
 
-export interface IUser extends Document {
-  _id: Types.ObjectId;
+export interface IUser {
+  _id: string;
   email?: string;
   phone?: string;
   password?: string;
@@ -112,6 +112,11 @@ export interface IVerifyOtp {
 export interface IResendOtp {
   email?: string;
   phone?: string;
+}
+
+export interface ISignOut {
+  userId: string;
+  refreshToken?: string;
 }
 
 export interface IRefreshToken {

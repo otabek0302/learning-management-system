@@ -1,5 +1,5 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
-import { clearAuthStorage } from '@/modules/auth/features/lib/auth-storage';
+import { clearUser } from '@/modules/auth/features/lib/auth-storage';
 import { tokenRefreshed, userLoggedOut } from '@/modules/auth/features/stores/authStore';
 
 const rawBaseQuery = fetchBaseQuery({
@@ -18,7 +18,7 @@ const baseQueryWithReauth = async (args: Parameters<typeof rawBaseQuery>[0], api
       api.dispatch(tokenRefreshed({ token: data.data.accessToken }));
       result = await rawBaseQuery(args, api, extraOptions);
     } else {
-      clearAuthStorage();
+      clearUser();
       api.dispatch(userLoggedOut());
       return refreshResult.error ? refreshResult : result;
     }

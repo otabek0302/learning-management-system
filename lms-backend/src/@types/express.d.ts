@@ -1,9 +1,13 @@
-import type { RequestUser } from "@shared/types/express.type";
-
 declare global {
   namespace Express {
+    interface User {
+      _id: string;
+      role?: string;
+      email?: string;
+      phone?: string;
+    }
     interface Request {
-      user?: RequestUser;
+      user?: User;
     }
   }
 }

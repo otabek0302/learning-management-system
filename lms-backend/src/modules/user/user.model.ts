@@ -66,11 +66,11 @@ userSchema.methods.comparePassword = async function (password: string): Promise<
 };
 
 userSchema.methods.signAccessToken = function (): string {
-  return jwt.sign({ _id: this._id }, env.JWT_SECRET, { expiresIn: env.JWT_EXPIRES_IN } as jwt.SignOptions);
+  return jwt.sign({ _id: this._id, role: this.role, email: this.email, phone: this.phone }, env.JWT_SECRET, { expiresIn: env.JWT_EXPIRES_IN } as jwt.SignOptions);
 };
 
 userSchema.methods.signRefreshToken = function (): string {
-  return jwt.sign({ _id: this._id }, env.JWT_REFRESH_SECRET, { expiresIn: env.JWT_REFRESH_EXPIRES_IN } as jwt.SignOptions);
+  return jwt.sign({ _id: this._id, role: this.role, email: this.email, phone: this.phone }, env.JWT_REFRESH_SECRET, { expiresIn: env.JWT_REFRESH_EXPIRES_IN } as jwt.SignOptions);
 };
 
 userSchema.pre("save", async function () {

@@ -1,31 +1,17 @@
-const AUTH_USER_KEY = 'user';
-
-export function saveAuthUser(user: Record<string, unknown>): void {
-  try {
-    if (typeof window === 'undefined') return;
-    localStorage.setItem(AUTH_USER_KEY, JSON.stringify(user));
-  } catch {
-    // localStorage full or disabled
-  }
+export function setUser(user: Record<string, unknown>): void {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem('user', JSON.stringify(user));
 }
 
-export function loadAuthUser(): Record<string, unknown> | null {
-  try {
-    if (typeof window === 'undefined') return null;
-    const raw = localStorage.getItem(AUTH_USER_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as unknown;
-    return parsed && typeof parsed === 'object' && parsed !== null ? (parsed as Record<string, unknown>) : null;
-  } catch {
-    return null;
-  }
+export function getUser(): Record<string, unknown> | null {
+  if (typeof window === 'undefined') return null;
+  const raw = localStorage.getItem('user');
+  if (!raw) return null;
+  const parsed = JSON.parse(raw) as unknown;
+  return parsed && typeof parsed === 'object' && parsed !== null ? (parsed as Record<string, unknown>) : null;
 }
 
-export function clearAuthStorage(): void {
-  try {
-    if (typeof window === 'undefined') return;
-    localStorage.removeItem(AUTH_USER_KEY);
-  } catch {
-    // ignore
-  }
+export function clearUser(): void {
+  if (typeof window === 'undefined') return;
+  localStorage.removeItem('user');
 }

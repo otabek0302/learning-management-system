@@ -19,9 +19,9 @@ const envSchema = z.object({
 
   // JWT (optional)
   JWT_SECRET: z.string().min(32),
-  JWT_EXPIRES_IN: z.string().default("3h"),
+  JWT_EXPIRES_IN: z.coerce.number().min(1, "JWT_EXPIRES_IN must be a number").default(3 * 60 * 60), // 3 hours in seconds
   JWT_REFRESH_SECRET: z.string().min(32),
-  JWT_REFRESH_EXPIRES_IN: z.string().default("3d"),
+  JWT_REFRESH_EXPIRES_IN: z.coerce.number().min(1, "JWT_REFRESH_EXPIRES_IN must be a number").default(7 * 24 * 60 * 60), // 7 days in seconds
 
   // API Keys (optional)
   API_PREFIX: z.string().default("/api/v1"),

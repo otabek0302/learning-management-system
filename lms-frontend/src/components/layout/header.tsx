@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 
 import { ThemeSwitcher } from '../widgets/theme-switcher';
 import { LanguageSwitcher } from '../widgets/language-switcher';
-import { AuthentedUser } from '../widgets/authented-user';
+import { AuthenticatedUser } from '../widgets/authenticated-user';
 
 import { NavigationMenu, NavigationMenuItem, NavigationMenuLink, NavigationMenuList } from '../ui/navigation-menu';
 
@@ -48,7 +48,7 @@ const Header = () => {
         <div className="flex items-center gap-2">
           <LanguageSwitcher />
           <ThemeSwitcher />
-          <AuthentedUser />
+          <AuthenticatedUser />
         </div>
       </div>
     </header>

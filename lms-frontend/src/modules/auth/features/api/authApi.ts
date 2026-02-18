@@ -1,6 +1,6 @@
 import type { RegistrationByEmailData, RegistrationByPhoneData, VerifyOtpData, ResendOtpData, LoginByEmailData, LoginByPhoneData, ForgotPasswordData, ResetPasswordData, User } from '@/shared/types';
 
-import { clearAuthStorage, saveAuthUser } from '../lib/auth-storage';
+import { clearUser, setUser } from '../lib/auth-storage';
 import { userLoggedIn, userLoggedOut, userRegistration } from '../../../../modules/auth/features/stores/authStore';
 import { api } from '@/services/redux/api/api';
 import { IUser } from '../types/auth';
@@ -51,7 +51,7 @@ export const authApi = api.injectEndpoints({
           const { data } = await queryFulfilled;
           if (data?.data?.user && data?.data?.accessToken) {
             dispatch(userLoggedIn({ token: data.data.accessToken, user: data.data.user as unknown as IUser }));
-            saveAuthUser(data.data.user as Record<string, unknown>);
+            setUser(data.data.user);
           }
         } catch {
           // Error handled by form / toast
@@ -76,7 +76,7 @@ export const authApi = api.injectEndpoints({
           const { data } = await queryFulfilled;
           if (data?.data?.user && data?.data?.accessToken) {
             dispatch(userLoggedIn({ token: data.data.accessToken, user: data.data.user as unknown as IUser }));
-            saveAuthUser(data.data.user as Record<string, unknown>);
+            setUser(data.data.user as Record<string, unknown>);
           }
         } catch {
           // Error handled by form / toast
@@ -94,7 +94,7 @@ export const authApi = api.injectEndpoints({
           const { data } = await queryFulfilled;
           if (data?.data?.user && data?.data?.accessToken) {
             dispatch(userLoggedIn({ token: data.data.accessToken, user: data.data.user as unknown as IUser }));
-            saveAuthUser(data.data.user as Record<string, unknown>);
+            setUser(data.data.user as Record<string, unknown>);
           }
         } catch {
           // Error handled by form / toast
@@ -109,7 +109,7 @@ export const authApi = api.injectEndpoints({
         } catch {
           // Still clear local state on network error
         } finally {
-          clearAuthStorage();
+          clearUser();
           dispatch(userLoggedOut());
         }
       },
@@ -127,10 +127,10 @@ export const authApi = api.injectEndpoints({
           const { data } = await queryFulfilled;
           if (data?.data) {
             dispatch(userLoggedIn({ token: 'session', user: data.data as unknown as IUser }));
-            saveAuthUser(data.data as Record<string, unknown>);
+            setUser(data.data as Record<string, unknown>);
           }
         } catch {
-          clearAuthStorage();
+          clearUser();
           dispatch(userLoggedOut());
         }
       },

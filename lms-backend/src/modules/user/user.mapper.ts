@@ -27,8 +27,7 @@ type UserSource = IUser | (Record<string, unknown> & { _id: unknown; email: stri
 export const toUserDTO = (user: UserSource | null): UserDTO | null => {
   if (!user) return null;
 
-  const doc = typeof (user as IUser).toObject === "function" ? (user as IUser).toObject() : user;
-  const { password: _p, ...rest } = doc as Record<string, unknown>;
+  const { password: _p, ...rest } = user as Record<string, unknown>;
 
   const profile = (rest.profile as Record<string, unknown>) || {};
   const security = (rest.security as Record<string, unknown>) || {};
